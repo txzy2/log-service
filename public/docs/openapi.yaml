@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Laravel
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'http://localhost'
+paths:
+  /api/test:
+    get:
+      summary: ''
+      operationId: getApiTest
+      description: ''
+      parameters: []
+      responses:
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  token:
+                    - 'Поле token обязательно для заполнения'
+                  service:
+                    - 'Поле service обязательно для заполнения'
+                  incident:
+                    - 'Поле incident обязательно для заполнения'
+                  incident.object:
+                    - 'The incident.object field is required.'
+                  incident.date:
+                    - 'The incident.date field is required.'
+                  incident.message:
+                    - 'The incident.message field is required.'
+                properties:
+                  token:
+                    type: array
+                    example:
+                      - 'Поле token обязательно для заполнения'
+                    items:
+                      type: string
+                  service:
+                    type: array
+                    example:
+                      - 'Поле service обязательно для заполнения'
+                    items:
+                      type: string
+                  incident:
+                    type: array
+                    example:
+                      - 'Поле incident обязательно для заполнения'
+                    items:
+                      type: string
+                  incident.object:
+                    type: array
+                    example:
+                      - 'The incident.object field is required.'
+                    items:
+                      type: string
+                  incident.date:
+                    type: array
+                    example:
+                      - 'The incident.date field is required.'
+                    items:
+                      type: string
+                  incident.message:
+                    type: array
+                    example:
+                      - 'The incident.message field is required.'
+                    items:
+                      type: string
+      tags:
+        - Endpoints
+      security: []
+  /api/v1/add:
+    post:
+      summary: 'sendLog - главный контроллер логов, который распределяет запросы по сервисам'
+      operationId: sendLog
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+tags:
+  -
+    name: Endpoints
+    description: ''

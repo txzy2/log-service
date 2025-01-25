@@ -5,7 +5,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
-$logPath = storage_path('logs/' . date('Y') . '/' . date('m') . '/' . date('d'));
+$storage_logs_path = 'logs/' . date("Y") . '/' . date("Y-m") . '/' . date("d");
 
 return [
 
@@ -26,14 +26,14 @@ return [
 
         'single' => [
             'driver' => 'single',
-            'path' => $logPath . '/laravel.log',
+            'path' => storage_path($storage_logs_path . '/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
-            'path' => $logPath . '/laravel.log',
+            'path' => storage_path($storage_logs_path . '/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -41,7 +41,7 @@ return [
 
         'debug' => [
             'driver' => 'daily',
-            'path' => $logPath . '/debug.log',
+            'path' => storage_path($storage_logs_path . '/debug.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -49,7 +49,7 @@ return [
 
         'tokens' => [
             'driver' => 'daily',
-            'path' => $logPath . '/tokens.log',
+            'path' => storage_path($storage_logs_path . '/tokens.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,

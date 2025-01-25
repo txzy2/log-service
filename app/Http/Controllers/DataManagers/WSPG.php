@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\DataManagers;
 
-class WSPG
+use App\Http\Controllers\Controller;
+
+class WSPG extends Controller
 {
     public function logging(): string
     {

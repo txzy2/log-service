@@ -9,22 +9,24 @@ use Illuminate\Support\Facades\Log;
 
 class LogController extends Controller
 {
-    /**s
-     * sendLog - запись лога
+    /**
+     * sendLog - главный контроллер логов, который распределяет запросы по сервисам
      * 
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function sendLog(Request $request)
     {
+        // получаем данные и удаляем токен
         $data = parent::unsetToken($request->all());
+        // парсим $data['service'] => [$service, $type]
         $parcedData = ServiceManager::returnParts($data);
         Log::channel("debug")->info('\LogController::sendLog REQUEST', $parcedData);
 
         $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
         $return = $serviceObject->logging($data);
 
-        return parent::sendResponse($return);
+        return $this->sendResponse($return);
     }
 
 }

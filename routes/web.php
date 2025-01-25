@@ -22,3 +22,7 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 });
+
+Route::get('/redoc', function () {
+    return view('redoc');
+});
