@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 abstract class Controller
 {
-    public function sendResponse($result = true, $message = "success")
+    public function sendResponse($message = "success", bool $result = true, )
     {
         $response = [
             'success' => $result,
