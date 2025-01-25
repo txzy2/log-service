@@ -5,10 +5,13 @@ namespace App\Http\Middleware;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Validator;
 
 class TokenCheck extends Controller
 {
+    private const ERROR_MESSAGE = "TokenCheck::sendResult TOKEN ERROR";
+
     /**
      * handle - обрабатывает токен для записи лога
      * 
@@ -46,18 +49,18 @@ class TokenCheck extends Controller
 
         $parcedData = ServiceManager::returnParts($data);
         if (!$parcedData['success']) {
-            $this->logError("Ошибка парсинга сервиса: {$data['service']}", $userData);
-            return response()->json(['success' => false, "message" => "Ошибка парсинга сервиса. Передан неверный сервис"], 400);
+            Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
+            return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
         }
 
         $checkResult = $this->checkToken($parcedData['data']['service'], $data);
 
         if (!$checkResult) {
-            $this->logError("Неверно указан сервис: {$data['service']}", $userData);
-            return response()->json(['success' => false, "message" => "Неверно указан сервис"], 400);
+            Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
+            return $this->sendError("Неверный токен", 401);
         }
 
-        $this->logSuccess('USER IS AUTHORIZED', $userData);
+        Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
         return $next($request);
     }
 
