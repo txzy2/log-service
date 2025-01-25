@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\Init;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -27,7 +28,7 @@ class TokenCheck
             $request->all(),
             [
                 'token' => 'required|string',
-                'service' => 'required|string|in:ws-pg,ads',
+                'service' => 'required|string',
                 'incident' => 'required|array',
                 'incident.object' => 'required|string',
                 'incident.date' => 'required|date_format:d-m-Y',
@@ -42,10 +43,11 @@ class TokenCheck
             return response()->json($validate->errors(), 400);
         }
         $data = $request->all();
+        $parcedData = Init::returnParts($data);
 
-        $checkResult = match ($data['service']) {
-            'ws-pg' => $this->checkTokenForWsPg($data),
-            'ads' => false,
+        $checkResult = match ($parcedData['service']) {
+            'WSPG' => $this->checkTokenForWsPg($data),
+            'ADS' => false,
             default => false,
         };
 
