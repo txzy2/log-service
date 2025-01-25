@@ -50,14 +50,14 @@ class TokenCheck extends Controller
         $parcedData = ServiceManager::returnParts($data);
         if (!$parcedData['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            return response()->json(['success' => false, "message" => "Ошибка парсинга сервиса. Передан неверный сервис"], 400);
+            return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
         }
 
         $checkResult = $this->checkToken($parcedData['data']['service'], $data);
 
         if (!$checkResult) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            return response()->json(['success' => false, "message" => "Неверно указан сервис"], 400);
+            return $this->sendError("Неверный токен", 401);
         }
 
         Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
