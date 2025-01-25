@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Helpers;
+
+class ServiceManager
+{
+    /**
+     * initServiceObject - инициализация сервиса
+     * 
+     * @param string $service
+     * @return object
+     */
+    public static function initServiceObject(string $service): object
+    {
+        $serviceName = "\\App\\Http\\Controllers\\DataManagers\\{$service}";
+        $paymentServiceObject = new $serviceName();
+
+        return $paymentServiceObject;
+    }
+
+    /**
+     * returnParts - проверяет и возвращает части данных
+     * 
+     * @param array $data
+     * @return array[]|array{data: array, success: bool}
+     */
+    public static function returnParts(array $data): array
+    {
+        $return = [
+            'success' => false,
+            'data' => $data,
+        ];
+
+        // Проверяем на наличие '|' в строке.
+        if (strpos($data['service'], '|') === false) {
+            return $return;
+        }
+
+        // Разбиваем строку на части, сразу сохраняем их.
+        [$data['service'], $data['incident']['type']] = explode('|', $data['service'], 2);
+
+        // Возвращаем успешный результат.
+        $return['success'] = true;
+        $return['data'] = $data;
+
+        return $return;
+    }
+
+
+}

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Helpers\Init;
+use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class LogController extends Controller
 {
-    /**
+    /**s
      * sendLog - запись лога
      * 
      * @param \Illuminate\Http\Request $request
@@ -18,10 +18,10 @@ class LogController extends Controller
     public function sendLog(Request $request)
     {
         $data = parent::unsetToken($request->all());
-        $parcedData = Init::returnParts($data);
+        $parcedData = ServiceManager::returnParts($data);
         Log::channel("debug")->info('\LogController::sendLog REQUEST', $parcedData);
 
-        $serviceObject = Init::initServiceObject($parcedData['service']);
+        $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
         $return = $serviceObject->logging($data);
 
         return parent::sendResponse($return);
