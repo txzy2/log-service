@@ -7,14 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 abstract class Controller
 {
-    private array $log_message = [
-        'tokens_error' => 'TokenCheck::sendResult TOKEN ERROR',
-    ];
-
-    private array $log_channel = [
-        'tokens' => 'tokens',
-    ];
-
     /**
      * sendResponse - отправляет успешный ответ 
      * 
@@ -65,27 +57,4 @@ abstract class Controller
         return $data;
     }
 
-    /**
-     * Логирует ошибку
-     * 
-     * @param string $message
-     * @param array $context
-     */
-    protected function logError(string $message, array $context): void
-    {
-        Log::channel($this->log_channel['tokens'])
-            ->info($this->log_message["tokens_error"] . " ($message)", $context);
-    }
-
-    /**
-     * Логирует успешную операцию
-     * 
-     * @param string $message
-     * @param array $context
-     */
-    protected function logSuccess(string $message, array $context): void
-    {
-        Log::channel($this->log_channel['tokens'])
-            ->info($message, $context);
-    }
 }
