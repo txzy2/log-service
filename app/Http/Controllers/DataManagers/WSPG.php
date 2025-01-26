@@ -10,4 +10,18 @@ class WSPG extends Controller
     {
         return "WSPG";
     }
+
+    /**
+     * checkToken - проверяет токен
+     * 
+     * @param array $data
+     * @return bool
+     */
+    public function checkToken(array $data): bool
+    {
+        $incident = $data["incident"];
+        $sign = hash('sha256', $incident["object"] . $incident["date"] . config("app.key"), false);
+
+        return $sign === $data["token"];
+    }
 }

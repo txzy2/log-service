@@ -2,11 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\Helpers\ServiceManager;
-use App\Http\Controllers\Controller;
+use App\Models\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Telegram\Bot\Laravel\Facades\Telegram;
 use Validator;
+
+use App\Helpers\ServiceManager;
+use App\Http\Controllers\Controller;
 
 class TokenCheck extends Controller
 {
@@ -53,11 +56,23 @@ class TokenCheck extends Controller
             return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
         }
 
-        $checkResult = $this->checkToken($parcedData['data']['service'], $data);
+        $checkResult = $this->tokenValidate($parcedData['data']['service'], $data);
 
         if (!$checkResult) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            return $this->sendError("Неверный токен", 401);
+
+            /*
+             * ====================================================================================
+             * TODO: Разобраться с телеграмом (пока что не получается из-за отсутсвия сертификата)
+             * ====================================================================================]
+             *
+             * Telegram::sendMessage([
+             *     'chat_id' => env('TELEGRAM_CHAT_ID'),
+             *     'text' => self::ERROR_MESSAGE . " ({$data['service']})"
+             * ]);
+             */
+
+            return $this->sendError("Неверный токен или сервис не активен", 401);
         }
 
         Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
@@ -71,13 +86,22 @@ class TokenCheck extends Controller
      * @param array $data
      * @return bool
      */
-    private function checkToken(string $service, array $data): bool
+    private function tokenValidate(string $service, array $data): bool
     {
-        return match ($service) {
-            'WSPG' => $this->checkTokenForWsPg($data),
-            'ADS' => false, // TODO: Реализовать проверку для ADS
-            default => false,
-        };
+        $existService = Services::where('name', $service)->first();
+        if (!$existService) {
+            return false;
+        }
+
+        if ($existService->active === "N") {
+            Log::channel("tokens")->info(self::ERROR_MESSAGE . "SERVICE IS INACTIVE" . " ({$data['service']})", $data);
+            return false;
+        }
+
+        $serviceObject = ServiceManager::initServiceObject($existService->name);
+        $return = $serviceObject->checkToken($data);
+
+        return $return;
     }
 
     /**

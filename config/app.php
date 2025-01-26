@@ -76,4 +76,14 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Telegram settings
+    |--------------------------------------------------------------------------
+    */
+
+    'https_proxy' => env('HTTPS_PROXY'),
+    'chat_id' => env('CHAT_ID'),
+    'token' => env('TELEGRAM_BOT_TOKEN'),
 ];

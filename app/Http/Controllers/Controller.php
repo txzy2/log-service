@@ -53,8 +53,6 @@ abstract class Controller
     protected function unsetToken($data)
     {
         unset($data['token']);
-
         return $data;
     }
-
 }
