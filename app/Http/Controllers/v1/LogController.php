@@ -24,7 +24,7 @@ class LogController extends Controller
         Log::channel("debug")->info('\LogController::sendLog REQUEST', $parcedData);
 
         $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
-        $return = $serviceObject->logging($data);
+        $return = $serviceObject->logging($parcedData['data']);
 
         return $this->sendResponse($return);
     }
