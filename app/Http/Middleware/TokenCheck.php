@@ -37,7 +37,7 @@ class TokenCheck extends Controller
                 'incident' => 'required|array',
                 'incident.object' => 'required|string',
                 'incident.date' => 'required|date_format:d-m-Y H:i:s',
-                'incident.message' => 'required|string',
+                'incident.message' => 'required|array',
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',

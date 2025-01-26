@@ -21,6 +21,7 @@ class WSPG extends Controller
     {
         $incident = $data["incident"];
         $sign = hash('sha256', $incident["object"] . $incident["date"] . config("app.key"), false);
+        \Illuminate\Support\Facades\Log::channel("tokens")->info("WSPG CHECK TOKEN", [$sign]);
 
         return $sign === $data["token"];
     }
