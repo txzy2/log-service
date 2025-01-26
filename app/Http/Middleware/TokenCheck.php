@@ -104,18 +104,4 @@ class TokenCheck extends Controller
         return $return;
     }
 
-    /**
-     * Проверка токена для платежного шлюза
-     * 
-     * @param array $data
-     * @return bool
-     */
-    private function checkTokenForWsPg(array $data): bool
-    {
-        $incident = $data["incident"];
-        $sign = hash('sha256', $incident["object"] . $incident["date"] . config("app.key"), false);
-
-        return $sign === $data["token"];
-    }
-
 }
