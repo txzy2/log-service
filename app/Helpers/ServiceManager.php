@@ -13,9 +13,23 @@ class ServiceManager
     public static function initServiceObject(string $service): object
     {
         $serviceName = "\\App\\Http\\Controllers\\DataManagers\\{$service}";
-        $paymentServiceObject = new $serviceName();
+        $serviceObject = new $serviceName();
 
-        return $paymentServiceObject;
+        return $serviceObject;
+    }
+
+    /**
+     * getServiceParcer - получает объект парсера для указанного сервиса
+     * 
+     * @param string $service
+     * @return object
+     */
+    public static function getServiceParcer(string $service): object
+    {
+        $serviceName = "\\App\\Helpers\\Parsers\\{$service}";
+        $parcerServiceObject = new $serviceName();
+
+        return $parcerServiceObject;
     }
 
     /**

@@ -56,7 +56,7 @@ class TokenCheck extends Controller
             return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
         }
 
-        $checkResult = $this->tokenValidate($parcedData['data']['service'], $data);
+        $checkResult = $this->tokenValidate($parcedData['data']);
 
         if (!$checkResult) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
@@ -86,15 +86,17 @@ class TokenCheck extends Controller
      * @param array $data
      * @return bool
      */
-    private function tokenValidate(string $service, array $data): bool
+    private function tokenValidate(array $data): bool
     {
+        $service = $data['service'];
+
         $existService = Services::where('name', $service)->first();
         if (!$existService) {
             return false;
         }
 
         if ($existService->active === "N") {
-            Log::channel("tokens")->info(self::ERROR_MESSAGE . "SERVICE IS INACTIVE" . " ({$data['service']})", $data);
+            Log::channel("tokens")->info(self::ERROR_MESSAGE . "SERVICE IS INACTIVE" . " ({$service})", $data);
             return false;
         }
 
