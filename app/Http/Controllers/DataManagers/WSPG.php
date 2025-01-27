@@ -4,6 +4,7 @@ namespace App\Http\Controllers\DataManagers;
 
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
+use App\Models\IncidentType;
 
 class WSPG extends Controller
 {
@@ -16,11 +17,18 @@ class WSPG extends Controller
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
             return $this->sendError('Не удалось распарсить сообщение', 400);
         }
+        $data['incident']['message'] = $parcedMessage['message'];
+        \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSED DATA", $data);
+
+        $messageParts = ServiceManager::parceStr($data['incident']['message']);
+        \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSED MESSAGE PARSE", $messageParts);
 
         // TODO: 
         // 1. Проверить есть ли такой код в базе данных и его тип
         // 2. Если нет, то записать в базу данных
         // 3. Если есть, то проверить дату и если она истекла по жизненному циклу, то отправить и count++
+
+        // $existType = IncidentType::where('code', $parcedMessage['message']['code'])->first();
 
 
         return $parcedMessage['message'];
