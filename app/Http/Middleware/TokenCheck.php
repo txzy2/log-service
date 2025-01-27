@@ -58,7 +58,7 @@ class TokenCheck extends Controller
 
         $checkResult = $this->tokenValidate($parcedData['data']);
 
-        if (!$checkResult) {
+        if (!$checkResult['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
 
             /*
@@ -72,7 +72,7 @@ class TokenCheck extends Controller
              * ]);
              */
 
-            return $this->sendError("Неверный токен или сервис не активен", 401);
+            return $this->sendError($checkResult['message'], 401);
         }
 
         Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
@@ -86,22 +86,34 @@ class TokenCheck extends Controller
      * @param array $data
      * @return bool
      */
-    private function tokenValidate(array $data): bool
+    private function tokenValidate(array $data): array
     {
+        $return = [
+            'success' => false,
+            'message' => ""
+        ];
+
         $service = $data['service'];
 
         $existService = Services::where('name', $service)->first();
         if (!$existService) {
-            return false;
+            $return['message'] = "Такого сервиса не существует";
+            return $return;
         }
 
         if ($existService->active === "N") {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . "SERVICE IS INACTIVE" . " ({$service})", $data);
-            return false;
+            $return['message'] = "Сервис не активен";
+            return $return;
         }
 
         $serviceObject = ServiceManager::initServiceObject($existService->name);
-        $return = $serviceObject->checkToken($data);
+        $result = $serviceObject->checkToken($data);
+
+        $return = [
+            'success' => $result['success'],
+            'message' => $result['message'],
+        ];
 
         return $return;
     }
