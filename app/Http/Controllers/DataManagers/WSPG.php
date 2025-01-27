@@ -43,7 +43,7 @@ class WSPG extends Controller
      * @param array $data
      * @return bool
      */
-    public function checkToken(array $data): bool
+    public function checkToken(array $data): array
     {
         $incident = $data["incident"];
 
@@ -54,7 +54,12 @@ class WSPG extends Controller
         $sign = hash('sha256', $incident["object"] . $incident["date"] . config("app.key") . $message, false);
         \Illuminate\Support\Facades\Log::channel("tokens")->info("WSPG CHECK TOKEN SIGH", [$sign]);
 
-        return $sign === $data["token"];
+        $res = $sign == $data['token'];
+        \Illuminate\Support\Facades\Log::channel("tokens")->info("WSPG CHECK TOKEN RESULT", [$res]);
+        return [
+            'success' => $res,
+            'message' => $res ? "" : "Неверный токен",
+        ];
     }
 
 }
