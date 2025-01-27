@@ -17,16 +17,16 @@ class LogController extends Controller
      */
     public function sendLog(Request $request)
     {
-        // получаем данные и удаляем токен
         $data = parent::unsetToken($request->all());
-        // парсим $data['service'] => [$service, $type]
         $parcedData = ServiceManager::returnParts($data);
         Log::channel("debug")->info('\LogController::sendLog REQUEST', $parcedData);
 
         $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
         $return = $serviceObject->logging($parcedData['data']);
 
-        return $this->sendResponse($return);
+        Log::channel("debug")->info('\LogController::sendLog RESULT SAVING', $return);
+
+        return $this->sendResponse('SUCCESS');
     }
 
 }
