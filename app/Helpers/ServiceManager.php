@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Helpers\Parsers\Parser;
+use Carbon\Carbon;
+
 class ServiceManager
 {
     /**
@@ -46,7 +49,7 @@ class ServiceManager
         ];
 
         // Разбиваем строку на части, сразу сохраняем их.
-        [$data['service'], $data['incident']['type']] = self::parceStr($data['service']);
+        [$data['service'], $data['incident']['type']] = Parser::parceStr($data['service']);
 
         // Возвращаем успешный результат.
         $return['success'] = true;
@@ -54,15 +57,4 @@ class ServiceManager
 
         return $return;
     }
-
-    //TODO: доделать и протестирвать 
-    public static function parceStr(string $str): array|bool
-    {
-        if (strpos($str, '|') === false) {
-            return false;
-        }
-
-        return explode('|', $str);
-    }
-
 }

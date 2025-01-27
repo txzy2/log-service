@@ -2,36 +2,39 @@
 
 namespace App\Http\Controllers\DataManagers;
 
+use App\Helpers\Parsers\Parser;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
+use App\Models\Incident;
 use App\Models\IncidentType;
 
 class WSPG extends Controller
 {
-    public function logging(array $data): string
+    /**
+     * logging - логируем инцидент
+     * Получаем сырые данные, парсим и сохраняем
+     * 
+     * @param array $data
+     * @return array{message: string, success: bool}
+     */
+    public function logging(array $data): array
     {
         $serviceMessageParser = ServiceManager::getServiceParcer($data['incident']['type']);
         $parcedMessage = $serviceMessageParser->parse($data['incident']['message']);
 
         if (!$parcedMessage['success']) {
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
-            return $this->sendError('Не удалось распарсить сообщение', 400);
         }
         $data['incident']['message'] = $parcedMessage['message'];
-        \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSED DATA", $data);
+        [$code, $message] = Parser::parceStr($data['incident']['message']);
 
-        $messageParts = ServiceManager::parceStr($data['incident']['message']);
-        \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSED MESSAGE PARSE", $messageParts);
+        $existType = IncidentType::where('code', $code)->first();
+        $result = match (true) {
+            $existType === null => Incident::saveData($data), // Сохраняем, если тип инцидента не найден
+            default => Incident::updateData($data, $existType['id']), // Обновляем, если тип инцидента найден
+        };
 
-        // TODO: 
-        // 1. Проверить есть ли такой код в базе данных и его тип
-        // 2. Если нет, то записать в базу данных
-        // 3. Если есть, то проверить дату и если она истекла по жизненному циклу, то отправить и count++
-
-        // $existType = IncidentType::where('code', $parcedMessage['message']['code'])->first();
-
-
-        return $parcedMessage['message'];
+        return $result;
     }
 
     /**
@@ -53,4 +56,5 @@ class WSPG extends Controller
 
         return $sign === $data["token"];
     }
+
 }
