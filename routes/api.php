@@ -9,4 +9,7 @@ Route::get('/test', [TestConroller::class, 'test']);
 
 Route::group(['prefix' => 'v1', 'middleware' => [TokenCheck::class]], function () {
     Route::post('/add', [LogController::class, 'sendLog']);
+
+    //TODO: сделать роут формирования отчета по ошибкам
+    // Route::post('/report', [LogController::class, 'sendReport']); // -> отправляем отчет по отпределенной дате
 });

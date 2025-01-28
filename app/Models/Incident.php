@@ -29,25 +29,33 @@ class Incident extends Model
 
     /**
      * saveData - сейвыим логи, о которых мы ещё не знаем или просто на них не реагируем
-     * 
+     *
      * @param array $data
      * @return void
      */
-    public function saveData(array $data)
+    public static function saveData(array $data): array
     {
+        \Illuminate\Support\Facades\Log::channel("unknown_errors")
+            ->info("НЕИЗВЕСТНАЯ ОШИБКА ОТ {$data['service']}", [$data['incident']['message']]);
 
+        // TODO: Сделать отправку в тг бота
+
+        return [
+            "success" => true,
+            "message" => "Данные успешно сохранены",
+        ];
     }
 
     /**
      * updateData - Проверяем есть ли для данного ползователя такая ошибка, если нет, то создаем новую
-     * 
+     *
      * @param array $data
      * @param mixed $incidentTypeIc
      * @return array{message: string, success: bool}
      */
     public static function updateData(array $data, $incidentTypeIc): array
     {
-        // TODO: Проверим есть ли для данного ползователя такая ошибка 
+        // TODO: Проверим есть ли для данного ползователя такая ошибка
 
         $result = [
             'success' => false,
