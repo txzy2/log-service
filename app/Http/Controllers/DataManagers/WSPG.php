@@ -7,7 +7,6 @@ use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\IncidentType;
-use Carbon\Carbon;
 
 class WSPG extends Controller
 {
@@ -36,29 +35,6 @@ class WSPG extends Controller
         };
 
         return $result;
-    }
-
-    /**
-     * report - отправляет отчет
-     * 
-     * @param array $data
-     * @return array{success: bool, message: string}
-     */
-    public function report(array $data): array
-    {
-        if (array_key_exists('date', $data)) {
-            $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
-            return [
-                'success' => count($checkWithDate) > 0,
-                'message' => $checkWithDate,
-            ];
-        }
-
-        $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
-        return [
-            'success' => count($checkWithoutDate) > 0,
-            'message' => $checkWithoutDate,
-        ];
     }
 
     /**
