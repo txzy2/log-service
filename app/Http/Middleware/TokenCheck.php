@@ -6,7 +6,7 @@ use App\Models\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
@@ -117,5 +117,4 @@ class TokenCheck extends Controller
 
         return $return;
     }
-
 }

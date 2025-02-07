@@ -38,27 +38,25 @@ class WSPG extends Controller
     }
 
     /**
-     * checkToken - проверяет токен
+     * checkToken - проверяет валидность токена для сервиса WSPG
+     * Формирует подпись на основе данных инцидента и сверяет с переданным токеном
      *
-     * @param array $data
-     * @return bool
+     * @param array $data Массив с данными запроса
+     * @return array{success: bool, message: string} Результат проверки токена
      */
     public function checkToken(array $data): array
     {
         $incident = $data["incident"];
-
         $message = is_array($incident['message'])
-            ? json_encode($incident['message'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            ? json_encode($incident['message'], JSON_UNESCAPED_UNICODE)
             : $incident['message'];
 
-        $sign = hash('sha256', $incident["object"] . $incident["date"] . config("app.key") . $message, false);
+        $sign = hash('sha256', implode('', [$incident['object'], $incident['date'], config('app.key'), $message]));
         \Illuminate\Support\Facades\Log::channel("tokens")->info("WSPG CHECK TOKEN SIGH", [$sign]);
-        $res = $sign == $data['token'];
 
         return [
-            'success' => $res,
-            'message' => $res ? "" : "Неверный токен",
+            'success' => $sign === $data['token'],
+            'message' => $sign === $data['token'] ? '' : 'Неверный токен'
         ];
     }
-
 }

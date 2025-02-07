@@ -26,7 +26,11 @@ class LogController extends Controller
 
         Log::channel("debug")->info('\LogController::sendLog RESULT SAVING', $return);
 
-        return $this->sendResponse('SUCCESS');
+        return $this->sendResponse($return['message']);
     }
 
+    public function sendReport(Request $request)
+    {
+        return $this->sendResponse('SUCCESS', [$request->all()]);
+    }
 }

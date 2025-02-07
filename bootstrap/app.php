@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(append: [
             \App\Http\Middleware\TokenCheck::class,
+            // \App\Http\Middleware\ReportTokenCheck::class
         ]);
 
         //

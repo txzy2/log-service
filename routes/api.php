@@ -1,15 +1,17 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
+use App\Http\Middleware\ReportTokenCheck;
+use App\Http\Middleware\TokenCheck;
+
 use App\Http\Controllers\TestConroller;
 use App\Http\Controllers\v1\LogController;
-use App\Http\Middleware\TokenCheck;
-use Illuminate\Support\Facades\Route;
 
 Route::get('/test', [TestConroller::class, 'test']);
 
-Route::group(['prefix' => 'v1', 'middleware' => [TokenCheck::class]], function () {
-    Route::post('/add', [LogController::class, 'sendLog']);
+Route::group(['prefix' => 'v1'], function () {
+    Route::post('/add', [LogController::class, 'sendLog'])->middleware(TokenCheck::class);
 
-    //TODO: сделать роут формирования отчета по ошибкам
-    // Route::post('/report', [LogController::class, 'sendReport']); // -> отправляем отчет по отпределенной дате
+    // Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class);
 });

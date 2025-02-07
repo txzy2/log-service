@@ -80,15 +80,22 @@ class Incident extends Model
             $result['message'] = 'Данные успешно сохранены и отправлены';
         }
 
-        $parceDates = Parser::parceDates($incidentData['date'], $existIncident->date);
-        $diffInYears = $parceDates['currentDate']->diffInYears($parceDates['prevDate'], true);
+        $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);
+        $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
         $lifecyrcle = $existIncident->incidentType->lifecycle;
+        \Illuminate\Support\Facades\Log::channel('debug')->info("Incident::updateData", [
+            'parceDates' => $parceDates,
+            'diffInDays' => $diffInDays,
+            'lifecycle' => $lifecyrcle,
+            'existIncidentDate' => $existIncident->date,
+        ]);
 
-        $diffInYears = (int) $diffInYears;
-        if ($diffInYears < $lifecyrcle) {
+        if ($diffInDays < $lifecyrcle) {
             $result['message'] = "Ошибка уже отправлялась ID ошибки: {$existIncident->id}";
+            $existIncident->count++;
         } else {
             $existIncident->count++;
+            $existIncident->date = $parceDates['currentDate'];
             $existIncident->save();
 
             // TODO: Сделать отправку через helper SenderManager
@@ -98,6 +105,5 @@ class Incident extends Model
         }
 
         return $result;
-
     }
 }
