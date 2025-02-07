@@ -69,6 +69,7 @@ class Incident extends Model
             $existIncident->incident_object = $incidentData['object'];
             $existIncident->incident_text = $incidentData['message'];
             $existIncident->incident_type_id = $incidentTypeIc;
+            $existIncident->service = $data['service'];
             $existIncident->source = $incidentData['type'];
             $existIncident->date = $incidentData['date'];
             $existIncident->count = 1;
@@ -78,6 +79,8 @@ class Incident extends Model
 
             $result['success'] = true;
             $result['message'] = 'Данные успешно сохранены и отправлены';
+
+            return $result;
         }
 
         $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);

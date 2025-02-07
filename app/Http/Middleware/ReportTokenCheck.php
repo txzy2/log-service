@@ -21,7 +21,8 @@ class ReportTokenCheck extends Controller
             $request->all(),
             [
                 'token' => 'required|string',
-                'date' => 'required|date_format:d-m-Y H:i:s'
+                'service' => 'required|string',
+                'date' => 'nullable|date_format:Y-m-d'
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -34,7 +35,7 @@ class ReportTokenCheck extends Controller
         }
 
         $data = $request->all();
-        $sign = hash('sha256', config("app.report_token") . $data['date'] . config("app.report_token"), false);
+        $sign = hash('sha256', config("app.report_token") . $data['service'] . config("app.report_token"), false);
         \Illuminate\Support\Facades\Log::channel("tokens")->info("REPORT CHECK TOKEN SIGH", [$sign]);
         $res = $sign == $data['token'];
 

@@ -31,6 +31,17 @@ class LogController extends Controller
 
     public function sendReport(Request $request)
     {
-        return $this->sendResponse('SUCCESS', [$request->all()]);
+        $data = parent::unsetToken($request->all());
+        $parcedData = ServiceManager::returnParts($data);
+        Log::channel("debug")->info('\LogController::sendReport REQUEST', $parcedData);
+
+        $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
+        $return = $serviceObject->report($parcedData['data']);
+
+        if (!$return['success']) {
+            return $this->sendResponse('Данные не найдены');
+        }
+
+        return $this->sendResponse('SUCCESS', $return['message']);
     }
 }

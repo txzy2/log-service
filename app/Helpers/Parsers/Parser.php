@@ -12,10 +12,10 @@ class Parser
      * @param string $str
      * @return bool|string[]
      */
-    public static function parceStr(string $str): array|bool
+    public static function parceStr(string $str): array
     {
         if (strpos($str, '|') === false) {
-            return false;
+            return [$str, ''];
         }
 
         return explode('|', $str);
