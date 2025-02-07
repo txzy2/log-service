@@ -29,11 +29,16 @@ class LogController extends Controller
         return $this->sendResponse($return['message']);
     }
 
+    /**
+     * sendReport - контроллер для формирования отчетов по логам
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
     public function sendReport(Request $request)
     {
         $data = parent::unsetToken($request->all());
         $parcedData = ServiceManager::returnParts($data);
-        Log::channel("debug")->info('\LogController::sendReport REQUEST', $parcedData);
 
         $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
         $return = $serviceObject->report($parcedData['data']);

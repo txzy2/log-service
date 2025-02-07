@@ -59,12 +59,18 @@ class ServiceManager
         return $return;
     }
 
+    /**
+     * telegramSendMessage - отправляет сообщение в телеграм
+     * 
+     * @param string $message
+     * @return void
+     */
     public static function telegramSendMessage(string $message): void
     {
         $message = "<b>" . "APP: " . config('app.name') . "</b>\n\n" . $message;
 
         \Illuminate\Support\Facades\Log::channel('telegramLogging')
-            ->info("ServiceManager::telegramSendMessage SEND BODY\n\n", [$message . "\n"]);
+            ->alert("ServiceManager::telegramSendMessage SEND BODY\n\n", [$message . "\n"]);
 
         try {
             Telegram::sendMessage([

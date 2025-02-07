@@ -54,7 +54,6 @@ class WSPG extends Controller
             ];
         }
 
-        // Если дата не указана, только тогда делаем запрос без даты
         $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
         return [
             'success' => count($checkWithoutDate) > 0,

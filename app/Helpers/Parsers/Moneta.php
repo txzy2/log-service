@@ -4,6 +4,12 @@ namespace App\Helpers\Parsers;
 
 class Moneta
 {
+    /**
+     * parse - парсит сообщение
+     * 
+     * @param array $message
+     * @return array{success: bool, message: string}
+     */
     public function parse(array $message): array
     {
         $result = [
@@ -17,6 +23,12 @@ class Moneta
         };
     }
 
+    /**
+     * parceError - парсит ошибку
+     * 
+     * @param array $message
+     * @return array{success: bool, message: string}
+     */
     private function parceError(array $message): array
     {
         $default = [
@@ -26,7 +38,6 @@ class Moneta
         ];
         $parse = $message['Envelope']['Body']['fault'] ?? null;
 
-        // Если структура не соответствует ожидаемой, возвращаем $default
         if (
             empty($parse) ||
             !isset($parse['faultstring'], $parse['detail']['faultDetail'])
