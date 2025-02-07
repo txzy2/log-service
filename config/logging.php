@@ -55,7 +55,15 @@ return [
             'replace_placeholders' => true,
         ],
 
-       'unknown_errors' => [
+        'telegramLogging' => [
+            'driver' => 'daily',
+            'path' => storage_path($storage_logs_path . '/telegramLogging.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'unknown_errors' => [
             'driver' => 'daily',
             'path' => storage_path($storage_logs_path . '/unknown.log'),
             'level' => env('LOG_LEVEL', 'debug'),

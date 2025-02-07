@@ -13,7 +13,7 @@ use App\Http\Controllers\Controller;
 
 class TokenCheck extends Controller
 {
-    private const ERROR_MESSAGE = "TokenCheck::sendResult TOKEN ERROR";
+    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>TokenCheck::sendResult</i></b>";
 
     /**
      * handle - обрабатывает токен для записи лога
@@ -60,18 +60,7 @@ class TokenCheck extends Controller
 
         if (!$checkResult['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-
-            /*
-             * ====================================================================================
-             * TODO: Разобраться с телеграмом (пока что не получается из-за отсутсвия сертификата)
-             * ====================================================================================]
-             *
-             * Telegram::sendMessage([
-             *     'chat_id' => env('TELEGRAM_CHAT_ID'),
-             *     'text' => self::ERROR_MESSAGE . " ({$data['service']})"
-             * ]);
-             */
-
+            ServiceManager::telegramSendMessage(self::ERROR_MESSAGE . "\nREQUEST: <code>{$data['service']}</code>");
             return $this->sendError($checkResult['message'], 401);
         }
 
@@ -108,7 +97,7 @@ class TokenCheck extends Controller
         }
 
         $serviceObject = ServiceManager::initServiceObject($existService->name);
-        $result = $serviceObject->checkToken($data);
+        $result = $serviceObject->validateToken($data);
 
         $return = [
             'success' => $result['success'],

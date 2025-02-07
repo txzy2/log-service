@@ -37,6 +37,7 @@ return [
             'async_requests' => env('TELEGRAM_ASYNC_REQUESTS', false),
             'http_client_config' => [
                 'verify' => 'C:/php/extras/ssl/cacert.pem',
+                // 'verify' => false,
                 // 'proxy' => config('app.https_proxy', 'http://kamaeff-site.ru/telegram')
             ],
             'webhook_url' => env('TELEGRAM_WEBHOOK_URL', 'YOUR-BOT-WEBHOOK-URL'),
@@ -196,8 +197,7 @@ return [
                 'status', // Shared Command Name.
                 'Acme\Project\Commands\BotCommand' // Full Path to Command Class.
            ],
-        */
-    ],
+        */],
 
     /*
     |--------------------------------------------------------------------------

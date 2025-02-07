@@ -86,16 +86,11 @@ class Incident extends Model
         $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
         $lifecyrcle = $existIncident->incidentType->lifecycle;
-        \Illuminate\Support\Facades\Log::channel('debug')->info("Incident::updateData", [
-            'parceDates' => $parceDates,
-            'diffInDays' => $diffInDays,
-            'lifecycle' => $lifecyrcle,
-            'existIncidentDate' => $existIncident->date,
-        ]);
 
         if ($diffInDays < $lifecyrcle) {
             $result['message'] = "Ошибка уже отправлялась ID ошибки: {$existIncident->id}";
             $existIncident->count++;
+            $existIncident->save();
         } else {
             $existIncident->count++;
             $existIncident->date = $parceDates['currentDate'];

@@ -46,11 +46,6 @@ class WSPG extends Controller
      */
     public function report(array $data): array
     {
-        $return = [
-            'success' => false,
-            'message' => 'Не удалось получить данные',
-        ];
-
         if (array_key_exists('date', $data)) {
             $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
             return [
@@ -68,13 +63,24 @@ class WSPG extends Controller
     }
 
     /**
+     * Публичный метод для проверки токена
+     *
+     * @param array $data Массив с данными запроса
+     * @return array{success: bool, message: string} Результат проверки токена
+     */
+    public function validateToken(array $data): array
+    {
+        return $this->checkToken($data);
+    }
+
+    /**
      * checkToken - проверяет валидность токена для сервиса WSPG
      * Формирует подпись на основе данных инцидента и сверяет с переданным токеном
      *
      * @param array $data Массив с данными запроса
      * @return array{success: bool, message: string} Результат проверки токена
      */
-    public function checkToken(array $data): array
+    private function checkToken(array $data): array
     {
         $incident = $data["incident"];
         $message = is_array($incident['message'])
