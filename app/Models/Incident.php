@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
+use App\Helpers\ServiceManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,6 +11,7 @@ class Incident extends Model
 {
     use HasFactory;
 
+    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>IncidentModel::class</i></b>";
     protected $table = 'incident';
     protected $fillable = [
         'incident_object',
@@ -91,6 +93,13 @@ class Incident extends Model
             $result['message'] = "Ошибка уже отправлялась ID ошибки: {$existIncident->id}";
             $existIncident->count++;
             $existIncident->save();
+
+            ServiceManager::telegramSendMessage(
+                self::ERROR_MESSAGE . "\n\n"
+                    . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
+                    . "Object: <code>{$existIncident->incident_object}</code>\n"
+                    . "Count: {$existIncident->count}"
+            );
         } else {
             $existIncident->count++;
             $existIncident->date = $parceDates['currentDate'];

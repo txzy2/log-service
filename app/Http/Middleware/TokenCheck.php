@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Models\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Telegram\Bot\Laravel\Facades\Telegram;
 use Illuminate\Support\Facades\Validator;
 
 use App\Helpers\ServiceManager;
@@ -13,7 +12,7 @@ use App\Http\Controllers\Controller;
 
 class TokenCheck extends Controller
 {
-    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>TokenCheck::sendResult</i></b>";
+    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>TokenCheck::class</i></b>";
 
     /**
      * handle - обрабатывает токен для записи лога
@@ -51,6 +50,7 @@ class TokenCheck extends Controller
         $data = $request->all();
 
         $parcedData = ServiceManager::returnParts($data);
+        Log::channel("debug")->info("PARCED DATA", $parcedData);
         if (!$parcedData['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
             return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
@@ -60,8 +60,8 @@ class TokenCheck extends Controller
 
         if (!$checkResult['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            ServiceManager::telegramSendMessage(self::ERROR_MESSAGE . "\nREQUEST: <code>{$data['service']}</code>");
-            return $this->sendError($checkResult['message'], 401);
+            ServiceManager::telegramSendMessage(self::ERROR_MESSAGE . "\n{$checkResult['message']}: <code>{$data['service']}</code>");
+            return $this->sendResponse($checkResult['message'], [], false);
         }
 
         Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
@@ -86,7 +86,7 @@ class TokenCheck extends Controller
 
         $existService = Services::where('name', $service)->first();
         if (!$existService) {
-            $return['message'] = "Такого сервиса не существует";
+            $return['message'] = "Введен неверный сервис";
             return $return;
         }
 
