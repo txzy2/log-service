@@ -109,6 +109,13 @@ class Incident extends Model
 
             $result['success'] = true;
             $result['message'] = 'Данные успешно обновлены';
+
+            ServiceManager::telegramSendMessage(
+                self::ERROR_MESSAGE . "\n\n"
+                    . "<b>Данные ошибки</b> <i>{$existIncident->incident_text}</i> обновлены\n"
+                    . "Object: <code>{$existIncident->incident_object}</code>\n"
+                    . "Count: {$existIncident->count}"
+            );
         }
 
         return $result;

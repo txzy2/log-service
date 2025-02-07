@@ -15,3 +15,6 @@ Route::group(['prefix' => 'v1'], function () {
 
     Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class);
 });
+
+
+//TODO: Сделать роут на получение всех доступных сервисов

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1;
 
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
+use App\Models\Incident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -38,15 +39,16 @@ class LogController extends Controller
     public function sendReport(Request $request)
     {
         $data = parent::unsetToken($request->all());
-        $parcedData = ServiceManager::returnParts($data);
+        Log::channel("debug")->info('\LogController::sendReport REQUEST', $data);
 
-        $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
-        $return = $serviceObject->report($parcedData['data']);
-
-        if (!$return['success']) {
-            return $this->sendResponse('Данные не найдены');
+        if (array_key_exists('date', $data)) {
+            $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
+            Log::channel("debug")->info('\LogController::sendReport RESULT BY DATE', $checkWithDate);
+            return $this->sendResponse($checkWithDate ?: 'За этот день нет данных');
         }
 
-        return $this->sendResponse('SUCCESS', $return['message']);
+        $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
+        Log::channel("debug")->info('\LogController::sendReport RESULT', $checkWithoutDate);
+        return $this->sendResponse($checkWithoutDate ?: 'Данные по сервису отсутствуют');
     }
 }

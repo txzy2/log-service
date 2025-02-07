@@ -50,7 +50,6 @@ class TokenCheck extends Controller
         $data = $request->all();
 
         $parcedData = ServiceManager::returnParts($data);
-        Log::channel("debug")->info("PARCED DATA", $parcedData);
         if (!$parcedData['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
             return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
