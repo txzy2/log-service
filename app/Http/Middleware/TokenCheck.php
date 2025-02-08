@@ -70,9 +70,8 @@ class TokenCheck extends Controller
     /**
      * Проверяет токен для указанного сервиса
      * 
-     * @param string $service
-     * @param array $data
-     * @return bool
+     * @param array $data Массив с данными сервиса
+     * @return array{success: bool, message: string}
      */
     private function tokenValidate(array $data): array
     {

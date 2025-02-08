@@ -69,9 +69,6 @@ class ServiceManager
     {
         $message = "<b>" . "APP: " . config('app.name') . "</b>\n\n" . $message;
 
-        \Illuminate\Support\Facades\Log::channel('telegramLogging')
-            ->alert("ServiceManager::telegramSendMessage SEND BODY\n\n", [$message . "\n"]);
-
         try {
             Telegram::sendMessage([
                 'chat_id' => config('app.chat_id'),
