@@ -1,0 +1,112 @@
+openapi: 3.0.0
+info:
+  title: API Логирования
+  version: 1.0.0
+  description: API для логирования инцидентов и получения отчетов
+
+paths:
+  /api/v1/add:
+    post:
+      summary: Добавление лога инцидента
+      tags:
+        - Логи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - service
+                - incident
+              properties:
+                token:
+                  type: string
+                  description: Токен авторизации
+                service:
+                  type: string
+                  description: Название сервиса
+                incident:
+                  type: object
+                  required:
+                    - object
+                    - date
+                    - message
+                  properties:
+                    object:
+                      type: string
+                      description: Объект инцидента
+                    date:
+                      type: string
+                      format: date-time
+                      description: Дата инцидента (формат d-m-Y H:i:s)
+                    message:
+                      type: array
+                      description: Массив сообщений инцидента
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Успешное добавление лога
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+
+  /api/v1/report:
+    post:
+      summary: Получение отчета
+      tags:
+        - Отчеты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - service
+              properties:
+                token:
+                  type: string
+                  description: Токен для доступа к отчетам
+                service:
+                  type: string
+                  description: Название сервиса
+                date:
+                  type: string
+                  format: date
+                  description: Дата отчета (формат Y-m-d)
+      responses:
+        '200':
+          description: Успешное получение отчета
+        '401':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: Authorization
+      in: header
+
+security:
+  - Authorization: []

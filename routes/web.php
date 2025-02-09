@@ -23,6 +23,6 @@ Route::middleware([
     })->name('dashboard');
 });
 
-Route::get('/redoc', function () {
+Route::get('/openapi', function () {
     return view('redoc');
 });

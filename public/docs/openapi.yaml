@@ -1,89 +1,164 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
-  title: Laravel
-  description: ''
-  version: 1.0.0
-servers:
-  -
-    url: 'http://localhost'
+  title: API LOGGER SERVICE Documentation
+  version: '1.0.0'
+  description: API документация для сервиса Логирования
+
+tags:
+  - name: WSPG
+    description: Операции с сервисами WSPG, ADS, VSK
+
+components:
+  responses:
+    ValidationError:
+      description: Ошибка валидации или парсинга
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 'Ошибка парсинга сервиса. Передан неверный сервис'
+              errors:
+                type: object
+                properties:
+                  token:
+                    type: array
+                    items:
+                      type: string
+                      example: 'Поле token обязательно для заполнения'
+                  service:
+                    type: array
+                    items:
+                      type: string
+                      example: 'Поле service обязательно для заполнения'
+                  incident:
+                    type: array
+                    items:
+                      type: string
+                      example: 'Поле incident обязательно для заполнения'
+    UnauthorizedError:
+      description: Ошибка авторизации
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 'Неверный токен'
+    ForbiddenError:
+      description: Сервис неактивен
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 'Сервис не активен'
+
 paths:
-  /api/test:
-    get:
-      summary: ''
-      operationId: getApiTest
-      description: ''
-      parameters: []
+  /api/v1/add:
+    post:
+      tags:
+        - WSPG, ADS, VSK
+      summary: Логирование инцидента
+      description: Получает сырые данные инцидента, парсит и сохраняет их
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - incident
+                - token
+              properties:
+                incident:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      example: <WSPG|FROM, ADS|FROM, VSK|FROM>
+                    message:
+                      type: string
+                      example: '123|Message text'
+                    object:
+                      type: string
+                      example: 'Object1'
+                    date:
+                      type: string
+                      format: date-time
+                      example: '2024-03-20'
+                token:
+                  type: string
+                  example: 'hash256token'
       responses:
-        400:
-          description: ''
+        '200':
+          description: Успешное сохранение инцидента
           content:
             application/json:
               schema:
                 type: object
-                example:
-                  token:
-                    - 'Поле token обязательно для заполнения'
-                  service:
-                    - 'Поле service обязательно для заполнения'
-                  incident:
-                    - 'Поле incident обязательно для заполнения'
-                  incident.object:
-                    - 'The incident.object field is required.'
-                  incident.date:
-                    - 'The incident.date field is required.'
-                  incident.message:
-                    - 'The incident.message field is required.'
                 properties:
-                  token:
-                    type: array
-                    example:
-                      - 'Поле token обязательно для заполнения'
-                    items:
-                      type: string
-                  service:
-                    type: array
-                    example:
-                      - 'Поле service обязательно для заполнения'
-                    items:
-                      type: string
-                  incident:
-                    type: array
-                    example:
-                      - 'Поле incident обязательно для заполнения'
-                    items:
-                      type: string
-                  incident.object:
-                    type: array
-                    example:
-                      - 'The incident.object field is required.'
-                    items:
-                      type: string
-                  incident.date:
-                    type: array
-                    example:
-                      - 'The incident.date field is required.'
-                    items:
-                      type: string
-                  incident.message:
-                    type: array
-                    example:
-                      - 'The incident.message field is required.'
-                    items:
-                      type: string
-      tags:
-        - Endpoints
-      security: []
-  /api/v1/add:
-    post:
-      summary: 'sendLog - главный контроллер логов, который распределяет запросы по сервисам'
-      operationId: sendLog
-      description: ''
-      parameters: []
-      responses: {  }
-      tags:
-        - Endpoints
-      security: []
-tags:
-  -
-    name: Endpoints
-    description: ''
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Инцидент успешно сохранен'
+        '400':
+          description: Ошибка валидации или парсинга
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Ошибка парсинга сервиса. Передан неверный сервис'
+                  errors:
+                    type: object
+                    properties:
+                      token:
+                        type: array
+                        items:
+                          type: string
+                          example: 'Поле token обязательно для заполнения'
+                      service:
+                        type: array
+                        items:
+                          type: string
+                          example: 'Поле service обязательно для заполнения'
+                      incident:
+                        type: array
+                        items:
+                          type: string
+                          example: 'Поле incident обязательно для заполнения'
+        '401':
+          description: Неверный токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Неверный токен'
