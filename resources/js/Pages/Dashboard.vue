@@ -78,7 +78,7 @@ const handleSubmit = async () => {
 <template>
   <AppLayout title="Dashboard">
     <template #header class="text-black/50 dark:bg-gray dark:text-white/50">
-      <h2 class="font-semibold text-xl leading-tight">Dashboard</h2>
+      <h2 class="font-semibold text-xl leading-tight">Мониторинг</h2>
     </template>
 
     <div class="py-6">
