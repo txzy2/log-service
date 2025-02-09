@@ -15,10 +15,10 @@ class TokenCheck extends Controller
     private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>TokenCheck::class</i></b>";
 
     /**
-     * handle - обрабатывает токен для записи лога
+     * Проверяет валидность токена для запроса
      * 
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param array $data Массив с данными запроса
+     * @return array{success: bool, message: string} Результат проверки токена
      */
     public function handle(Request $request, \Closure $next)
     {
@@ -35,7 +35,7 @@ class TokenCheck extends Controller
                 'service' => 'required|string',
                 'incident' => 'required|array',
                 'incident.object' => 'required|string',
-                'incident.date' => 'required|date_format:d-m-Y H:i:s',
+                'incident.date' => 'required|date_format:d-m-Y',
                 'incident.message' => 'required|array',
             ],
             [
@@ -70,9 +70,8 @@ class TokenCheck extends Controller
     /**
      * Проверяет токен для указанного сервиса
      * 
-     * @param string $service
-     * @param array $data
-     * @return bool
+     * @param array $data Массив с данными сервиса
+     * @return array{success: bool, message: string}
      */
     private function tokenValidate(array $data): array
     {

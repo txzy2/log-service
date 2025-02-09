@@ -25,7 +25,14 @@ return [
     */
 
     'ws_pg_token' => env('WS_PG_TOKEN'),
+
     'report_token' => env('REPORT_TOKEN'),
+
+    /**
+     * Токены для отправки сообщений на сервис уведомлений
+     */
+    'ws_pg_key' => env('WS_PG_KEY'),
+    'ws_messages_url' => env('WS_MESSAGES_URL'),
 
     /*
     |--------------------------------------------------------------------------

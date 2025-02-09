@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
+use App\Helpers\SenderManager;
 use App\Helpers\ServiceManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -57,58 +58,39 @@ class Incident extends Model
      */
     public static function updateData(array $data, $incidentTypeIc): array
     {
-        // TODO: Проверим есть ли для данного ползователя такая ошибка
-
-        $result = [
-            'success' => false,
-            'message' => 'Не удалось создать/обновить данные',
-        ];
-
         $incidentData = $data['incident'];
-        $existIncident = self::where('incident_object', $incidentData['object'])->first();
-        if (!$existIncident) {
-            $existIncident = new self();
-            $existIncident->incident_object = $incidentData['object'];
-            $existIncident->incident_text = $incidentData['message'];
-            $existIncident->incident_type_id = $incidentTypeIc;
-            $existIncident->service = $data['service'];
-            $existIncident->source = $incidentData['type'];
-            $existIncident->date = $incidentData['date'];
-            $existIncident->count = 1;
+        $existIncident = self::firstOrNew(
+            ['incident_object' => $incidentData['object']],
+            [
+                'incident_text' => $incidentData['message'],
+                'incident_type_id' => $incidentTypeIc,
+                'service' => $data['service'],
+                'source' => $incidentData['type'],
+                'date' => $incidentData['date'],
+                'count' => 1
+            ]
+        );
+
+        if (!$existIncident->exists) {
             $existIncident->save();
+            SenderManager::preparePushOrMail($existIncident);
 
-            // TODO: Сделать отправку через helper SenderManager
-
-            $result['success'] = true;
-            $result['message'] = 'Данные успешно сохранены и отправлены';
-
-            return $result;
+            return [
+                'success' => true,
+                'message' => 'Данные успешно сохранены и отправлены'
+            ];
         }
 
         $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
-        $lifecyrcle = $existIncident->incidentType->lifecycle;
 
-        if ($diffInDays < $lifecyrcle) {
-            $result['message'] = "Ошибка уже отправлялась ID ошибки: {$existIncident->id}";
-            $existIncident->count++;
-            $existIncident->save();
+        $existIncident->count++;
 
-            ServiceManager::telegramSendMessage(
-                self::ERROR_MESSAGE . "\n\n"
-                    . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
-                    . "Object: <code>{$existIncident->incident_object}</code>\n"
-                    . "Count: {$existIncident->count}"
-            );
-        } else {
-            $existIncident->count++;
+        if ($diffInDays >= $existIncident->incidentType->lifecycle) {
             $existIncident->date = $parceDates['currentDate'];
             $existIncident->save();
 
-            // TODO: Сделать отправку через helper SenderManager
-
-            $result['success'] = true;
-            $result['message'] = 'Данные успешно обновлены';
+            SenderManager::preparePushOrMail($existIncident);
 
             ServiceManager::telegramSendMessage(
                 self::ERROR_MESSAGE . "\n\n"
@@ -116,8 +98,25 @@ class Incident extends Model
                     . "Object: <code>{$existIncident->incident_object}</code>\n"
                     . "Count: {$existIncident->count}"
             );
+
+            return [
+                'success' => true,
+                'message' => 'Данные успешно обновлены'
+            ];
         }
 
-        return $result;
+        $existIncident->save();
+
+        ServiceManager::telegramSendMessage(
+            self::ERROR_MESSAGE . "\n\n"
+                . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
+                . "Object: <code>{$existIncident->incident_object}</code>\n"
+                . "Count: {$existIncident->count}"
+        );
+
+        return [
+            'success' => false,
+            'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}"
+        ];
     }
 }
