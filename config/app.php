@@ -25,6 +25,7 @@ return [
     */
 
     'ws_pg_token' => env('WS_PG_TOKEN'),
+    'services_token' => env('SERVICES_TOKEN'),
 
     'report_token' => env('REPORT_TOKEN'),
 
@@ -33,6 +34,7 @@ return [
      */
     'ws_pg_key' => env('WS_PG_KEY'),
     'ws_messages_url' => env('WS_MESSAGES_URL'),
+
 
     /*
     |--------------------------------------------------------------------------

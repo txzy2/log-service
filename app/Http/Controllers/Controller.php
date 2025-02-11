@@ -14,15 +14,18 @@ abstract class Controller
      * @param bool $result
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function sendResponse($message = "success", array $data = [], bool $result = true): JsonResponse
+    public function sendResponse($message = "", array $data = [], bool $result = true): JsonResponse
     {
         $response = [
-            'success' => $result,
-            'message' => $message,
+            'success' => $result
         ];
 
         if (!empty($data)) {
             $response['data'] = $data;
+        }
+
+        if (!empty($message)) {
+            $response['message'] = $message;
         }
 
         return response()->json($response, 200);
