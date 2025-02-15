@@ -63,8 +63,7 @@ class LogController extends Controller
      */
     public function exportLogs(Request $request)
     {
-        $data = parent::unsetToken($request->all());
-
+        $data = $request->all();
         $validator = Validator::make(
             $data,
             [

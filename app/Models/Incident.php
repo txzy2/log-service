@@ -152,10 +152,10 @@ class Incident extends Model
             : now()->format('Y-m-d');
 
         $service = Arr::has($data, 'service') && !empty($data['service']) 
-            ? $data['service'] 
+            ? $data['service'] . '_'
             : '';
 
-        $fileName = "{$service}_logs_{$date}.csv";
+        $fileName = "{$service}logs_{$date}.csv";
 
         $headers = [
             "Content-Type" => "text/csv; charset=windows-1251",

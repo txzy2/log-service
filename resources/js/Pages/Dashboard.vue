@@ -45,10 +45,15 @@ const exportLogs = async () => {
       }
     });
     
+    // Получаем имя файла из заголовка ответа
+    const filename = response.headers['content-disposition']
+      ? response.headers['content-disposition'].split('filename=')[1].replace(/"/g, '')
+      : `logs_${new Date().toISOString().split('T')[0]}.csv`;
+
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `logs_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     link.remove();
