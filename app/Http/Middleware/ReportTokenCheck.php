@@ -5,11 +5,13 @@ namespace App\Http\Middleware;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Services;
+use App\Models\Incident;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class ReportTokenCheck extends Controller
 {
@@ -34,7 +36,7 @@ class ReportTokenCheck extends Controller
             $request->all(),
             [
                 'token' => 'required|string',
-                'service' => 'required|string',
+                'service' => 'nullable|string',
                 'date' => 'nullable|date_format:Y-m-d'
             ],
             [

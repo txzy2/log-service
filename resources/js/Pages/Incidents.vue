@@ -1,7 +1,7 @@
 <script setup>
 import {ref} from 'vue';
 import axios from 'axios';
-import { generateServicesToken} from '@/shared/utils/generateToken';
+import {generateServicesToken} from '@/shared/utils/generateToken';
 
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -48,11 +48,10 @@ getServices();
           </tr>
         </tbody>
       </table>
+
+      
     </div>
   </AppLayout>
 </template>
 
-<style scoped>
-
-</style>
-
+<style scoped></style>
