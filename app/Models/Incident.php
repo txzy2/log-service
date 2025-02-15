@@ -7,6 +7,7 @@ use App\Helpers\SenderManager;
 use App\Helpers\ServiceManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class Incident extends Model
 {
@@ -93,9 +94,9 @@ class Incident extends Model
 
             ServiceManager::telegramSendMessage(
                 self::ERROR_MESSAGE . "\n\n"
-                    . "<b>Данные ошибки</b> <i>{$existIncident->incident_text}</i> обновлены\n"
-                    . "Object: <code>{$existIncident->incident_object}</code>\n"
-                    . "Count: {$existIncident->count}"
+                . "<b>Данные ошибки</b> <i>{$existIncident->incident_text}</i> обновлены\n"
+                . "Object: <code>{$existIncident->incident_object}</code>\n"
+                . "Count: {$existIncident->count}"
             );
 
             return [
@@ -107,14 +108,93 @@ class Incident extends Model
 
         ServiceManager::telegramSendMessage(
             self::ERROR_MESSAGE . "\n\n"
-                . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
-                . "Object: <code>{$existIncident->incident_object}</code>\n"
-                . "Count: {$existIncident->count}"
+            . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
+            . "Object: <code>{$existIncident->incident_object}</code>\n"
+            . "Count: {$existIncident->count}"
         );
 
         return [
             'success' => false,
             'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}"
         ];
+    }
+
+    public static function exportLogs(array $data)
+    {
+        $query = self::query();
+
+        if (Arr::has($data, 'date')) {
+            $query->where('date', $data['date']);
+
+            if(!$query->exists()){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Данные по дате не найдены'
+                ], 404);
+            }
+        }
+
+        if (Arr::has($data, 'service')) {
+            $query->where('service', $data['service']);
+
+            if(!$query->exists()){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Данные по сервису не найдены'
+                ], 404);
+            }
+        }
+
+        $logs = $query->get();
+ 
+        $date = Arr::has($data, 'date')
+            ? $data['date']
+            : now()->format('Y-m-d');
+
+        $service = Arr::has($data, 'service') && !empty($data['service']) 
+            ? $data['service'] 
+            : '';
+
+        $fileName = "{$service}_logs_{$date}.csv";
+
+        $headers = [
+            "Content-Type" => "text/csv; charset=windows-1251",
+            "Content-Disposition" => "attachment; filename={$fileName}",
+        ];
+
+        $callback = function () use ($logs) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($file, [
+                'ID',
+                'Объект',
+                'Текст',
+                'Источник',
+                'Сервис',
+                'Повторения',
+                'Тип ошибки',
+                'Цикл жизни',
+                'Дата'
+            ], ';');
+
+            foreach ($logs as $item) {
+                fputcsv($file, [
+                    $item->id,
+                    $item->incident_object,
+                    $item->incident_text,
+                    $item->source,
+                    $item->service,
+                    $item->count,
+                    $item->incidentType->type_name,
+                    $item->incidentType->lifecycle,
+                    $item->date,
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $fileName, $headers);
     }
 }

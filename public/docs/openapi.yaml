@@ -1,164 +1,231 @@
 openapi: 3.0.0
 info:
-  title: API LOGGER SERVICE Documentation
-  version: '1.0.0'
-  description: API документация для сервиса Логирования
+  title: API Сервиса Логирования
+  version: 1.0.0
+  description: API для сервиса логирования инцидентов, получения отчетов и управления сервисами. 
+    Позволяет отслеживать и анализировать инциденты в различных сервисах, формировать отчеты 
+    и управлять конфигурацией сервисов.
+  contact:
+    name: Kamaev Anton
+    email: kamaeff2@gmail.com
+    # url: https://kamaev.ru
 
-tags:
-  - name: WSPG
-    description: Операции с сервисами WSPG, ADS, VSK
+paths:
+  /api/v1/log/add:
+    post:
+      summary: Добавление лога инцидента
+      tags:
+        - Логи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogRequest'
+      responses:
+        '200':
+          description: Успешное добавление лога
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/v1/log/report:
+    post:
+      summary: Получение отчета
+      tags:
+        - Отчеты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '200':
+          description: Успешное получение отчета
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /api/v1/services:
+    get:
+      summary: Получение списка сервисов
+      tags:
+        - Сервисы
+      security:
+        - ServicesToken: []
+      parameters:
+        - $ref: '#/components/parameters/XTimestamp'
+        - $ref: '#/components/parameters/XSignature'
+      responses:
+        '200':
+          description: Список сервисов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /api/v1/services/edit:
+    post:
+      summary: Редактирование сервиса
+      tags:
+        - Сервисы
+      security:
+        - ServicesToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceEditRequest'
+      parameters:
+        - $ref: '#/components/parameters/XTimestamp'
+        - $ref: '#/components/parameters/XSignature'
+      responses:
+        '200':
+          description: Сервис успешно отредактирован
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
 
 components:
+  schemas:
+    LogRequest:
+      type: object
+      required:
+        - token
+        - service
+        - incident
+      properties:
+        token:
+          type: string
+          description: Токен авторизации
+        service:
+          type: string
+          description: Название сервиса
+        incident:
+          type: object
+          required:
+            - object
+            - date
+            - message
+          properties:
+            object:
+              type: string
+              description: Объект инцидента
+            date:
+              type: string
+              format: date-time
+              description: Дата инцидента (формат d-m-Y H:i:s)
+            message:
+              type: array
+              description: Массив сообщений инцидента. Каждое сообщение должно содержать информацию об ошибке или предупреждении
+              items:
+                type: string
+              example: ["Ошибка подключения к БД", "Таймаут операции"]
+
+    ReportRequest:
+      type: object
+      required:
+        - token
+        - service
+      properties:
+        token:
+          type: string
+          description: Токен для доступа к отчетам
+        service:
+          type: string
+          description: Название сервиса
+        date:
+          type: string
+          format: date
+          description: Дата отчета (формат Y-m-d)
+
+    Service:
+      type: object
+      required:
+        - id
+        - name
+        - active
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор сервиса в системе
+          example: 1
+        name:
+          type: string
+          description: Уникальное название сервиса в системе
+          example: "payment-service"
+        active:
+          type: string
+          enum: ["Y", "N"]
+          description: Статус активности сервиса (Y - активен, N - неактивен)
+          example: "Y"
+
+    ServiceEditRequest:
+      type: object
+      required:
+        - id
+        - name
+        - active
+      properties:
+        id:
+          type: integer
+          description: Идентификатор сервиса
+        name:
+          type: string
+          description: Название сервиса
+        active:
+          type: string
+          # enum: [Y, N]
+          description: Статус сервиса
+
   responses:
     ValidationError:
-      description: Ошибка валидации или парсинга
+      description: Ошибка валидации
       content:
         application/json:
           schema:
             type: object
             properties:
-              success:
-                type: boolean
-                example: false
-              message:
-                type: string
-                example: 'Ошибка парсинга сервиса. Передан неверный сервис'
               errors:
                 type: object
-                properties:
-                  token:
-                    type: array
-                    items:
-                      type: string
-                      example: 'Поле token обязательно для заполнения'
-                  service:
-                    type: array
-                    items:
-                      type: string
-                      example: 'Поле service обязательно для заполнения'
-                  incident:
-                    type: array
-                    items:
-                      type: string
-                      example: 'Поле incident обязательно для заполнения'
-    UnauthorizedError:
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+    AuthError:
       description: Ошибка авторизации
       content:
         application/json:
           schema:
             type: object
             properties:
-              success:
-                type: boolean
-                example: false
               message:
                 type: string
-                example: 'Неверный токен'
-    ForbiddenError:
-      description: Сервис неактивен
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: false
-              message:
-                type: string
-                example: 'Сервис не активен'
 
-paths:
-  /api/v1/add:
-    post:
-      tags:
-        - WSPG, ADS, VSK
-      summary: Логирование инцидента
-      description: Получает сырые данные инцидента, парсит и сохраняет их
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - incident
-                - token
-              properties:
-                incident:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      example: <WSPG|FROM, ADS|FROM, VSK|FROM>
-                    message:
-                      type: string
-                      example: '123|Message text'
-                    object:
-                      type: string
-                      example: 'Object1'
-                    date:
-                      type: string
-                      format: date-time
-                      example: '2024-03-20'
-                token:
-                  type: string
-                  example: 'hash256token'
-      responses:
-        '200':
-          description: Успешное сохранение инцидента
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: 'Инцидент успешно сохранен'
-        '400':
-          description: Ошибка валидации или парсинга
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Ошибка парсинга сервиса. Передан неверный сервис'
-                  errors:
-                    type: object
-                    properties:
-                      token:
-                        type: array
-                        items:
-                          type: string
-                          example: 'Поле token обязательно для заполнения'
-                      service:
-                        type: array
-                        items:
-                          type: string
-                          example: 'Поле service обязательно для заполнения'
-                      incident:
-                        type: array
-                        items:
-                          type: string
-                          example: 'Поле incident обязательно для заполнения'
-        '401':
-          description: Неверный токен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Неверный токен'
+  securitySchemes:
+    ServicesToken:
+      type: apiKey
+      name: Authorization
+      in: header
+
+  parameters:
+    XTimestamp:
+      name: X-Timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Временная метка в формате Unix timestamp
+    XSignature:
+      name: X-Signature
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Подпись запроса (HMAC SHA256 от timestamp + services_token)

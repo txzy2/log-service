@@ -63,7 +63,7 @@ const logout = () => {
                   :href="route('incidents')"
                   :active="route().current('incidents')"
                 >
-                  Инциденты
+                  Сервисы
                 </NavLink>
               </div>
             </div>

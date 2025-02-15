@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Exports\LogsExport;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LogController extends Controller
 {
@@ -50,5 +53,34 @@ class LogController extends Controller
         $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
         Log::channel("debug")->info('\LogController::sendReport RESULT', $checkWithoutDate);
         return $this->sendResponse($checkWithoutDate ?: 'Данные по сервису отсутствуют');
+    }
+
+    /**
+     * exportLogs - контроллер для экспорта логов
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function exportLogs(Request $request)
+    {
+        $data = parent::unsetToken($request->all());
+
+        $validator = Validator::make(
+            $data,
+            [
+                'date' => 'nullable|date_format:Y-m-d',
+                'service' => 'nullable|string',
+            ],
+            [
+                'date.date_format' => 'Неверный формат даты',
+                'service.string' => 'Сервис должен быть строкой',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 400);
+        }
+
+        return Incident::exportLogs($data);
     }
 }

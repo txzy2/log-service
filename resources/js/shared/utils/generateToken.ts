@@ -5,9 +5,32 @@ export interface IGenerateToken {
   date?: string;
 }
 
+export interface IGenerateServicesToken {
+  timestamp: number;
+}
+
 export const generateToken = async (data: IGenerateToken): Promise<string> => {
   const token = import.meta.env.VITE_REPORT_TOKEN;
   return CryptoJS.SHA256(token + data.service + token).toString(
+    CryptoJS.enc.Hex
+  );
+};
+
+
+/**
+ * on back 
+ * 
+        $sign = hash_hmac(
+            'sha256',
+            $timestamp . config('app.services_token'),
+            false
+        );
+
+        do this on js
+ */
+export const generateServicesToken = async (timestamp: number): Promise<string> => {
+  const token = import.meta.env.VITE_SERVICES_TOKEN;
+  return CryptoJS.SHA256(timestamp + token).toString(
     CryptoJS.enc.Hex
   );
 };

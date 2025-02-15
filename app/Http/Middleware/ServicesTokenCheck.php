@@ -29,9 +29,9 @@ class ServicesTokenCheck extends Controller
             return $this->sendError($validated->errors()->first(), 401);
         }
 
-        $timestamp = $request->header('X-Timestamp');
-        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle SYSTEM TIMESTAMP", [
-            'systemTime' => time(),
+        $timestamp = (int) $request->header('X-Timestamp');
+        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle TIMESTAMPS", [
+            'systemTime' => time()
         ]);
 
         // Проверяем актуальность временной метки (например, 5 минут)
@@ -43,12 +43,14 @@ class ServicesTokenCheck extends Controller
             ], 401);
         }
 
-        $sign = hash_hmac(
+        $sign = hash(
             'sha256',
             $timestamp . config('app.services_token'),
             false
         );
-        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle SIGN", [$sign]);
+        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle SIGNS", [
+            'sign SYSTEM' => $sign
+        ]);
 
         // Проверяем подпись
         if (!hash_equals($sign, $request->header('X-Signature'))) {
