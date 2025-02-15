@@ -85,7 +85,6 @@ class Incident extends Model
         $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
 
         $existIncident->count++;
-
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
             $existIncident->date = $parceDates['currentDate'];
             $existIncident->save();
@@ -104,7 +103,6 @@ class Incident extends Model
                 'message' => 'Данные успешно обновлены'
             ];
         }
-
         $existIncident->save();
 
         ServiceManager::telegramSendMessage(

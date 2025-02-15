@@ -30,7 +30,7 @@ class ServicesTokenCheck extends Controller
         }
 
         $timestamp = $request->header('X-Timestamp');
-        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle TIMESTAMP", [
+        \Illuminate\Support\Facades\Log::channel("tokens")->info("ServicesTokenCheck::handle SYSTEM TIMESTAMP", [
             'systemTime' => time(),
         ]);
 
