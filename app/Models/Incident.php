@@ -8,8 +8,8 @@ use App\Helpers\ServiceManager;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Incident extends Model
@@ -17,6 +17,7 @@ class Incident extends Model
     use HasFactory;
 
     private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>IncidentModel::class</i></b>";
+    public $timestamps = false;
     protected $table = 'incident';
     protected $fillable = [
         'incident_object',
@@ -26,13 +27,6 @@ class Incident extends Model
         'date',
         'count',
     ];
-
-    public $timestamps = false;
-
-    public function incidentType()
-    {
-        return $this->belongsTo(IncidentType::class, 'incident_type_id');
-    }
 
     /**
      * saveData - сейвыим логи, о которых мы ещё не знаем или просто на них не реагируем
@@ -143,7 +137,7 @@ class Incident extends Model
         if (Arr::has($data, 'date')) {
             $query->where('date', $data['date']);
 
-            if(!$query->exists()){
+            if (!$query->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Данные по дате не найдены'
@@ -154,7 +148,7 @@ class Incident extends Model
         if (Arr::has($data, 'service')) {
             $query->where('service', $data['service']);
 
-            if(!$query->exists()){
+            if (!$query->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Данные по сервису не найдены'
@@ -213,5 +207,10 @@ class Incident extends Model
         };
 
         return response()->streamDownload($callback, $fileName, $headers);
+    }
+
+    public function incidentType()
+    {
+        return $this->belongsTo(IncidentType::class, 'incident_type_id');
     }
 }

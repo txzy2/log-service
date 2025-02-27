@@ -4,25 +4,14 @@ import axios from 'axios';
 import {generateServicesToken} from '@/shared/utils/generateToken';
 
 import AppLayout from '@/Layouts/AppLayout.vue';
+import {getSignType} from '../shared/types/types';
+import {getSign} from '../shared/utils/generateToken';
 
 const services = ref([]);
 const successMessage = ref<{message: string; res: boolean}>({
   message: '',
   res: false
 });
-
-type getSignType = {
-  timestamp: number;
-  signature: string;
-};
-
-const getSign = async (): Promise<getSignType> => {
-  const timestamp = Math.floor(Date.now() / 1000);
-  return {
-    signature: await generateServicesToken(timestamp),
-    timestamp
-  };
-};
 
 const getServices = async () => {
   const headerParams: getSignType = await getSign();

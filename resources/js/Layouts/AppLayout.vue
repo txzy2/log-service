@@ -65,6 +65,12 @@ const logout = () => {
                 >
                   Сервисы
                 </NavLink>
+
+                  <NavLink
+                      href="http://localhost:8000/openapi"
+                  >
+                      OpenAPI
+                  </NavLink>
               </div>
             </div>
 

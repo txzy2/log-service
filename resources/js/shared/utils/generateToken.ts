@@ -1,4 +1,5 @@
 import * as CryptoJS from 'crypto-js';
+import {getSignType} from '../types/types';
 
 export interface IGenerateToken {
   service: string;
@@ -18,8 +19,8 @@ export const generateToken = async (data: IGenerateToken): Promise<string> => {
 
 
 /**
- * on back 
- * 
+ * on back
+ *
         $sign = hash_hmac(
             'sha256',
             $timestamp . config('app.services_token'),
@@ -33,4 +34,12 @@ export const generateServicesToken = async (timestamp: number): Promise<string> 
   return CryptoJS.SHA256(timestamp + token).toString(
     CryptoJS.enc.Hex
   );
+};
+
+export const getSign = async (): Promise<getSignType> => {
+    const timestamp = Math.floor(Date.now() / 1000);
+    return {
+        signature: await generateServicesToken(timestamp),
+        timestamp
+    };
 };
