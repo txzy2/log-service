@@ -26,7 +26,7 @@ class ServiceManager
      * @param string $service
      * @return object
      */
-    public static function getServiceParcer(string $service): object
+    public static function getServiceParser(string $service): object
     {
         $serviceName = "\\App\\Helpers\\Parsers\\{$service}";
         $parcerServiceObject = new $serviceName();

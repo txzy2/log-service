@@ -91,20 +91,20 @@ class Incident extends Model
             ];
         }
 
-        $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);
-        $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
+        $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
+        $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
         $now = Carbon::now();
 
-        if ($parceDates['currentDate']->lt($now)) {
+        if ($parseDates['currentDate']->lt($now)) {
             return [
                 'success' => false,
-                'message' => "Текущая дата ($now) не соответствует переданной {$parceDates['currentDate']}"
+                'message' => "Текущая дата ($now) не соответствует переданной {$parseDates['currentDate']}"
             ];
         }
 
         $existIncident->count++;
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
-            $existIncident->date = $parceDates['currentDate'];
+            $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
             SenderManager::preparePushOrMail($existIncident);

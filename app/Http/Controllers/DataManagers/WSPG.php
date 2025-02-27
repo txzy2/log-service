@@ -19,13 +19,13 @@ class WSPG extends Controller
      */
     public function logging(array $data): array
     {
-        $serviceMessageParser = ServiceManager::getServiceParcer($data['incident']['type']);
-        $parcedMessage = $serviceMessageParser->parse($data['incident']['message']);
+        $serviceMessageParser = ServiceManager::getServiceParser($data['incident']['type']);
+        $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
 
-        if (!$parcedMessage['success']) {
+        if (!$parsedMessage['success']) {
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
         }
-        $data['incident']['message'] = $parcedMessage['message'];
+        $data['incident']['message'] = $parsedMessage['message'];
         [$code, $message] = Parser::parceStr($data['incident']['message']);
 
         $existType = IncidentType::where('code', $code)->first();
@@ -61,9 +61,7 @@ class WSPG extends Controller
         $message = is_array($incident['message'])
             ? json_encode($incident['message'], JSON_UNESCAPED_UNICODE)
             : $incident['message'];
-
         $sign = hash('sha256', implode('', [$incident['object'], $incident['date'], config('app.key'), $message]));
-        \Illuminate\Support\Facades\Log::channel("tokens")->info("WSPG CHECK TOKEN SIGH", [$sign]);
 
         return [
             'success' => $sign === $data['token'],

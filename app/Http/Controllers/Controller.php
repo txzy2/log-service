@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 abstract class Controller
 {
     /**
-     * sendResponse - отправляет успешный ответ 
-     * 
-     * @param mixed $message
+     * sendResponse - отправляет успешный ответ
+     *
+     * @param string $message
      * @param bool $result
-     * @return mixed|\Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function sendResponse($message = "", array $data = [], bool $result = true): JsonResponse
+    public function sendResponse(string $message = "", array $data = [], bool $result = true): JsonResponse
     {
         $response = [
             'success' => $result
@@ -33,12 +32,12 @@ abstract class Controller
 
     /**
      * sendError - отправляет ошибку
-     * 
-     * @param mixed $error
-     * @param mixed $code
-     * @return mixed|\Illuminate\Http\JsonResponse
+     *
+     * @param string $error
+     * @param int $code
+     * @return JsonResponse
      */
-    public function sendError($error, $code = 404)
+    public function sendError(string $error, int $code = 404): JsonResponse
     {
         $response = [
             'success' => false,
@@ -50,10 +49,11 @@ abstract class Controller
 
     /**
      * unsetToken - удаляет токен
-     * 
-     * @param mixed $data
+     *
+     * @param array $data
+     * @return array
      */
-    protected function unsetToken($data)
+    protected function unsetToken(array $data): array
     {
         unset($data['token']);
         return $data;

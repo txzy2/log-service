@@ -87,7 +87,7 @@ class SenderManager
         $messages = json_encode($messages);
         $key = config('app.ws_pg_key');
 
-        return hash('sha256', $key . $messages . $key, false);;
+        return hash('sha256', $key . $messages . $key, false);
     }
 
     /*

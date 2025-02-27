@@ -41,32 +41,25 @@ class ServicesTokenCheck extends Controller
             'systemTime' => time()
         ]);
 
-        // Проверяем актуальность временной метки (например, 5 минут)
-        if (abs(time() - intval($timestamp)) > 300) {
-            Log::channel("tokens")
-                ->error("ServicesTokenCheck::handle TIMESTAMP EXPIRED", [$userData]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Истек срок действия токена'
-            ], 401);
+        // Проверяем актуальность временной метки (30 минут)
+        if (abs(time() - intval($timestamp)) > 1800) {
+            $this->sendError(
+                'Истек срок действия токена',
+                401
+            );
         }
 
-        $sign = hash(
-            'sha256',
-            config('app.services_token') . $timestamp . config('app.services_token')
-        );
+        $sign = hash('sha256', config('app.services_token') . $timestamp . config('app.services_token'));
         Log::channel("tokens")->info("ServicesTokenCheck::handle SIGNS", [
             'sign SYSTEM' => $sign,
-        ]);
+        ]); // Убрать после тестов
 
         // Проверяем подпись
         if (!hash_equals($sign, $request->header('X-Signature'))) {
-            Log::channel("tokens")
-                ->error("ServicesTokenCheck::handle INVALID SIGNATURE", [$userData]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Неверная подпись запроса'
-            ], 401);
+            $this->sendError(
+                'Неверная подпись запроса',
+                401
+            );
         }
 
         Log::channel("tokens")->info("ServicesTokenCheck::handle USER IS AUTH", [$userData]);

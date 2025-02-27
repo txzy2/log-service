@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Tg\TgActions;
 use Telegram\Bot\Commands\HelpCommand;
 
 return [
@@ -165,12 +166,12 @@ return [
            ],
         */
 
-        /* // Group Type: 2
-           'subscription' => [
-                'start', // Shared Command Name.
-                'stop', // Shared Command Name.
-           ],
-        */
+        // Group Type: 2
+        'subscription' => [
+            'start', // Shared Command Name.
+            'stop', // Shared Command Name.
+        ],
+
 
         /* // Group Type: 3
             'auth' => [
@@ -190,14 +191,15 @@ return [
             ],
         */
 
-        /* // Group Type: 4
-           'myBot' => [
-                'admin', // Command Group Name.
-                'subscription', // Command Group Name.
-                'status', // Shared Command Name.
-                'Acme\Project\Commands\BotCommand' // Full Path to Command Class.
-           ],
-        */],
+        // Group Type: 4
+        'myBot' => [
+            'admin', // Command Group Name.
+            'subscription', // Command Group Name.
+            'status', // Shared Command Name.
+            'Acme\Project\Commands\BotCommand', // Full Path to Command Class.
+            'start'
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -216,7 +218,7 @@ return [
     |
     */
     'shared_commands' => [
-        // 'start' => Acme\Project\Commands\StartCommand::class,
+        'start' => TgActions::class,
         // 'stop' => Acme\Project\Commands\StopCommand::class,
         // 'status' => Acme\Project\Commands\StatusCommand::class,
     ],
