@@ -37,15 +37,15 @@ class Incident extends Model
      */
     public static function saveData(array $data): array
     {
-        $message = "НЕИЗВЕСТНАЯ ОШИБКА ОТ {$data['service']}";
+        $message = "Новая не отслеживаемая ошибка от {$data['service']}";
         Log::channel("unknown_errors")
             ->info($message, [$data['incident']['message']]);
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "<b>$message</b>\n"
+            "\n<code>$message</code>\n\n"
             . "<b>Object:</b> <code>{$data['incident']['object']}</code>\n"
-            . "<b>Message:</b> <i>{$data['incident']['message']}</i>"
+            . "<b>Message:</b> <code>{$data['incident']['message']}</code>"
         );
 
         return [
@@ -63,7 +63,9 @@ class Incident extends Model
      */
     public static function updateData(array $data, int $incidentTypeId): array
     {
+        Log::channel('debug')->info('Incident::updateData', [$data]);
         $incidentData = $data['incident'];
+        $type = $data['incident']['type'];
         $existIncident = self::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
@@ -78,11 +80,15 @@ class Incident extends Model
 
         if (!$existIncident->exists) {
             $existIncident->save();
-            SenderManager::preparePushOrMail($existIncident);
+
+            if ($existIncident->send_template_id) {
+                SenderManager::preparePushOrMail($existIncident);
+            }
+
             SenderManager::telegramSendMessage(__CLASS__,
-                "\n<b>Новая ошибка</b> от <code>{$data['service']}</code>\n"
-                . "Object: <code>{$existIncident->incident_object}</code>\n"
-                . "Message: <code>{$existIncident->incident_text}</code>\n"
+                "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
+                . "Object: <code>$existIncident->incident_object</code>\n"
+                . "Message: <code>$existIncident->incident_text</code>\n"
             );
 
             return [
@@ -111,10 +117,10 @@ class Incident extends Model
 
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
-                "\n<code>ОШИБКА ОБНОВИЛАСЬ</code>\n"
-                . "<b>Данные ошибки</b> <code>{$existIncident->incident_text}</code>\n"
-                . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
-                . "<b>Count:</b> <code>{$existIncident->count}</code>"
+                "\n<code>ОШИБКА ОБНОВИЛАСЬ</code>\n\n"
+                . "<b>Данные ошибки от $type</b> <code>$existIncident->incident_text</code>\n"
+                . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
+                . "<b>Count:</b> <code>$existIncident->count</code>"
             );
 
             return [
@@ -126,10 +132,10 @@ class Incident extends Model
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "\n<code>ОТПРАВЛЯЛАСЬ РАНЕЕ</code>\n"
-            . "<b>Ошибка: </b> <code>{$existIncident->incident_text}</code>\n"
-            . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
-            . "<b>Count:</b> <code>{$existIncident->count}</code>"
+            "\n<code>ОТПРАВЛЯЛАСЬ РАНЕЕ</code>\n\n"
+            . "<b>Ошибка от $type: </b> <code>$existIncident->incident_text</code>\n"
+            . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
+            . "<b>Count:</b> <code>$existIncident->count</code>"
         );
 
         return [
