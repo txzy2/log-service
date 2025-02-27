@@ -8,11 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-//TODO: Убрать логи
-
 class ServicesTokenCheck extends Controller
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * Handle - проверка токена по заголовкам
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next): mixed
     {
         $userData = [
             'ip' => $request->ip(),
@@ -48,11 +53,10 @@ class ServicesTokenCheck extends Controller
 
         $sign = hash(
             'sha256',
-            $timestamp . config('app.services_token'),
-            false
+            config('app.services_token') . $timestamp . config('app.services_token')
         );
         Log::channel("tokens")->info("ServicesTokenCheck::handle SIGNS", [
-            'sign SYSTEM' => $sign
+            'sign SYSTEM' => $sign,
         ]);
 
         // Проверяем подпись

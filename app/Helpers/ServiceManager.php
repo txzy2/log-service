@@ -42,19 +42,12 @@ class ServiceManager
      */
     public static function returnParts(array $data): array
     {
-        $return = [
-            'success' => false,
-            'data' => $data,
-        ];
-
-        // Разбиваем строку на части, сразу сохраняем их.
         [$data['service'], $data['incident']['type']] = Parser::parceStr($data['service']);
 
-        // Возвращаем успешный результат.
-        $return['success'] = true;
-        $return['data'] = $data;
-
-        return $return;
+        return [
+            'success' => true,
+            'data' => $data
+        ];
     }
 
 }

@@ -6,11 +6,15 @@ use App\Models\IncidentType;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-/**
- *
- */
 class SenderManager
 {
+
+    /**
+     * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
+     *
+     * @param \App\Models\Incident $data
+     * @return void
+     */
     public static function preparePushOrMail($data)
     {
         $getSendType = IncidentType::where('id', $data->incident_type_id)->first();
@@ -30,6 +34,13 @@ class SenderManager
         };
     }
 
+    /**
+     * SendIncidentMessage - отправляет сообщение об инциденте
+     *
+     * @param string $recipient - кому отправлять
+     * @param string $template - текст сообщения
+     * @return void
+     */
     private static function sendIncidentMessage(string $recipient, string $template)
     {
         $emails = strpos($recipient, ',') !== false

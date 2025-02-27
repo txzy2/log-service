@@ -2,24 +2,23 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Exports\LogsExport;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
 
 class LogController extends Controller
 {
     /**
      * sendLog - главный контроллер логов, который распределяет запросы по сервисам
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return mixed|\Illuminate\Http\JsonResponse
+     *
+     * @param Request $request
+     * @return mixed|JsonResponse
      */
-    public function sendLog(Request $request)
+    public function sendLog(Request $request): JsonResponse
     {
         $data = parent::unsetToken($request->all());
         $parcedData = ServiceManager::returnParts($data);
@@ -35,11 +34,11 @@ class LogController extends Controller
 
     /**
      * sendReport - контроллер для формирования отчетов по логам
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return mixed|\Illuminate\Http\JsonResponse
+     *
+     * @param Request $request
+     * @return mixed|JsonResponse
      */
-    public function sendReport(Request $request)
+    public function sendReport(Request $request): JsonResponse
     {
         $data = parent::unsetToken($request->all());
         Log::channel("debug")->info('\LogController::sendReport REQUEST', $data);
@@ -56,9 +55,9 @@ class LogController extends Controller
 
     /**
      * exportLogs - контроллер для экспорта логов
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return mixed|\Illuminate\Http\JsonResponse
+     *
+     * @param Request $request
+     * @return mixed|JsonResponse
      */
     public function exportLogs(Request $request)
     {
