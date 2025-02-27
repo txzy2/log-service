@@ -36,7 +36,7 @@ return [
             // 'certificate_path' => env('TELEGRAM_CERTIFICATE_PATH', 'YOUR-CERTIFICATE-PATH'),
             'async_requests' => env('TELEGRAM_ASYNC_REQUESTS', false),
             'http_client_config' => [
-                'verify' => 'C:/php/extras/ssl/cacert.pem',
+                'verify' => 'C:/php/cacert.pem',
                 // 'verify' => false,
                 // 'proxy' => config('app.https_proxy', 'http://kamaeff-site.ru/telegram')
             ],

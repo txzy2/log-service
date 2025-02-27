@@ -3,14 +3,19 @@
 namespace App\Helpers;
 
 use App\Models\IncidentType;
+use Illuminate\Support\Facades\Log;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
+/**
+ *
+ */
 class SenderManager
 {
     public static function preparePushOrMail($data)
     {
         $getSendType = IncidentType::where('id', $data->incident_type_id)->first();
         if (!$getSendType) {
-            \Illuminate\Support\Facades\Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
+            Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
@@ -20,21 +25,10 @@ class SenderManager
 
         match ($sendType) {
             1 => self::sendIncidentMessage($recipient, $template),
-                // "telegram" => self::sendTelegram($data),
-            default => \Illuminate\Support\Facades\Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND TYPE", [$data]),
+            // "telegram" => self::sendTelegram($data),
+            default => Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND TYPE", [$data]),
         };
     }
-
-    protected static function generateMailToken(array $messages): string
-    {
-        $messages = json_encode($messages);
-
-        $key = config('app.ws_pg_key');
-        $sign = hash('sha256', $key . $messages . $key, false);
-
-        return $sign;
-    }
-
 
     private static function sendIncidentMessage(string $recipient, string $template)
     {
@@ -65,9 +59,44 @@ class SenderManager
             ]);
 
             $return = json_decode($response->getBody()->getContents(), true);
-            \Illuminate\Support\Facades\Log::channel("debug")->info("SEND INCIDENT MESSAGE RETURN", [$return]);
+            Log::channel("debug")->info("SEND INCIDENT MESSAGE RETURN", [$return]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::channel("debug")->error("Ошибка при отправке сообщения: " . $e->getMessage());
+            Log::channel("debug")->error("Ошибка при отправке сообщения: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * sendIncidentMessage - отправляет сообщение об инциденте
+     *
+     * @param array $messages
+     * @return string
+     */
+    protected static function generateMailToken(array $messages): string
+    {
+        $messages = json_encode($messages);
+        $key = config('app.ws_pg_key');
+
+        return hash('sha256', $key . $messages . $key, false);;
+    }
+
+    /*
+     * telegramSendMessage - отправляет сообщение в телеграм
+     *
+     * @param string $message
+     * @return void
+     */
+    public static function telegramSendMessage(string $class, string $message): void
+    {
+        $message = "<b>" . "APP: " . config('app.name') . "</b>\n<b>FROM</b>: <code>$class</code>\n" . $message;
+
+        try {
+            Telegram::sendMessage([
+                'chat_id' => config('app.chat_id'),
+                'text' => $message,
+                'parse_mode' => 'HTML',
+            ]);
+        } catch (\Exception $e) {
+            Log::channel('telegramLogging')->error("ServiceManager::telegramSendMessage ERROR", [$e->getMessage()]);
         }
     }
 }

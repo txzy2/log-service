@@ -4,19 +4,19 @@ namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
-use App\Helpers\ServiceManager;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Incident extends Model
 {
     use HasFactory;
 
-    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>IncidentModel::class</i></b>";
+    private const ERROR_CLASS = __CLASS__;
     public $timestamps = false;
     protected $table = 'incident';
     protected $fillable = [
@@ -24,22 +24,29 @@ class Incident extends Model
         'incident_text',
         'incident_type_id',
         'source',
+        'service',
         'date',
         'count',
     ];
 
     /**
-     * saveData - сейвыим логи, о которых мы ещё не знаем или просто на них не реагируем
+     * saveData - сейвим логи, о которых мы ещё не знаем или просто на них не реагируем
      *
      * @param array $data
-     * @return void
+     * @return array
      */
     public static function saveData(array $data): array
     {
-        \Illuminate\Support\Facades\Log::channel("unknown_errors")
-            ->info("НЕИЗВЕСТНАЯ ОШИБКА ОТ {$data['service']}", [$data['incident']['message']]);
+        $message = "НЕИЗВЕСТНАЯ ОШИБКА ОТ {$data['service']}";
+        Log::channel("unknown_errors")
+            ->info($message, [$data['incident']['message']]);
 
-        // TODO: Сделать отправку в тг бота
+        SenderManager::telegramSendMessage(
+            self::ERROR_CLASS,
+            "<b>$message</b>\n"
+            . "<b>Object:</b> <code>{$data['incident']['object']}</code>\n"
+            . "<b>Message:</b> <i>{$data['incident']['message']}</i>"
+        );
 
         return [
             "success" => true,
@@ -48,10 +55,10 @@ class Incident extends Model
     }
 
     /**
-     * updateData - Проверяем есть ли для данного ползователя такая ошибка, если нет, то создаем новую
+     * updateData - Проверяем есть ли для данного пользователя такая ошибка, если нет, то создаем новую
      *
      * @param array $data
-     * @param mixed $incidentTypeIc
+     * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
     public static function updateData(array $data, int $incidentTypeId): array
@@ -72,6 +79,11 @@ class Incident extends Model
         if (!$existIncident->exists) {
             $existIncident->save();
             SenderManager::preparePushOrMail($existIncident);
+            SenderManager::telegramSendMessage(__CLASS__,
+                "\n<b>Новая ошибка</b> от {$data['service']}\n"
+                . "Object: <code>{$existIncident->incident_object}</code>\n"
+                . "Message: <code>{$existIncident->incident_text}</code>\n"
+            );
 
             return [
                 'success' => true,
@@ -97,9 +109,9 @@ class Incident extends Model
 
             SenderManager::preparePushOrMail($existIncident);
 
-            ServiceManager::telegramSendMessage(
-                self::ERROR_MESSAGE . "\n\n"
-                . "<b>Данные ошибки</b> <i>{$existIncident->incident_text}</i> обновлены\n"
+            SenderManager::telegramSendMessage(
+                self::ERROR_CLASS,
+                "<b>Данные ошибки</b> <i>{$existIncident->incident_text}</i> обновлены\n"
                 . "Object: <code>{$existIncident->incident_object}</code>\n"
                 . "Count: {$existIncident->count}"
             );
@@ -111,9 +123,9 @@ class Incident extends Model
         }
         $existIncident->save();
 
-        ServiceManager::telegramSendMessage(
-            self::ERROR_MESSAGE . "\n\n"
-            . "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
+        SenderManager::telegramSendMessage(
+            self::ERROR_CLASS,
+            "<b>Ошибка</b> <i>{$existIncident->incident_text}</i> уже отправлялась\n"
             . "Object: <code>{$existIncident->incident_object}</code>\n"
             . "Count: {$existIncident->count}"
         );
@@ -128,7 +140,7 @@ class Incident extends Model
      * exportLogs - экспорт логов в csv
      *
      * @param array $data
-     * @return JsonResponse
+     * @return JsonResponse|StreamedResponse
      */
     public static function exportLogs(array $data): JsonResponse|StreamedResponse
     {

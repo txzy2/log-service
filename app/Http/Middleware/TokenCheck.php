@@ -2,17 +2,17 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\SenderManager;
+use App\Helpers\ServiceManager;
+use App\Http\Controllers\Controller;
 use App\Models\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use App\Helpers\ServiceManager;
-use App\Http\Controllers\Controller;
-
 class TokenCheck extends Controller
 {
-    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>TokenCheck::class</i></b>";
+    private const ERROR_CLASS = __CLASS__;
 
     /**
      * Проверяет валидность токена для запроса
@@ -20,7 +20,8 @@ class TokenCheck extends Controller
      * @param array $data Массив с данными запроса
      * @return array{success: bool, message: string} Результат проверки токена
      */
-    public function handle(Request $request, \Closure $next) {
+    public function handle(Request $request, \Closure $next)
+    {
         $userData = [
             'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),
@@ -50,17 +51,17 @@ class TokenCheck extends Controller
 
         $parcedData = ServiceManager::returnParts($data);
         if (!$parcedData['success']) {
-            Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
+            Log::channel("tokens")->info(self::ERROR_CLASS . " ({$data['service']})", $userData);
             return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
         }
 
         $checkResult = $this->tokenValidate($parcedData['data']);
 
         if (!$checkResult['success']) {
-            Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            ServiceManager::telegramSendMessage(
-                self::ERROR_MESSAGE
-                . "\n{$checkResult['message']}: <code>{$data['service']}</code>"
+            Log::channel("tokens")->info(self::ERROR_CLASS . " ({$data['service']})", $userData);
+            SenderManager::telegramSendMessage(
+                self::ERROR_CLASS,
+                "\n{$checkResult['message']}: <code>{$data['service']}</code>"
             );
             return $this->sendResponse($checkResult['message'], [], false);
         }
@@ -75,7 +76,8 @@ class TokenCheck extends Controller
      * @param array $data Массив с данными сервиса
      * @return array{success: bool, message: string}
      */
-    private function tokenValidate(array $data): array {
+    private function tokenValidate(array $data): array
+    {
         $return = [
             'success' => false,
             'message' => ""
@@ -90,7 +92,7 @@ class TokenCheck extends Controller
         }
 
         if ($existService->active === "N") {
-            Log::channel("tokens")->info(self::ERROR_MESSAGE . "SERVICE IS INACTIVE" . " ({$service})", $data);
+            Log::channel("tokens")->info(self::ERROR_CLASS . "SERVICE IS INACTIVE" . " ({$service})", $data);
             $return['message'] = "Сервис не активен";
             return $return;
         }

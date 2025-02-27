@@ -2,24 +2,22 @@
 
 namespace App\Http\Middleware;
 
-use App\Helpers\ServiceManager;
+use App\Helpers\SenderManager;
 use App\Http\Controllers\Controller;
 use App\Models\Services;
-use App\Models\Incident;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReportTokenCheck extends Controller
 {
-    private const ERROR_MESSAGE = "<b>MODULE ERROR: <i>ReportTokenCheck::class</i></b>";
+    private const ERROR_CLASS = __CLASS__;
 
     /**
      * handle - проверяет токен для формирования отчета
-     * 
+     *
      * @param Request $request
      * @param Closure $next
      * @return Response
@@ -53,7 +51,10 @@ class ReportTokenCheck extends Controller
 
         $existService = Services::where('name', $data['service'])->first();
         if (!$existService || $existService->active === "N") {
-            ServiceManager::telegramSendMessage(self::ERROR_MESSAGE . "\n\nВведен неверный сервис или сервис не активен" . " ({$data['service']})");
+            SenderManager::telegramSendMessage(
+                self::ERROR_CLASS,
+                "Введен неверный сервис или сервис не активен" . " ({$data['service']})"
+            );
             return $this->sendError("Введен неверный сервис или сервис не активен", Response::HTTP_UNAUTHORIZED);
         }
 
@@ -62,7 +63,7 @@ class ReportTokenCheck extends Controller
         $res = $sign == $data['token'];
 
         if (!$res) {
-            Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
+            Log::channel("tokens")->info(self::ERROR_CLASS . " ({$data['service']})", $userData);
             return $this->sendError("Неверный токен", Response::HTTP_UNAUTHORIZED);
         }
 

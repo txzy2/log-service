@@ -3,14 +3,12 @@
 namespace App\Helpers;
 
 use App\Helpers\Parsers\Parser;
-use Carbon\Carbon;
-use Telegram\Bot\Laravel\Facades\Telegram;
 
 class ServiceManager
 {
     /**
      * initServiceObject - инициализация сервиса
-     * 
+     *
      * @param string $service
      * @return object
      */
@@ -24,7 +22,7 @@ class ServiceManager
 
     /**
      * getServiceParcer - получает объект парсера для указанного сервиса
-     * 
+     *
      * @param string $service
      * @return object
      */
@@ -38,7 +36,7 @@ class ServiceManager
 
     /**
      * returnParts - проверяет и возвращает части данных
-     * 
+     *
      * @param array $data
      * @return array[]|array{data: array, success: bool}
      */
@@ -59,25 +57,4 @@ class ServiceManager
         return $return;
     }
 
-    /**
-     * telegramSendMessage - отправляет сообщение в телеграм
-     * 
-     * @param string $message
-     * @return void
-     */
-    public static function telegramSendMessage(string $message): void
-    {
-        $message = "<b>" . "APP: " . config('app.name') . "</b>\n\n" . $message;
-
-        try {
-            Telegram::sendMessage([
-                'chat_id' => config('app.chat_id'),
-                'text' => $message,
-                'parse_mode' => 'HTML',
-            ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::channel('telegramLogging')
-                ->error("ServiceManager::telegramSendMessage ERROR", [$e->getMessage()]);
-        }
-    }
 }
