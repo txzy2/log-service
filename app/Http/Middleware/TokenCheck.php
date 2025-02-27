@@ -16,12 +16,11 @@ class TokenCheck extends Controller
 
     /**
      * Проверяет валидность токена для запроса
-     * 
+     *
      * @param array $data Массив с данными запроса
      * @return array{success: bool, message: string} Результат проверки токена
      */
-    public function handle(Request $request, \Closure $next)
-    {
+    public function handle(Request $request, \Closure $next) {
         $userData = [
             'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),
@@ -59,7 +58,10 @@ class TokenCheck extends Controller
 
         if (!$checkResult['success']) {
             Log::channel("tokens")->info(self::ERROR_MESSAGE . " ({$data['service']})", $userData);
-            ServiceManager::telegramSendMessage(self::ERROR_MESSAGE . "\n{$checkResult['message']}: <code>{$data['service']}</code>");
+            ServiceManager::telegramSendMessage(
+                self::ERROR_MESSAGE
+                . "\n{$checkResult['message']}: <code>{$data['service']}</code>"
+            );
             return $this->sendResponse($checkResult['message'], [], false);
         }
 
@@ -69,12 +71,11 @@ class TokenCheck extends Controller
 
     /**
      * Проверяет токен для указанного сервиса
-     * 
+     *
      * @param array $data Массив с данными сервиса
      * @return array{success: bool, message: string}
      */
-    private function tokenValidate(array $data): array
-    {
+    private function tokenValidate(array $data): array {
         $return = [
             'success' => false,
             'message' => ""

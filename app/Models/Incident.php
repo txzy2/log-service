@@ -5,9 +5,12 @@ namespace App\Models;
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use App\Helpers\ServiceManager;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Incident extends Model
 {
@@ -57,14 +60,14 @@ class Incident extends Model
      * @param mixed $incidentTypeIc
      * @return array{message: string, success: bool}
      */
-    public static function updateData(array $data, $incidentTypeIc): array
+    public static function updateData(array $data, int $incidentTypeId): array
     {
         $incidentData = $data['incident'];
         $existIncident = self::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
                 'incident_text' => $incidentData['message'],
-                'incident_type_id' => $incidentTypeIc,
+                'incident_type_id' => $incidentTypeId,
                 'service' => $data['service'],
                 'source' => $incidentData['type'],
                 'date' => $incidentData['date'],
@@ -84,6 +87,14 @@ class Incident extends Model
 
         $parceDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $diffInDays = $parceDates['prevDate']->diffInDays($parceDates['currentDate'], true);
+        $now = Carbon::now();
+
+        if ($parceDates['currentDate']->lt($now)) {
+            return [
+                'success' => false,
+                'message' => "Текущая дата ($now) не соответствует переданной {$parceDates['currentDate']}"
+            ];
+        }
 
         $existIncident->count++;
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
@@ -119,7 +130,13 @@ class Incident extends Model
         ];
     }
 
-    public static function exportLogs(array $data)
+    /**
+     * exportLogs - экспорт логов в csv
+     *
+     * @param array $data
+     * @return JsonResponse
+     */
+    public static function exportLogs(array $data): JsonResponse|StreamedResponse
     {
         $query = self::query();
 
@@ -146,12 +163,12 @@ class Incident extends Model
         }
 
         $logs = $query->get();
- 
+
         $date = Arr::has($data, 'date')
             ? $data['date']
             : now()->format('Y-m-d');
 
-        $service = Arr::has($data, 'service') && !empty($data['service']) 
+        $service = Arr::has($data, 'service') && !empty($data['service'])
             ? $data['service'] . '_'
             : '';
 

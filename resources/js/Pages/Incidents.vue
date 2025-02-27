@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import {ref} from 'vue';
 import axios from 'axios';
 import {generateServicesToken} from '@/shared/utils/generateToken';
@@ -6,23 +6,66 @@ import {generateServicesToken} from '@/shared/utils/generateToken';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const services = ref([]);
+const successMessage = ref<{message: string; res: boolean}>({
+  message: '',
+  res: false
+});
+
+type getSignType = {
+  timestamp: number;
+  signature: string;
+};
+
+const getSign = async (): Promise<getSignType> => {
+  const timestamp = Math.floor(Date.now() / 1000);
+  return {
+    signature: await generateServicesToken(timestamp),
+    timestamp
+  };
+};
 
 const getServices = async () => {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signature = await generateServicesToken(timestamp);
-
+  const headerParams: getSignType = await getSign();
   const response = await axios.get('/api/v1/services', {
     headers: {
-      'X-Timestamp': timestamp,
-      'X-Signature': signature
+      'X-Timestamp': headerParams.timestamp,
+      'X-Signature': headerParams.signature
     }
   });
-
-  console.log(response.data);
   services.value = response.data.data;
 };
 
 getServices();
+
+const saveServiceState = async (service: {
+  id: number;
+  name: string;
+  active: string;
+}) => {
+  try {
+    const headerParams: getSignType = await getSign();
+    const response = await axios.post(
+      '/api/v1/services/edit',
+      {
+        id: service.id,
+        name: service.name,
+        active: service.active
+      },
+      {
+        headers: {
+          'x-timestamp': headerParams.timestamp,
+          'x-signature': headerParams.signature
+        }
+      }
+    );
+
+    successMessage.value = response.data.success
+      ? {message: 'Состояние сервиса успешно сохранено!', res: true}
+      : {message: 'Ошибка при сохранении состояния сервиса.', res: false};
+  } catch (error) {
+    successMessage.value = {message: 'Произошла ошибка при сохранении.', res: false};
+  }
+};
 </script>
 
 <template>
@@ -30,7 +73,6 @@ getServices();
     <template #header class="text-black/50 dark:bg-gray dark:text-white/50">
       <h2 class="font-semibold text-xl leading-tight">Сервисы</h2>
     </template>
-
     <div class="w-full flex items-center justify-center">
       <table class="">
         <thead>
@@ -44,14 +86,31 @@ getServices();
           <tr v-for="service in services" :key="service.id">
             <td>{{ service.id }}</td>
             <td>{{ service.name }}</td>
-            <td>{{ service.active }}</td>
+            <td>
+              <select
+                name=""
+                id=""
+                v-model="service.active"
+                @change="saveServiceState(service)"
+              >
+                <option value="Y">Y</option>
+                <option class="option" value="N">N</option>
+              </select>
+            </td>
           </tr>
         </tbody>
       </table>
-
-      
     </div>
   </AppLayout>
 </template>
 
-<style scoped></style>
+<style scoped>
+select {
+  height: 40px;
+  font-size: 14px;
+  font-weight: bold;
+
+  border: none;
+  outline: none;
+}
+</style>

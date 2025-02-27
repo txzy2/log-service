@@ -12,27 +12,49 @@ use App\Http\Middleware\ReportTokenCheck;
 
 Route::get('/test', [TestConroller::class, 'test']);
 
-Route::prefix('v1')->group(function () {
+/*
+* ================================================================
+* REFACTORING: Добавил новый вариант токенизации, более простой
+* ================================================================
+*
+* x-timestamp => Временная метка (UNIX)
+* x-signature => Сгенерированная сигнатура
+*
+*/
+Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
     Route::prefix('log')->group(function () {
-        Route::post('/', [LogController::class, 'sendLog'])->middleware(TokenCheck::class); // Отправка лога 
-        
-        Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class); // Отправка отчета
-        Route::post('/export', [LogController::class, 'exportLogs'])->middleware(ServicesTokenCheck::class);
-    });
-
-    Route::prefix('services')->middleware(ServicesTokenCheck::class)->group(function () {
 
         /*
-        \ ================================================================
-        \   Пока не понятно надо ли изспользовать этот роут, т.к пока что сервис трудно расширять,
-        \   так как надо добавлять отдельные файлы с логикой для каждого нового сервиса
-        \   ================================================================
-        \
-        \   Route::post('/', [ServicesController::class, 'addService']); 
-        \ 
-        */
+        * ================================================================
+        * Старый вариант, обсудить с Сергеем
+        * ================================================================
+        *
+        * Route::post('/', [LogController::class, 'sendLog'])->middleware(TokenCheck::class);
+        *
+        * Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class);
+        * Route::post('/export', [LogController::class, 'exportLogs'])->middleware(ServicesTokenCheck::class);
+        *
+       */
 
-        Route::get('/', [ServicesController::class, 'getServices']); 
+        Route::post('/', [LogController::class, 'sendLog']);
+
+        Route::post('/report', [LogController::class, 'sendReport']);
+        Route::post('/export', [LogController::class, 'exportLogs']);
+   });
+
+   Route::prefix('services')->group(function () {
+
+       /*
+       * ================================================================
+       * Пока не понятно надо ли использовать этот роут, т.к пока что сервис трудно расширять,
+       * так как надо добавлять отдельные файлы с логикой для каждого нового сервиса
+       * ================================================================
+       *
+       * Route::post('/', [ServicesController::class, 'addService']);
+       *
+       */
+
+        Route::get('/', [ServicesController::class, 'getServices']);
         Route::post('/edit', [ServicesController::class, 'editService']);
     });
 });

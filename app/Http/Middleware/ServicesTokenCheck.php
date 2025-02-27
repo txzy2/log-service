@@ -8,10 +8,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class ServicesTokenCheck extends Controller
-{
-    public function handle(Request $request, Closure $next)
-    {
+//TODO: Убрать логи
+
+class ServicesTokenCheck extends Controller {
+    public function handle(Request $request, Closure $next) {
         $userData = [
             'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),
@@ -36,7 +36,8 @@ class ServicesTokenCheck extends Controller
 
         // Проверяем актуальность временной метки (например, 5 минут)
         if (abs(time() - intval($timestamp)) > 300) {
-            \Illuminate\Support\Facades\Log::channel("tokens")->error("ServicesTokenCheck::handle TIMESTAMP EXPIRED", [$userData]);
+            \Illuminate\Support\Facades\Log::channel("tokens")
+                ->error("ServicesTokenCheck::handle TIMESTAMP EXPIRED", [$userData]);
             return response()->json([
                 'success' => false,
                 'message' => 'Истек срок действия токена'
@@ -54,7 +55,8 @@ class ServicesTokenCheck extends Controller
 
         // Проверяем подпись
         if (!hash_equals($sign, $request->header('X-Signature'))) {
-            \Illuminate\Support\Facades\Log::channel("tokens")->error("ServicesTokenCheck::handle INVALID SIGNATURE", [$userData]);
+            \Illuminate\Support\Facades\Log::channel("tokens")
+                ->error("ServicesTokenCheck::handle INVALID SIGNATURE", [$userData]);
             return response()->json([
                 'success' => false,
                 'message' => 'Неверная подпись запроса'
