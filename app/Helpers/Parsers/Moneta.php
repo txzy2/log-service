@@ -6,7 +6,7 @@ class Moneta
 {
     /**
      * parse - парсит сообщение
-     * 
+     *
      * @param array $message
      * @return array{success: bool, message: string}
      */
@@ -18,18 +18,18 @@ class Moneta
         ];
 
         return match (true) {
-            isset($message['error']) => $this->parceError($message['error']),
+            isset($message['error']) => $this->parseError($message['error']),
             default => $result,
         };
     }
 
     /**
      * parceError - парсит ошибку
-     * 
+     *
      * @param array $message
      * @return array{success: bool, message: string}
      */
-    private function parceError(array $message): array
+    private function parseError(array $message): array
     {
         $default = [
             'success' => false,

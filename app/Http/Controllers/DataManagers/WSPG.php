@@ -21,7 +21,6 @@ class WSPG extends Controller
     {
         $serviceMessageParser = ServiceManager::getServiceParser($data['incident']['type']);
         $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
-
         if (!$parsedMessage['success']) {
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
         }
