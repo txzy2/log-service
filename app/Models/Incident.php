@@ -85,7 +85,7 @@ class Incident extends Model
                 SenderManager::preparePushOrMail($existIncident);
             }
 
-            SenderManager::telegramSendMessage(__CLASS__,
+            SenderManager::telegramSendMessage(self::ERROR_CLASS,
                 "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
                 . "Object: <code>$existIncident->incident_object</code>\n"
                 . "Message: <code>$existIncident->incident_text</code>\n"

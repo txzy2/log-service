@@ -12,10 +12,10 @@ class SenderManager
     /**
      * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
      *
-     * @param \App\Models\Incident $data
+     * @param object $data
      * @return void
      */
-    public static function preparePushOrMail($data)
+    public static function preparePushOrMail(object $data): void
     {
         $getSendType = IncidentType::where('id', $data->incident_type_id)->first();
         if (!$getSendType) {
@@ -41,9 +41,9 @@ class SenderManager
      * @param string $template - текст сообщения
      * @return void
      */
-    private static function sendIncidentMessage(string $recipient, string $template)
+    private static function sendIncidentMessage(string $recipient, string $template): void
     {
-        $emails = strpos($recipient, ',') !== false
+        $emails = str_contains($recipient, ',')
             ? array_map('trim', explode(',', $recipient))
             : [$recipient];
 

@@ -13,7 +13,7 @@ class ServicesTokenCheck extends Controller
     /**
      * Handle - проверка токена по заголовкам
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param \Closure $next
      * @return mixed
      */
@@ -39,18 +39,21 @@ class ServicesTokenCheck extends Controller
         $timestamp = (int)$request->header('X-Timestamp');
         Log::channel("tokens")->info("ServicesTokenCheck::handle TIMESTAMPS", [
             'systemTime' => time()
-        ]);
+        ]); // TODO: Убрать после тестов
 
-        // Проверяем актуальность временной метки (30 минут)
-//        dd("Токен истёк. Разница: " . abs(time() - intval($timestamp)));
-        if (abs(time() - intval($timestamp)) > 900) {
+        // Проверяем актуальность временной метки (1 минута)
+        if (abs(time() - $timestamp) > 60) {
             return $this->sendError('Истек срок действия токена', 401);
         }
 
-        $sign = hash('sha256', config('app.services_token') . $timestamp . config('app.services_token'));
+        $sign = hash_hmac(
+            'sha256',
+            $request->method() . $request->path() . $timestamp . $request->getContent(),
+            config('app.services_token')
+        );
         Log::channel("tokens")->info("ServicesTokenCheck::handle SIGNS", [
-            'sign SYSTEM' => $sign,
-        ]); // Убрать после тестов
+            'sign SYSTEM' => $sign
+        ]); // TODO: Убрать после тестов
 
         // Проверяем подпись
         if (!hash_equals($sign, $request->header('X-Signature'))) {

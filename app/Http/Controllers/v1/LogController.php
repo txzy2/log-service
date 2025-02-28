@@ -50,7 +50,7 @@ class LogController extends Controller
         }
 
         $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
-        return $this->sendResponse($checkWithoutDate ?: 'Данные по сервису отсутствуют');
+        return $this->sendResponse("", $checkWithoutDate);
     }
 
     /**

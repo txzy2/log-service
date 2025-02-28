@@ -3,15 +3,22 @@ import {ref} from 'vue';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
-import {getSignType} from '../shared/types/types';
+import {genTypes, getSignType} from '../shared/types/types';
 import {getSign} from '../shared/utils/generateToken';
 
-const checkData = ref({
+const checkData = ref<{date: string; service: string}>({
     date: null,
     service: null
 });
 
-const serverData = ref({
+const serverData = ref<{
+    service: string;
+    date: string;
+    count: number;
+    incident_object: string;
+    incident_text: string;
+    source: string;
+}>({
     count: null,
     date: null,
     incident_object: null,
@@ -19,28 +26,30 @@ const serverData = ref({
     source: null
 });
 
-const error = ref(null);
-const loading = ref(false);
+const error = ref<string>(null);
+const loading = ref<boolean>(false);
 
 const exportLogs = async () => {
     try {
-        const headerParams: getSignType = await getSign();
 
-        const data = {
-            ...(checkData.value.date && {date: checkData.value.date}),
-            ...(checkData.value.service && {service: checkData.value.service})
+        const params: genTypes = {
+            path: 'api/v1/log/export',
+            method: 'POST',
+            content: JSON.stringify({
+                ...(checkData.value.date && {date: checkData.value.date}),
+                ...(checkData.value.service && {service: checkData.value.service})
+            })
         };
 
-        console.log(data);
+        const headerParams: getSignType = getSign(params);
 
-        const response = await axios.post('/api/v1/log/export', data, {
+        const response = await axios.post(params.path, JSON.parse(params.content), {
             responseType: 'blob',
             headers: {
                 'x-timestamp': headerParams.timestamp,
                 'x-signature': headerParams.signature
             }
         });
-
         // Получаем имя файла из заголовка ответа
         const filename = response.headers['content-disposition']
             ? response.headers['content-disposition']
@@ -62,9 +71,16 @@ const exportLogs = async () => {
 };
 
 const fetchData = async () => {
-    const headerParams: getSignType = await getSign();
-    const response = await axios.post('/api/v1/log/report',
-        {service: checkData.value.service},
+    const params: genTypes = {
+        path: 'api/v1/log/report',
+        method: 'POST',
+        content: {
+            service: checkData.value.service
+        }
+    };
+    const headerParams: getSignType = getSign(params);
+    const response = await axios.post(params.path,
+        params.content,
         {
             headers: {
                 'x-timestamp': headerParams.timestamp,
@@ -75,11 +91,11 @@ const fetchData = async () => {
 
     error.value = null;
     if (
-        Array.isArray(response.data.message) &&
-        response.data.message.length > 0
+        Array.isArray(response.data.data) &&
+        response.data.data.length > 0
     ) {
         // Обработка массива сообщений
-        const responseData = response.data.message.map(item => ({
+        const responseData = response.data.data.map(item => ({
             count: item.count,
             service: item.service,
             date: item.date,

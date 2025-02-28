@@ -10,6 +10,7 @@ abstract class Controller
      * sendResponse - отправляет успешный ответ
      *
      * @param string $message
+     * @param array $data
      * @param bool $result
      * @return JsonResponse
      */
@@ -27,7 +28,7 @@ abstract class Controller
             $response['message'] = $message;
         }
 
-        return response()->json($response, 200);
+        return response()->json($response);
     }
 
     /**
