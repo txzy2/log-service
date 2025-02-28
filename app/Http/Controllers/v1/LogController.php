@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
+use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 
 class LogController extends Controller
 {
+    private const ERROR_CLASS = __CLASS__;
+
     /**
      * sendLog - главный контроллер логов, который распределяет запросы по сервисам
      *
@@ -20,12 +23,41 @@ class LogController extends Controller
      */
     public function sendLog(Request $request): JsonResponse
     {
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'service' => 'required|string',
+                'incident' => 'required|array',
+                'incident.object' => 'required|string',
+                'incident.date' => 'required|date_format:d-m-Y',
+                'incident.message' => 'required|array',
+            ],
+            [
+                '*.required' => 'Поле :attribute обязательно для заполнения',
+            ]
+        );
+
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), 400);
+        }
+
         $data = parent::unsetToken($request->all());
         $parsedData = ServiceManager::returnParts($data);
-        Log::channel("debug")->info('\LogController::sendLog REQUEST', $parsedData);
+        if (!$parsedData['success']) {
+            Log::channel("debug")->info(self::ERROR_CLASS . " ({$data['service']})", $data);
+            return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
+        }
 
-        $serviceObject = ServiceManager::initServiceObject($parsedData['data']['service']);
-        $return = $serviceObject->logging($parsedData['data']);
+        $data = $parsedData['data'];
+        Log::channel("debug")->info('\LogController::sendLog REQUEST', $parsedData['data']);
+        
+        $existService = Services::validateService($data['service']);
+        if (!$existService['success']) {
+            return $this->sendError($existService['message'], 400);
+        }
+
+        $serviceObject = ServiceManager::initServiceObject($data['service']);
+        $return = $serviceObject->logging($data);
 
         Log::channel("debug")->info('\LogController::sendLog RESULT SAVING', $return);
 
@@ -40,8 +72,29 @@ class LogController extends Controller
      */
     public function sendReport(Request $request): JsonResponse
     {
-        $data = parent::unsetToken($request->all());
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'service' => 'nullable|string',
+                'date' => 'nullable|date_format:Y-m-d'
+            ],
+            [
+                '*.required' => 'Поле :attribute обязательно для заполнения',
+                'date.date_format' => 'Неверный формат даты',
+            ]
+        );
+
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), 400);
+        }
+
+        $data = $request->all();
         Log::channel("debug")->info('\LogController::sendReport REQUEST', $data);
+
+        $existService = Services::validateService($data['service']);
+        if (!$existService['success']) {
+            return $this->sendError($existService['message'], 400);
+        }
 
         if (array_key_exists('date', $data)) {
             $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
@@ -76,6 +129,11 @@ class LogController extends Controller
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), 400);
+        }
+
+        $existService = Services::validateService($data['service']);
+        if (!$existService['success']) {
+            return $this->sendError($existService['message'], 400);
         }
 
         return Incident::exportLogs($data);

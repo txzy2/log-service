@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\IncidentType;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -40,6 +41,7 @@ class SenderManager
      * @param string $recipient - кому отправлять
      * @param string $template - текст сообщения
      * @return void
+     * @throws GuzzleException
      */
     private static function sendIncidentMessage(string $recipient, string $template): void
     {
