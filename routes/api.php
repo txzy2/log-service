@@ -8,15 +8,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/test', [TestConroller::class, 'test']);
 
-/*
-* ================================================================
-* REFACTORING: Добавил новый вариант токенизации, более простой
-* ================================================================
-*
-* x-timestamp => Временная метка (UNIX)
-* x-signature => Сгенерированная сигнатура
-*
-*/
 Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
     // Работа с логами
     Route::prefix('log')->group(function () {
@@ -35,24 +26,26 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
 
         Route::post('/', [LogController::class, 'sendLog']);
 
+        /*
+        * ================================================================
+        * TODO: Идеи для /report
+        * ================================================================
+        *
+        * ВЫБОРКИ:
+        * 1. Сортировка по "Источнику"
+        * 2. Поиск по "Объект инцидента"
+        * 3. Поиск по коду ошибки
+        * 4. Сортировака по дате
+        *
+       */
         Route::post('/report', [LogController::class, 'sendReport']);
         Route::post('/export', [LogController::class, 'exportLogs']);
     });
 
     // Контроллеры для работы на фронтенде
     Route::prefix('services')->group(function () {
-
-        /*
-        * ================================================================
-        * Пока не понятно надо ли использовать этот роут, т.к пока что сервис трудно расширять,
-        * так как надо добавлять отдельные файлы с логикой для каждого нового сервиса
-        * ================================================================
-        *
-        * Route::post('/', [ServicesController::class, 'addService']);
-        *
-        */
-
         Route::get('/', [ServicesController::class, 'getServices']);
         Route::post('/edit', [ServicesController::class, 'editService']);
+        Route::post('/delete', [ServicesController::class, 'deleteService']);
     });
 });

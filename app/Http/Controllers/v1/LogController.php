@@ -8,6 +8,7 @@ use App\Models\Incident;
 use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -40,8 +41,8 @@ class LogController extends Controller
         if ($validate->fails()) {
             return response()->json($validate->errors(), 400);
         }
-
-        $data = parent::unsetToken($request->all());
+        $data = $request->all();
+        
         $parsedData = ServiceManager::returnParts($data);
         if (!$parsedData['success']) {
             Log::channel("debug")->info(self::ERROR_CLASS . " ({$data['service']})", $data);
@@ -50,7 +51,7 @@ class LogController extends Controller
 
         $data = $parsedData['data'];
         Log::channel("debug")->info('\LogController::sendLog REQUEST', $parsedData['data']);
-        
+
         $existService = Services::validateService($data['service']);
         if (!$existService['success']) {
             return $this->sendError($existService['message'], 400);
@@ -93,10 +94,11 @@ class LogController extends Controller
 
         $existService = Services::validateService($data['service']);
         if (!$existService['success']) {
-            return $this->sendError($existService['message'], 400);
+            return $this->sendResponse($existService['message'], [], false);
         }
 
-        if (array_key_exists('date', $data)) {
+        // TODO: Сделать в модели отдельный метод с разными вариантами выборки
+        if (Arr::has($data, 'date') && !empty($data['date'])) {
             $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
             Log::channel("debug")->info('\LogController::sendReport RESULT BY DATE', $checkWithDate);
             return $this->sendResponse($checkWithDate ?: 'За этот день нет данных');
@@ -133,7 +135,7 @@ class LogController extends Controller
 
         $existService = Services::validateService($data['service']);
         if (!$existService['success']) {
-            return $this->sendError($existService['message'], 400);
+            return $this->sendError($existService['message'], 200);
         }
 
         return Incident::exportLogs($data);

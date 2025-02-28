@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ServicesController extends Controller
 {
+    private const ERROR_CLASS = __CLASS__;
+
     /**
      * getServices - Получение всех сервисов
      *
@@ -30,7 +33,7 @@ class ServicesController extends Controller
     public function editService(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'name' => 'required|string',
             'active' => 'required|in:Y,N',
         ], [
             '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -43,50 +46,37 @@ class ServicesController extends Controller
 
         $data = $request->all();
 
-        $service = Services::find($data['id']);
+        $service = Services::findService($data['name']);
         if (!$service) {
-            return $this->sendError('Сервис не найден');
+            return $this->sendError('Сервис не найден', 400);
         }
 
-        if ($service->active === $data['active']) {
-            return $this->sendResponse('Сервис уже имеет такой статус');
-        }
-
-        Services::where('id', $data['id'])->update(['active' => $data['active']]);
-
+        Services::where('name', $data['name'])->update(['active' => $data['active']]);
+        Log::channel('debug')->info(self::ERROR_CLASS . "::editService", ["{$data['name']}" => $data['active']]);
         return $this->sendResponse('Сервис успешно отредактирован');
     }
 
-    /**
-     * addService - Добавление сервиса
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function addService(Request $request): JsonResponse
+    public function deleteService(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:16',
+            'service' => 'required|string',
         ], [
             '*.required' => 'Поле :attribute обязательно для заполнения',
+            'service.string' => 'Невалидный тип данных',
         ]);
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), 400);
         }
 
         $data = $request->all();
-        $existService = Services::where('name', $data['name'])->first();
-        if ($existService) {
-            return $this->sendError('Сервис с таким именем уже существует', 400);
+        $existService = Services::where('name', $data['service'])->first();
+        if (!$existService) {
+            return $this->sendError('Сервис не найден', 400);
         }
 
-        Services::create(
-            [
-                'name' => $data['name'],
-                'active' => "N",
-            ]
-        );
+        $existService->delete();
+        Log::channel('debug')->info(self::ERROR_CLASS . "::deleteService", ["{$data['service']} deleted"]);
 
-        return $this->sendResponse('Сервис успешно добавлен и взят на рассмотрение');
+        return $this->sendResponse('Сервис успешно удален', Services::all()->toArray());
     }
 }

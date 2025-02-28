@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {ref} from 'vue';
 import axios from 'axios';
+import {Trash2} from 'lucide-vue-next';
 
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {genTypes, getSignType} from '../shared/types/types';
@@ -36,16 +37,47 @@ const saveServiceState = async (service: {
     name: string;
     active: string;
 }) => {
-    try {
+    if (confirm('Вы действительно хотите изменить активность сервиса?')) {
+        try {
+            const params: genTypes = {
+                path: 'api/v1/services/edit',
+                method: 'POST',
+                content: {
+                    name: service.name,
+                    active: service.active
+                }
+            };
+            const headerParams: getSignType = getSign(params);
+            const response = await axios.post(
+                params.path,
+                params.content,
+                {
+                    headers: {
+                        'x-timestamp': headerParams.timestamp,
+                        'x-signature': headerParams.signature
+                    }
+                }
+            );
+
+            successMessage.value = response.data.success
+                ? {message: 'Состояние сервиса успешно сохранено!', res: true}
+                : {message: 'Ошибка при сохранении состояния сервиса.', res: false};
+        } catch (error) {
+            successMessage.value = {message: 'Произошла ошибка при сохранении.', res: false};
+        }
+    }
+};
+
+const deleteService = async (service: string) => {
+    if (confirm('Вы действительно хотите удалить сервис?')) {
         const params: genTypes = {
-            path: 'api/v1/services/edit',
+            path: 'api/v1/services/delete',
             method: 'POST',
             content: {
-                id: service.id,
-                name: service.name,
-                active: service.active
+                service
             }
         };
+
         const headerParams: getSignType = getSign(params);
         const response = await axios.post(
             params.path,
@@ -58,11 +90,11 @@ const saveServiceState = async (service: {
             }
         );
 
-        successMessage.value = response.data.success
-            ? {message: 'Состояние сервиса успешно сохранено!', res: true}
-            : {message: 'Ошибка при сохранении состояния сервиса.', res: false};
-    } catch (error) {
-        successMessage.value = {message: 'Произошла ошибка при сохранении.', res: false};
+        if (!response.data.success) {
+            alert('Произошла ошибка при удалении сервиса.');
+        }
+
+        services.value = response.data.data;
     }
 };
 </script>
@@ -79,6 +111,7 @@ const saveServiceState = async (service: {
                     <th>ID</th>
                     <th>Сервис</th>
                     <th>Активность</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -95,6 +128,12 @@ const saveServiceState = async (service: {
                             <option value="Y">Y</option>
                             <option class="option" value="N">N</option>
                         </select>
+                    </td>
+                    <td>
+                        <Trash2
+                            class="cursor-pointer"
+                            @click="deleteService(service.name)"
+                        />
                     </td>
                 </tr>
                 </tbody>

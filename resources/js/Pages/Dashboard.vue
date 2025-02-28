@@ -42,7 +42,6 @@ const exportLogs = async () => {
         };
 
         const headerParams: getSignType = getSign(params);
-
         const response = await axios.post(params.path, JSON.parse(params.content), {
             responseType: 'blob',
             headers: {
@@ -75,7 +74,8 @@ const fetchData = async () => {
         path: 'api/v1/log/report',
         method: 'POST',
         content: {
-            service: checkData.value.service
+            service: checkData.value.service,
+            date: checkData.value.date
         }
     };
     const headerParams: getSignType = getSign(params);
@@ -90,6 +90,11 @@ const fetchData = async () => {
     );
 
     error.value = null;
+    if (!response.data.success) {
+        error.value = response.data.message;
+        return;
+    }
+
     if (
         Array.isArray(response.data.data) &&
         response.data.data.length > 0
@@ -180,7 +185,7 @@ const handleSubmit = async () => {
                         <div
                             class="flex items-center justify-center gap-4 mt-4">
                             <button
-                                :disabled="loading"
+                                :disabled="loading || !checkData.service"
                                 class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
                                 type="button"
                                 @click="handleSubmit"
@@ -189,16 +194,21 @@ const handleSubmit = async () => {
                                 }}
                             </button>
 
-                            <button @click="exportLogs">Экспорт в CSV</button>
+                            <button
+                                class="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-100 disabled:opacity-50"
+                                @click="exportLogs">Экспорт в CSV
+                            </button>
+
+
+                        </div>
+
+                        <div
+                            v-if="error"
+                            class="text-center text-red-500 text-[16px]"
+                        >
+                            <span class="font-bold">ERROR:</span> {{ error }}
                         </div>
                     </form>
-                </div>
-
-                <div
-                    v-if="error"
-                    class="text-center font-bold text-red-500 text-[13px]"
-                >
-                    {{ error }}
                 </div>
 
                 <div>

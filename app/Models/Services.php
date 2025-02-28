@@ -16,6 +16,11 @@ class Services extends Model
         'active',
     ];
 
+    public static function findService(string $service): ?Services
+    {
+        return Services::where('name', $service)->first();
+    }
+
     public static function validateService(string $service): array
     {
         $existService = Services::where('name', $service)->first();
