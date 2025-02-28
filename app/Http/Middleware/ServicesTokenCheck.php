@@ -42,11 +42,9 @@ class ServicesTokenCheck extends Controller
         ]);
 
         // Проверяем актуальность временной метки (30 минут)
-        if (abs(time() - intval($timestamp)) > 1800) {
-            $this->sendError(
-                'Истек срок действия токена',
-                401
-            );
+//        dd("Токен истёк. Разница: " . abs(time() - intval($timestamp)));
+        if (abs(time() - intval($timestamp)) > 900) {
+            return $this->sendError('Истек срок действия токена', 401);
         }
 
         $sign = hash('sha256', config('app.services_token') . $timestamp . config('app.services_token'));
@@ -56,10 +54,7 @@ class ServicesTokenCheck extends Controller
 
         // Проверяем подпись
         if (!hash_equals($sign, $request->header('X-Signature'))) {
-            $this->sendError(
-                'Неверная подпись запроса',
-                401
-            );
+            return $this->sendError('Неверная подпись запроса', 401);
         }
 
         Log::channel("tokens")->info("ServicesTokenCheck::handle USER IS AUTH", [$userData]);
