@@ -79,9 +79,11 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            match ($incidentType->send_template_id) {
-                1 => SenderManager::preparePushOrMail($existIncident),
-            };
+            if (!empty($incidentType->send_template_id)) {
+                match ($incidentType->send_template_id) {
+                    1 => SenderManager::preparePushOrMail($existIncident)
+                };
+            }
 
             SenderManager::telegramSendMessage(self::ERROR_CLASS,
                 "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"

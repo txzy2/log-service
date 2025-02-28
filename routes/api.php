@@ -54,5 +54,6 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
 
         Route::get('/', [ServicesController::class, 'getServices']);
         Route::post('/edit', [ServicesController::class, 'editService']);
+        Route::post('/add', [ServicesController::class, 'addService']);
     });
 });

@@ -21,11 +21,11 @@ class LogController extends Controller
     public function sendLog(Request $request): JsonResponse
     {
         $data = parent::unsetToken($request->all());
-        $parcedData = ServiceManager::returnParts($data);
-        Log::channel("debug")->info('\LogController::sendLog REQUEST', $parcedData);
+        $parsedData = ServiceManager::returnParts($data);
+        Log::channel("debug")->info('\LogController::sendLog REQUEST', $parsedData);
 
-        $serviceObject = ServiceManager::initServiceObject($parcedData['data']['service']);
-        $return = $serviceObject->logging($parcedData['data']);
+        $serviceObject = ServiceManager::initServiceObject($parsedData['data']['service']);
+        $return = $serviceObject->logging($parsedData['data']);
 
         Log::channel("debug")->info('\LogController::sendLog RESULT SAVING', $return);
 
@@ -59,7 +59,7 @@ class LogController extends Controller
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function exportLogs(Request $request)
+    public function exportLogs(Request $request): mixed
     {
         $data = $request->all();
         $validator = Validator::make(
