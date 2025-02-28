@@ -61,16 +61,16 @@ class Incident extends Model
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function updateData(array $data, int $incidentTypeId): array
+    public static function updateData(array $data, object $incidentType): array
     {
-        Log::channel('debug')->info('Incident::updateData', [$data]);
+        Log::channel('debug')->info('Incident::updateData', $data);
         $incidentData = $data['incident'];
         $type = $data['incident']['type'];
         $existIncident = self::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
                 'incident_text' => $incidentData['message'],
-                'incident_type_id' => $incidentTypeId,
+                'incident_type_id' => $incidentType->id,
                 'service' => $data['service'],
                 'source' => $incidentData['type'],
                 'date' => $incidentData['date'],
@@ -79,17 +79,17 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            $existIncident->save();
-
-            if ($existIncident->send_template_id) {
-                SenderManager::preparePushOrMail($existIncident);
-            }
+            match ($incidentType->send_template_id) {
+                1 => SenderManager::preparePushOrMail($existIncident),
+            };
 
             SenderManager::telegramSendMessage(self::ERROR_CLASS,
                 "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
                 . "Object: <code>$existIncident->incident_object</code>\n"
                 . "Message: <code>$existIncident->incident_text</code>\n"
             );
+
+            $existIncident->save();
 
             return [
                 'success' => true,

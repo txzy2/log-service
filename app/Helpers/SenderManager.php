@@ -60,7 +60,7 @@ class SenderManager
         $token = self::generateMailToken($cleanedMessage);
         try {
             $client = new \GuzzleHttp\Client();
-            $response = $client->post("http://78.24.216.215:513/api/v1/send_mail", [
+            $response = $client->post(config('app.ws_messages_url') . "api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
                 'json' => [
                     "token" => $token,

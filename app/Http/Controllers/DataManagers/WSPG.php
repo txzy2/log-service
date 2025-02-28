@@ -30,7 +30,7 @@ class WSPG extends Controller
         $existType = IncidentType::where('code', $code)->first();
         $result = match (true) {
             $existType === null => Incident::saveData($data), // Сохраняем, если тип инцидента не найден
-            default => Incident::updateData($data, $existType['id']), // Обновляем, если тип инцидента найден
+            default => Incident::updateData($data, $existType), // Обновляем, если тип инцидента найден
         };
 
         return $result;

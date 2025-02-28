@@ -8,8 +8,6 @@ use Monolog\Processor\PsrLogMessageProcessor;
 $storage_logs_path = 'logs/' . date("Y") . '/' . date("Y-m") . '/' . date("d");
 
 return [
-
-
     'default' => env('LOG_CHANNEL', 'stack'),
     'deprecations' => [
         'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
