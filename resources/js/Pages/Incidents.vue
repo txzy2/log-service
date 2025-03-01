@@ -122,6 +122,7 @@ const deleteService = async (service: string) => {
                         <select
                             id=""
                             v-model="service.active"
+                            class="cursor-pointer transition-all duration-150 hover:scale-110"
                             name=""
                             @change="saveServiceState(service)"
                         >
@@ -129,9 +130,8 @@ const deleteService = async (service: string) => {
                             <option class="option" value="N">N</option>
                         </select>
                     </td>
-                    <td>
+                    <td class="cursor-pointer transition-all duration-150 hover:scale-110">
                         <Trash2
-                            class="cursor-pointer"
                             @click="deleteService(service.name)"
                         />
                     </td>

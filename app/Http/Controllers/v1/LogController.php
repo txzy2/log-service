@@ -8,7 +8,6 @@ use App\Models\Incident;
 use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,7 +41,7 @@ class LogController extends Controller
             return response()->json($validate->errors(), 400);
         }
         $data = $request->all();
-        
+
         $parsedData = ServiceManager::returnParts($data);
         if (!$parsedData['success']) {
             Log::channel("debug")->info(self::ERROR_CLASS . " ({$data['service']})", $data);
@@ -76,7 +75,9 @@ class LogController extends Controller
         $validate = Validator::make(
             $request->all(),
             [
-                'service' => 'nullable|string',
+                'service' => 'required|string',
+                'source' => "nullable|string",
+                "code" => "nullable|string",
                 'date' => 'nullable|date_format:Y-m-d'
             ],
             [
@@ -92,20 +93,8 @@ class LogController extends Controller
         $data = $request->all();
         Log::channel("debug")->info('\LogController::sendReport REQUEST', $data);
 
-        $existService = Services::validateService($data['service']);
-        if (!$existService['success']) {
-            return $this->sendResponse($existService['message'], [], false);
-        }
-
-        // TODO: Сделать в модели отдельный метод с разными вариантами выборки
-        if (Arr::has($data, 'date') && !empty($data['date'])) {
-            $checkWithDate = Incident::where('service', $data['service'])->where('date', $data['date'])->get()->toArray();
-            Log::channel("debug")->info('\LogController::sendReport RESULT BY DATE', $checkWithDate);
-            return $this->sendResponse($checkWithDate ?: 'За этот день нет данных');
-        }
-
-        $checkWithoutDate = Incident::where('service', $data['service'])->get()->toArray();
-        return $this->sendResponse("", $checkWithoutDate);
+        $return = Incident::getIncidentDataByParams($data);
+        return $this->sendResponse($return['message'], $return['data'], $return['success']);
     }
 
     /**
@@ -128,6 +117,8 @@ class LogController extends Controller
                 'service.string' => 'Сервис должен быть строкой',
             ]
         );
+
+        Log::channel('debug')->info('EXPORT LOGS REQUEST', $data);
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), 400);

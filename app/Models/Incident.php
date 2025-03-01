@@ -231,6 +231,78 @@ class Incident extends Model
         return response()->streamDownload($callback, $fileName, $headers);
     }
 
+    public static function getIncidentDataByParams(array $data): array
+    {
+        $return = [
+            "success" => false,
+            "message" => "Данные не найдены",
+            "data" => []
+        ];
+
+        $existService = Services::validateService($data['service']);
+        if (!$existService['success']) {
+            $return['message'] = $existService['message'];
+            return $return;
+        }
+
+        $query = self::query()
+            ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
+            ->select([
+                'incident.id',
+                'incident.incident_object',
+                'incident.incident_text',
+                'incident.source',
+                'incident.date',
+                'incident.count',
+                'incident.service',
+                'incident_type.type_name',
+                'incident_type.code',
+                'incident_type.lifecycle'
+            ]);
+
+        if (!empty($data['source'])) {
+            $query->where("source", $data['source']);
+        }
+
+        if (!empty($data['service'])) {
+            $query->where("service", $data['service']);
+        }
+
+        if (!empty($data['date'])) {
+            $query->where("date", $data['date']);
+        }
+
+        if (!empty($data['code'])) {
+            $query->where("code", $data['code']);
+        }
+
+        $returnData = $query->get()->toArray();
+
+        if (!empty($returnData)) {
+            $return['success'] = true;
+            $return['message'] = "";
+
+            $return['data'] = array_map(function ($item) {
+                return [
+                    "id" => $item['id'],
+                    "code" => $item['code'],
+                    "service" => $item['service'],
+                    "source" => $item['source'],
+                    "incident" => [
+                        "object" => $item['incident_object'],
+                        "text" => $item['incident_text'],
+                    ],
+                    "type" => $item['type_name'],
+                    "count" => $item['count'],
+                    "lifecycle" => $item['lifecycle'],
+                    "date" => $item['date']
+                ];
+            }, $returnData);
+        }
+
+        return $return;
+    }
+
     public function incidentType()
     {
         return $this->belongsTo(IncidentType::class, 'incident_type_id');
