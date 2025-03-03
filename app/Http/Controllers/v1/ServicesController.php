@@ -32,7 +32,8 @@ class ServicesController extends Controller
      */
     public function editService(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        $validator = Validator::make($data, [
             'name' => 'required|string',
             'active' => 'required|in:Y,N',
         ], [
@@ -44,39 +45,42 @@ class ServicesController extends Controller
             return $this->sendError($validator->errors()->first(), 400);
         }
 
-        $data = $request->all();
-
-        $service = Services::findService($data['name']);
-        if (!$service) {
+        $existService = Services::findService($data['service']);
+        if (!$existService['success']) {
             return $this->sendError('Сервис не найден', 400);
         }
 
         Services::where('name', $data['name'])->update(['active' => $data['active']]);
-        Log::channel('debug')->info(self::ERROR_CLASS . "::editService", ["{$data['name']}" => $data['active']]);
         return $this->sendResponse('Сервис успешно отредактирован');
     }
 
+    /**
+     * deleteService - удаление сервиса
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return JsonResponse
+     */
     public function deleteService(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        $validator = Validator::make($data, [
             'service' => 'required|string',
         ], [
             '*.required' => 'Поле :attribute обязательно для заполнения',
             'service.string' => 'Невалидный тип данных',
         ]);
+
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), 400);
         }
 
-        $data = $request->all();
-        $existService = Services::where('name', $data['service'])->first();
-        if (!$existService) {
+        $existService = Services::findService($data['service']);
+        if (!$existService['success']) {
             return $this->sendError('Сервис не найден', 400);
         }
-
         $existService->delete();
-        Log::channel('debug')->info(self::ERROR_CLASS . "::deleteService", ["{$data['service']} deleted"]);
 
+        Log::channel('debug')->info(self::ERROR_CLASS . "::deleteService", ["{$data['service']} deleted"]);
         return $this->sendResponse('Сервис успешно удален', Services::all()->toArray());
     }
 }

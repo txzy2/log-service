@@ -4,6 +4,7 @@ use App\Http\Controllers\TestConroller;
 use App\Http\Controllers\v1\LogController;
 use App\Http\Controllers\v1\ServicesController;
 use App\Http\Middleware\ServicesTokenCheck;
+use App\Http\Middleware\ValidateService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test', [TestConroller::class, 'test']);
@@ -13,31 +14,31 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
     Route::prefix('log')->group(function () {
 
         /*
-        * ================================================================
-        * Старый вариант, обсудить с Сергеем или с Леонидом
-        * ================================================================
-        *
-        * Route::post('/', [LogController::class, 'sendLog'])->middleware(TokenCheck::class);
-        *
-        * Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class);
-        * Route::post('/export', [LogController::class, 'exportLogs'])->middleware(ServicesTokenCheck::class);
-        *
-       */
+         * ================================================================
+         * Старый вариант, обсудить с Сергеем или с Леонидом
+         * ================================================================
+         *
+         * Route::post('/', [LogController::class, 'sendLog'])->middleware(TokenCheck::class);
+         *
+         * Route::post('/report', [LogController::class, 'sendReport'])->middleware(ReportTokenCheck::class);
+         * Route::post('/export', [LogController::class, 'exportLogs'])->middleware(ServicesTokenCheck::class);
+         *
+         */
 
-        Route::post('/', [LogController::class, 'sendLog']);
+        Route::post('/', [LogController::class, 'addLog']);
 
         /*
-        * ================================================================
-        * TODO: Идеи для /report
-        * ================================================================
-        *
-        * ВЫБОРКИ:
-        * 1. Сортировка по "Источнику"
-        * 2. Поиск по "Объект инцидента"
-        * 3. Поиск по коду ошибки
-        * 4. Сортировака по дате
-        *
-       */
+         * ================================================================
+         * TODO: Идеи для /report
+         * ================================================================
+         *
+         * ВЫБОРКИ:
+         * 1. Сортировка по "Источнику"
+         * 2. Поиск по "Объект инцидента"
+         * 3. Поиск по коду ошибки
+         * 4. Сортировака по дате
+         *
+         */
         Route::post('/report', [LogController::class, 'sendReport']);
         Route::post('/export', [LogController::class, 'exportLogs']);
     });

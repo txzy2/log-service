@@ -9,6 +9,7 @@ use Telegram\Bot\Laravel\Facades\Telegram;
 
 class SenderManager
 {
+    private const ERROR_CLASS = __CLASS__;
 
     /**
      * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
@@ -20,18 +21,18 @@ class SenderManager
     {
         $getSendType = IncidentType::where('id', $data->incident_type_id)->first();
         if (!$getSendType) {
-            Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
+            Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
         $sendType = $getSendType->send_template_id;
         $template = $getSendType->sendTemplate->template;
-        $recipient = $getSendType->sendTemplate->to;;
+        $recipient = $getSendType->sendTemplate->to;
 
         match ($sendType) {
             1 => self::sendIncidentMessage($recipient, $template),
             // "telegram" => self::sendTelegram($data),
-            default => Log::channel("debug")->error("SENDERMANAGER::sendToSendService ERROR SEND TYPE", [$data]),
+            default => Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE", [$data]),
         };
     }
 
@@ -62,7 +63,7 @@ class SenderManager
         $token = self::generateMailToken($cleanedMessage);
         try {
             $client = new \GuzzleHttp\Client();
-            $response = $client->post(config('app.ws_messages_url') . "api/v1/send_mail", [
+            $client->post(config('app.ws_messages_url') . "api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
                 'json' => [
                     "token" => $token,
@@ -70,11 +71,10 @@ class SenderManager
                     "messages" => $cleanedMessage
                 ]
             ]);
-
-            $return = json_decode($response->getBody()->getContents(), true);
-            Log::channel("debug")->info("SEND INCIDENT MESSAGE RETURN", [$return]);
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage FROM SEND SERVICE", [$e->getMessage()]);
         } catch (\Exception $e) {
-            Log::channel("debug")->error("Ошибка при отправке сообщения: " . $e->getMessage());
+            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage" . $e->getMessage());
         }
     }
 
@@ -101,7 +101,6 @@ class SenderManager
     public static function telegramSendMessage(string $class, string $message): void
     {
         $message = "<b>" . "APP: " . config('app.name') . "</b>\n<b>FROM</b>: <code>$class</code>\n" . $message;
-
         try {
             Telegram::sendMessage([
                 'chat_id' => config('app.chat_id'),
@@ -109,7 +108,7 @@ class SenderManager
                 'parse_mode' => 'HTML',
             ]);
         } catch (\Exception $e) {
-            Log::channel('telegramLogging')->error("ServiceManager::telegramSendMessage ERROR", [$e->getMessage()]);
+            Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }
     }
 }

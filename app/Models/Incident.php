@@ -61,9 +61,8 @@ class Incident extends Model
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function updateData(array $data, object $incidentType): array
+    public static function updateOrCreateData(array $data, object $incidentType): array
     {
-        Log::channel('debug')->info('Incident::updateData', $data);
         $incidentData = $data['incident'];
         $type = $data['incident']['type'];
         $existIncident = self::firstOrNew(
@@ -85,7 +84,8 @@ class Incident extends Model
                 };
             }
 
-            SenderManager::telegramSendMessage(self::ERROR_CLASS,
+            SenderManager::telegramSendMessage(
+                self::ERROR_CLASS,
                 "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
                 . "Object: <code>$existIncident->incident_object</code>\n"
                 . "Message: <code>$existIncident->incident_text</code>\n"
@@ -101,18 +101,11 @@ class Incident extends Model
 
         $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
-        $now = Carbon::now();
-
-        if ($parseDates['currentDate']->lt($now)) {
-            return [
-                'success' => false,
-                'message' => "Текущая дата ($now) не соответствует переданной {$parseDates['currentDate']}"
-            ];
-        }
-
         $existIncident->count++;
+
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
+
             $existIncident->save();
 
             SenderManager::preparePushOrMail($existIncident);
@@ -231,6 +224,13 @@ class Incident extends Model
         return response()->streamDownload($callback, $fileName, $headers);
     }
 
+    /*
+     * getIncidentDataByParams - получаем данные по параметрам
+     *
+     * @param array $data
+     * @return array
+     *
+     * */
     public static function getIncidentDataByParams(array $data): array
     {
         $return = [
