@@ -25,15 +25,13 @@ class WSPG extends Controller
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
         }
         $data['incident']['message'] = $parsedMessage['message'];
-        [$code, $message] = Parser::parceStr($data['incident']['message']);
+        [$code] = Parser::parceStr($data['incident']['message']);
 
         $existType = IncidentType::where('code', $code)->first();
-        $result = match (true) {
+        return match (true) {
             $existType === null => Incident::saveData($data), // Сохраняем, если тип инцидента не найден
-            default => Incident::updateData($data, $existType), // Обновляем, если тип инцидента найден
+            default => Incident::updateOrCreateData($data, $existType), // Обновляем, если тип инцидента найден
         };
-
-        return $result;
     }
 
     /**

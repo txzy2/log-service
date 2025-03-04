@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -61,11 +60,9 @@ class Incident extends Model
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function updateData(array $data, object $incidentType): array
+    public static function updateOrCreateData(array $data, object $incidentType): array
     {
-        Log::channel('debug')->info('Incident::updateData', $data);
         $incidentData = $data['incident'];
-        $type = $data['incident']['type'];
         $existIncident = self::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
@@ -79,50 +76,66 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            if (!empty($incidentType->send_template_id)) {
-                match ($incidentType->send_template_id) {
-                    1 => SenderManager::preparePushOrMail($existIncident)
-                };
-            }
-
-            SenderManager::telegramSendMessage(self::ERROR_CLASS,
-                "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
-                . "Object: <code>$existIncident->incident_object</code>\n"
-                . "Message: <code>$existIncident->incident_text</code>\n"
-            );
-
-            $existIncident->save();
-
+            self::handleNewIncident($existIncident, $incidentType, $data);
             return [
                 'success' => true,
                 'message' => 'Данные успешно сохранены и отправлены'
             ];
         }
 
-        $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
-        $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
-        $now = Carbon::now();
+        return self::handleExistingIncident($existIncident, $incidentData);
+    }
 
-        if ($parseDates['currentDate']->lt($now)) {
-            return [
-                'success' => false,
-                'message' => "Текущая дата ($now) не соответствует переданной {$parseDates['currentDate']}"
-            ];
+    /**
+     * handleNewIncident
+     *
+     * @param mixed $existIncident
+     * @param mixed $incidentType
+     * @param mixed $data
+     * @return void
+     */
+    private static function handleNewIncident($existIncident, $incidentType, $data): void
+    {
+        if (!empty($incidentType->send_template_id)) {
+            match ($incidentType->send_template_id) {
+                1 => SenderManager::preparePushOrMail($existIncident)
+            };
         }
 
+        SenderManager::telegramSendMessage(
+            self::ERROR_CLASS,
+            "\n<b>Новая ошибка</b> от <code>{$data['service']} ({$data['incident']['type']})</code>\n\n"
+            . "Object: <code>{$existIncident->incident_object}</code>\n"
+            . "Message: <code>{$existIncident->incident_text}</code>\n"
+        );
+
+        $existIncident->save();
+    }
+
+    /**
+     * handleExistingIncident
+     *
+     * @param mixed $existIncident
+     * @param mixed $incidentData
+     * @return array{message: string, success: bool}
+     */
+    private static function handleExistingIncident($existIncident, $incidentData): array
+    {
+        $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
+        $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
         $existIncident->count++;
+
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
             SenderManager::preparePushOrMail($existIncident);
-
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
                 "\n<code>ОШИБКА ОБНОВИЛАСЬ</code>\n\n"
-                . "<b>Данные ошибки от $type</b> <code>$existIncident->incident_text</code>\n"
-                . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
-                . "<b>Count:</b> <code>$existIncident->count</code>"
+                . "<b>Данные ошибки от {$incidentData['type']}</b> <code>{$existIncident->incident_text}</code>\n"
+                . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
+                . "<b>Count:</b> <code>{$existIncident->count}</code>"
             );
 
             return [
@@ -130,14 +143,15 @@ class Incident extends Model
                 'message' => 'Данные успешно обновлены'
             ];
         }
+
         $existIncident->save();
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
             "\n<code>ОТПРАВЛЯЛАСЬ РАНЕЕ</code>\n\n"
-            . "<b>Ошибка от $type: </b> <code>$existIncident->incident_text</code>\n"
-            . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
-            . "<b>Count:</b> <code>$existIncident->count</code>"
+            . "<b>Ошибка от {$incidentData['type']}: </b> <code>{$existIncident->incident_text}</code>\n"
+            . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
+            . "<b>Count:</b> <code>{$existIncident->count}</code>"
         );
 
         return [
@@ -229,6 +243,85 @@ class Incident extends Model
         };
 
         return response()->streamDownload($callback, $fileName, $headers);
+    }
+
+    /*
+     * getIncidentDataByParams - получаем данные по параметрам
+     *
+     * @param array $data
+     * @return array
+     *
+     * */
+    public static function getIncidentDataByParams(array $data): array
+    {
+        $return = [
+            "success" => false,
+            "message" => "Данные не найдены",
+            "data" => []
+        ];
+
+        $existService = Services::validateService($data['service']);
+        if (!$existService['success']) {
+            $return['message'] = $existService['message'];
+            return $return;
+        }
+
+        $query = self::query()
+            ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
+            ->select([
+                'incident.id',
+                'incident.incident_object',
+                'incident.incident_text',
+                'incident.source',
+                'incident.date',
+                'incident.count',
+                'incident.service',
+                'incident_type.type_name',
+                'incident_type.code',
+                'incident_type.lifecycle'
+            ]);
+
+        if (!empty($data['source'])) {
+            $query->where("source", $data['source']);
+        }
+
+        if (!empty($data['service'])) {
+            $query->where("service", $data['service']);
+        }
+
+        if (!empty($data['date'])) {
+            $query->where("date", $data['date']);
+        }
+
+        if (!empty($data['code'])) {
+            $query->where("code", $data['code']);
+        }
+
+        $returnData = $query->get()->toArray();
+
+        if (!empty($returnData)) {
+            $return['success'] = true;
+            $return['message'] = "";
+
+            $return['data'] = array_map(function ($item) {
+                return [
+                    "id" => $item['id'],
+                    "code" => $item['code'],
+                    "service" => $item['service'],
+                    "source" => $item['source'],
+                    "incident" => [
+                        "object" => $item['incident_object'],
+                        "text" => $item['incident_text'],
+                    ],
+                    "type" => $item['type_name'],
+                    "count" => $item['count'],
+                    "lifecycle" => $item['lifecycle'],
+                    "date" => $item['date']
+                ];
+            }, $returnData);
+        }
+
+        return $return;
     }
 
     public function incidentType()

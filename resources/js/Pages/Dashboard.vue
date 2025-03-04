@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import {ref} from 'vue';
+import {File} from 'lucide-vue-next';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
-import {genTypes, getSignType} from '../shared/types/types';
+import {genTypes, getSignType, serverDataType} from '../shared/types/types';
 import {getSign} from '../shared/utils/generateToken';
 
 const checkData = ref<{date: string; service: string}>({
@@ -11,18 +12,14 @@ const checkData = ref<{date: string; service: string}>({
     service: null
 });
 
-const serverData = ref<{
-    service: string;
-    date: string;
-    count: number;
-    incident_object: string;
-    incident_text: string;
-    source: string;
-}>({
+const serverData = ref<serverDataType>({
     count: null,
     date: null,
-    incident_object: null,
-    incident_text: null,
+    incident: {
+        object: null,
+        text: null
+    },
+    lifecycle: null,
     source: null
 });
 
@@ -35,14 +32,14 @@ const exportLogs = async () => {
         const params: genTypes = {
             path: 'api/v1/log/export',
             method: 'POST',
-            content: JSON.stringify({
+            content: {
                 ...(checkData.value.date && {date: checkData.value.date}),
                 ...(checkData.value.service && {service: checkData.value.service})
-            })
+            }
         };
 
         const headerParams: getSignType = getSign(params);
-        const response = await axios.post(params.path, JSON.parse(params.content), {
+        const response = await axios.post(params.path, params.content, {
             responseType: 'blob',
             headers: {
                 'x-timestamp': headerParams.timestamp,
@@ -95,20 +92,24 @@ const fetchData = async () => {
         return;
     }
 
+    console.log(response.data.data);
+
     if (
         Array.isArray(response.data.data) &&
         response.data.data.length > 0
     ) {
         // Обработка массива сообщений
-        const responseData = response.data.data.map(item => ({
+        serverData.value = response.data.data.map(item => ({
             count: item.count,
             service: item.service,
             date: item.date,
-            incident_object: item.incident_object,
-            incident_text: item.incident_text,
+            incident: {
+                object: item.incident.object,
+                text: item.incident.text
+            },
+            lifecycle: item.lifecycle,
             source: item.source
         }));
-        serverData.value = responseData; // Сохраняем массив данных
     }
 
     console.log('Обновленный checkData:', checkData.value);
@@ -120,8 +121,11 @@ const resetServerData = () => {
         service: null,
         date: null,
         count: null,
-        incident_object: null,
-        incident_text: null,
+        incident: {
+            object: null,
+            text: null
+        },
+        lifecycle: null,
         source: null
     };
 };
@@ -195,8 +199,10 @@ const handleSubmit = async () => {
                             </button>
 
                             <button
-                                class="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-100 disabled:opacity-50"
-                                @click="exportLogs">Экспорт в CSV
+                                class="flex item-center gap-2 px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-100 disabled:opacity-50"
+                                @click="exportLogs">
+                                <File size="20" />
+                                Экспорт в CSV
                             </button>
 
 
@@ -225,7 +231,10 @@ const handleSubmit = async () => {
                                 <code>Дата</code>
                             </th>
                             <th class="p-2 text-[16px] font-bold">
-                                <code>Количество повторений</code>
+                                <code>Повторения</code>
+                            </th>
+                            <th class="p-2 text-[16px] font-bold">
+                                <code>Цикл жизни</code>
                             </th>
                             <th class="p-2 text-[16px] font-bold">
                                 <code>Объект инцидента</code>
@@ -257,10 +266,13 @@ const handleSubmit = async () => {
                                 {{ item?.count || '-' }}
                             </td>
                             <td class="p-2 text-center">
-                                {{ item?.incident_object || '-' }}
+                                {{ item?.lifecycle + 'д.' || '-' }}
                             </td>
                             <td class="p-2 text-center">
-                                {{ item?.incident_text || '-' }}
+                                {{ item?.incident?.object || '-' }}
+                            </td>
+                            <td class="p-2 text-center">
+                                {{ item?.incident?.text || '-' }}
                             </td>
                             <td class="p-2 text-center group-hover:rounded-r-lg">
                                 {{ item?.source || '-' }}

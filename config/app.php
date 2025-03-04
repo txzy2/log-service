@@ -100,7 +100,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'https_proxy' => env('HTTPS_PROXY'),
+    // 'https_proxy' => env('HTTPS_PROXY'),
     'chat_id' => env('CHAT_ID'),
     'token' => env('TELEGRAM_BOT_TOKEN'),
 ];

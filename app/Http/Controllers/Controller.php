@@ -14,7 +14,7 @@ abstract class Controller
      * @param bool $result
      * @return JsonResponse
      */
-    public function sendResponse(string $message = "", array $data = [], bool $result = true): JsonResponse
+    public function sendResponse(string $message = "", array $data = [], bool $result = true, int $code = 200): JsonResponse
     {
         $response = [
             'success' => $result
@@ -28,7 +28,7 @@ abstract class Controller
             $response['message'] = $message;
         }
 
-        return response()->json($response);
+        return response()->json($response, $code);
     }
 
     /**

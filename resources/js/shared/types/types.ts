@@ -18,3 +18,15 @@ export interface IGenerateToken {
     service: string;
     date?: string;
 }
+
+export type serverDataType = {
+    service: string;
+    date: string;
+    count: number;
+    incident: {
+        object: string;
+        text: string
+    };
+    lifecycle: string;
+    source: string;
+}

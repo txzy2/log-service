@@ -120,9 +120,9 @@ const deleteService = async (service: string) => {
                     <td>{{ service.name }}</td>
                     <td>
                         <select
+                            class="cursor-pointer transition-all duration-150 hover:scale-110"
                             id=""
                             v-model="service.active"
-                            class="cursor-pointer transition-all duration-150 hover:scale-110"
                             name=""
                             @change="saveServiceState(service)"
                         >

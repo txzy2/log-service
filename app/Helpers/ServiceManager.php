@@ -3,9 +3,22 @@
 namespace App\Helpers;
 
 use App\Helpers\Parsers\Parser;
+use App\Models\Services;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ServiceManager
 {
+    private const ERROR_CLASS = __CLASS__;
+
+    private static function sendError(string $error, int $code = 404): JsonResponse
+    {
+        return response()->json([
+            "error" => $error,
+            "code" => $code
+        ]);
+    }
+
     /**
      * initServiceObject - инициализация сервиса
      *
@@ -15,9 +28,7 @@ class ServiceManager
     public static function initServiceObject(string $service): object
     {
         $serviceName = "\\App\\Http\\Controllers\\DataManagers\\{$service}";
-        $serviceObject = new $serviceName();
-
-        return $serviceObject;
+        return new $serviceName();
     }
 
     /**
@@ -29,13 +40,33 @@ class ServiceManager
     public static function getServiceParser(string $service): object
     {
         $serviceName = "\\App\\Helpers\\Parsers\\{$service}";
-        $parcerServiceObject = new $serviceName();
-
-        return $parcerServiceObject;
+        return new $serviceName();
     }
 
     /**
-     * returnParts - проверяет и возвращает части данных
+     * prepareRequestData - метод подготовки и валидации сервиса
+     *
+     * @param array $data
+     * @return array|JsonResponse
+     */
+    public static function prepareRequestData(array $data): mixed
+    {
+        $parsedData = self::returnParts($data);
+        if (!$parsedData['success']) {
+            Log::channel("debug")->info(self::ERROR_CLASS . " ({$data['service']})", $data);
+            return self::sendError("Ошибка парсинга сервиса", 400);
+        }
+
+        $existService = Services::findService($parsedData['data']['service']);
+        if (!$existService) {
+            return self::sendError("Сервис не найден", 400);
+        }
+
+        return $parsedData['data'];
+    }
+
+    /**
+     * returnParts - проверяет и возвращает наименования сервиса и тип инцидента
      *
      * @param array $data
      * @return array[]|array{data: array, success: bool}
