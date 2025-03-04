@@ -44,12 +44,12 @@ class LogController extends Controller
         }
 
         $parsedData = ServiceManager::prepareRequestData($data);
-        Log::channel("debug")->info(self::ERROR_CLASS . ':sendLog REQUEST', [$parsedData]);
+        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$parsedData]);
 
         $serviceObject = ServiceManager::initServiceObject($parsedData['service']);
         $return = $serviceObject->logging($parsedData);
 
-        Log::channel("debug")->info(self::ERROR_CLASS . '::sendLog RESULT SAVING', $return);
+        Log::channel("debug")->info(self::ERROR_CLASS . '::addLog RESULT SAVING', $return);
         return $this->sendResponse($return['message']);
     }
 
@@ -62,7 +62,7 @@ class LogController extends Controller
     public function sendReport(Request $request): JsonResponse
     {
         $data = $request->all();
-        Log::channel("debug")->info('\LogController::sendReport REQUEST', $data);
+        Log::channel("debug")->info(self::ERROR_CLASS . '::sendReport REQUEST', $data);
         $validate = Validator::make(
             $data,
             [
@@ -94,7 +94,7 @@ class LogController extends Controller
     public function exportLogs(Request $request): mixed
     {
         $data = $request->all();
-        Log::channel('debug')->info('EXPORT LOGS REQUEST', $data);
+        Log::channel('debug')->info(self::ERROR_CLASS . '::exportLogs REQUEST', $data);
         $validator = Validator::make(
             $data,
             [

@@ -16,13 +16,13 @@ class ServicesTokenCheck extends Controller
      * @param int $timestamp
      * @param string $signature
      * @param object $request
-     * @throws \Exception
      * @return bool
+     * @throws \Exception
      */
     private function validateSignature(int $timestamp, string $signature, object $request): bool
     {
         Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
-        if (abs(time() - $timestamp) > 600) {
+        if (abs(time() - $timestamp) > 250) {
             throw new \Exception('Истек срок действия токена');
         }
 
@@ -48,6 +48,12 @@ class ServicesTokenCheck extends Controller
      */
     public function handle(Request $request, Closure $next): mixed
     {
+        $userData = [
+            'ip' => $request->ip(),
+            'userAgent' => $request->header('user-agent'),
+            'auth' => $request->header('Authorization')
+        ];
+
         $validated = Validator::make($request->headers->all(), [
             'x-timestamp' => 'required',
             'x-signature' => 'required',
@@ -66,9 +72,13 @@ class ServicesTokenCheck extends Controller
                 $request
             );
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage(), 401);
+            $error = $e->getMessage();
+            Log::channel('tokens')->error("ERROR TO AUTH => <$error>", $userData);
+            return $this->sendError($error, 401);
         }
 
+        Log::channel('tokens')->info('USER IS AUTH', $userData);
         return $next($request);
     }
+
 }
