@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -64,7 +63,6 @@ class Incident extends Model
     public static function updateOrCreateData(array $data, object $incidentType): array
     {
         $incidentData = $data['incident'];
-        $type = $data['incident']['type'];
         $existIncident = self::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
@@ -78,44 +76,66 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            if (!empty($incidentType->send_template_id)) {
-                match ($incidentType->send_template_id) {
-                    1 => SenderManager::preparePushOrMail($existIncident)
-                };
-            }
-
-            SenderManager::telegramSendMessage(
-                self::ERROR_CLASS,
-                "\n<b>Новая ошибка</b> от <code>{$data['service']} ($type)</code>\n\n"
-                . "Object: <code>$existIncident->incident_object</code>\n"
-                . "Message: <code>$existIncident->incident_text</code>\n"
-            );
-
-            $existIncident->save();
-
+            self::handleNewIncident($existIncident, $incidentType, $data);
             return [
                 'success' => true,
                 'message' => 'Данные успешно сохранены и отправлены'
             ];
         }
 
+        return self::handleExistingIncident($existIncident, $incidentData);
+    }
+
+    /**
+     * handleNewIncident
+     *
+     * @param mixed $existIncident
+     * @param mixed $incidentType
+     * @param mixed $data
+     * @return void
+     */
+    private static function handleNewIncident($existIncident, $incidentType, $data): void
+    {
+        if (!empty($incidentType->send_template_id)) {
+            match ($incidentType->send_template_id) {
+                1 => SenderManager::preparePushOrMail($existIncident)
+            };
+        }
+
+        SenderManager::telegramSendMessage(
+            self::ERROR_CLASS,
+            "\n<b>Новая ошибка</b> от <code>{$data['service']} ({$data['incident']['type']})</code>\n\n"
+            . "Object: <code>{$existIncident->incident_object}</code>\n"
+            . "Message: <code>{$existIncident->incident_text}</code>\n"
+        );
+
+        $existIncident->save();
+    }
+
+    /**
+     * handleExistingIncident
+     *
+     * @param mixed $existIncident
+     * @param mixed $incidentData
+     * @return array{message: string, success: bool}
+     */
+    private static function handleExistingIncident($existIncident, $incidentData): array
+    {
         $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
         $existIncident->count++;
 
         if ($diffInDays >= $existIncident->incidentType->lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
-
             $existIncident->save();
 
             SenderManager::preparePushOrMail($existIncident);
-
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
                 "\n<code>ОШИБКА ОБНОВИЛАСЬ</code>\n\n"
-                . "<b>Данные ошибки от $type</b> <code>$existIncident->incident_text</code>\n"
-                . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
-                . "<b>Count:</b> <code>$existIncident->count</code>"
+                . "<b>Данные ошибки от {$incidentData['type']}</b> <code>{$existIncident->incident_text}</code>\n"
+                . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
+                . "<b>Count:</b> <code>{$existIncident->count}</code>"
             );
 
             return [
@@ -123,14 +143,15 @@ class Incident extends Model
                 'message' => 'Данные успешно обновлены'
             ];
         }
+
         $existIncident->save();
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
             "\n<code>ОТПРАВЛЯЛАСЬ РАНЕЕ</code>\n\n"
-            . "<b>Ошибка от $type: </b> <code>$existIncident->incident_text</code>\n"
-            . "<b>Object:</b> <code>$existIncident->incident_object</code>\n"
-            . "<b>Count:</b> <code>$existIncident->count</code>"
+            . "<b>Ошибка от {$incidentData['type']}: </b> <code>{$existIncident->incident_text}</code>\n"
+            . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
+            . "<b>Count:</b> <code>{$existIncident->count}</code>"
         );
 
         return [

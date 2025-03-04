@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\Validator;
 
 class ServicesTokenCheck extends Controller
 {
+    /**
+     * validateSignature - валидация сигнатуры
+     *
+     * @param int $timestamp
+     * @param string $signature
+     * @param object $request
+     * @throws \Exception
+     * @return bool
+     */
     private function validateSignature(int $timestamp, string $signature, object $request): bool
     {
         Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
@@ -30,6 +39,13 @@ class ServicesTokenCheck extends Controller
         return true;
     }
 
+    /**
+     * handle - главный метод проверки сигнатуры
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @return mixed
+     */
     public function handle(Request $request, Closure $next): mixed
     {
         $validated = Validator::make($request->headers->all(), [
@@ -40,7 +56,7 @@ class ServicesTokenCheck extends Controller
         ]);
 
         if ($validated->fails()) {
-            return response()->json(['error' => $validated->errors()->first()], 401);
+            return $this->sendError($validated->errors()->first(), 401);
         }
 
         try {
