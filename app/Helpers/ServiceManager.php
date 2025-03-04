@@ -53,12 +53,11 @@ class ServiceManager
     {
         $parsedData = self::returnParts($data);
         if (!$parsedData['success']) {
-            Log::channel("debug")->info(self::ERROR_CLASS . " ({$data['service']})", $data);
+            Log::channel("debug")->info(self::ERROR_CLASS . "::prepareRequestData ({$data['service']})", $data);
             return self::sendError("Ошибка парсинга сервиса", 400);
         }
 
-        $existService = Services::findService($parsedData['data']['service']);
-        if (!$existService) {
+        if (!Services::findService($parsedData['data']['service'])) {
             return self::sendError("Сервис не найден", 400);
         }
 
