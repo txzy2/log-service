@@ -44,6 +44,9 @@ class LogController extends Controller
         }
 
         $parsedData = ServiceManager::prepareRequestData($data);
+        if (isset($parsedData['error'])) {
+            return $this->sendError($parsedData['error'], 400);
+        }
         Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$parsedData]);
 
         $serviceObject = ServiceManager::initServiceObject($parsedData['service']);
@@ -82,6 +85,7 @@ class LogController extends Controller
         }
 
         $return = Incident::getIncidentDataByParams($data);
+        Log::channel('debug')->info(self::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
         return $this->sendResponse($return['message'], $return['data'], $return['success']);
     }
 

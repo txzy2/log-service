@@ -49,16 +49,17 @@ class ServiceManager
      * @param array $data
      * @return array|JsonResponse
      */
-    public static function prepareRequestData(array $data): mixed
+    public static function prepareRequestData(array $data): array
     {
         $parsedData = self::returnParts($data);
         if (!$parsedData['success']) {
             Log::channel("debug")->info(self::ERROR_CLASS . "::prepareRequestData ({$data['service']})", $data);
-            return self::sendError("Ошибка парсинга сервиса", 400);
+            return ['error' => "Ошибка парсинга сервиса"];
         }
 
-        if (!Services::findService($parsedData['data']['service'])) {
-            return self::sendError("Сервис не найден", 400);
+        $existService = Services::validateService($parsedData['data']['service']);
+        if (!$existService['success']) {
+            return ['error' => $existService['message']];
         }
 
         return $parsedData['data'];
