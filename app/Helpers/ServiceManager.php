@@ -11,14 +11,6 @@ class ServiceManager
 {
     private const ERROR_CLASS = __CLASS__;
 
-    private static function sendError(string $error, int $code = 404): JsonResponse
-    {
-        return response()->json([
-            "error" => $error,
-            "code" => $code
-        ]);
-    }
-
     /**
      * initServiceObject - инициализация сервиса
      *
@@ -69,12 +61,19 @@ class ServiceManager
      * returnParts - проверяет и возвращает наименования сервиса и тип инцидента
      *
      * @param array $data
-     * @return array[]|array{data: array, success: bool}
+     * @return array
      */
     public static function returnParts(array $data): array
     {
-        [$data['service'], $data['incident']['type']] = Parser::parceStr($data['service']);
+        if (!isset($data['service']) || !isset($data['incident'])) {
+            return [
+                'success' => false,
+                'data' => $data,
+                'message' => 'Отсутствуют необходимые данные'
+            ];
+        }
 
+        [$data['service'], $data['incident']['type']] = Parser::parseStr($data['service']);
         return [
             'success' => true,
             'data' => $data

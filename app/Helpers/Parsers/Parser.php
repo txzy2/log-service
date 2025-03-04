@@ -7,23 +7,23 @@ use Carbon\Carbon;
 class Parser
 {
     /**
-     * parceStr - парсим строку с "|" в массив
-     * 
+     * parseStr - парсит строку на основе разделителя '|'
+     *
      * @param string $str
-     * @return bool|string[]
+     * @return array
      */
-    public static function parceStr(string $str): array
+    public static function parseStr(string $str): array
     {
-        if (strpos($str, '|') === false) {
-            return [$str, ''];
+        if (empty($str)) {
+            return ['', ''];
         }
 
-        return explode('|', $str);
+        return strpos($str, '|') === false ? [$str, ''] : explode('|', $str);
     }
 
     /**
      * parceDates - парсим даты
-     * 
+     *
      * @param string $prevDate
      * @param string $currentDate
      * @return array{currentDate: Carbon, prevDate: Carbon}
