@@ -25,7 +25,7 @@ class WSPG extends Controller
             \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
         }
         $data['incident']['message'] = $parsedMessage['message'];
-        [$code] = Parser::parceStr($data['incident']['message']);
+        [$code] = Parser::parseStr($data['incident']['message']);
 
         $existType = IncidentType::where('code', $code)->first();
         return match (true) {
