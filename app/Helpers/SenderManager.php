@@ -25,14 +25,17 @@ class SenderManager
             return;
         }
 
-        $sendType = $getSendType->send_template_id;
-        $template = $getSendType->sendTemplate->template;
-        $recipient = $getSendType->sendTemplate->to;
-
-        match ($sendType) {
-            1 => self::sendIncidentMessage($recipient, $template),
+        match ($getSendType->send_template_id) {
+            1 => self::sendIncidentMessage($getSendType->sendTemplate->to, $getSendType->sendTemplate->template),
             // "telegram" => self::sendTelegram($data),
-            default => Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE", [$data]),
+            default => Log::channel("debug")
+                ->error(
+                    self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE",
+                    [
+                        'DATA' => $data,
+                        'TEMPLATE_ID' => $getSendType->send_template_id
+                    ]
+                ),
         };
     }
 
@@ -98,15 +101,32 @@ class SenderManager
      * @param string $message
      * @return void
      */
-    public static function telegramSendMessage(string $class, string $message): void
+    public static function telegramSendMessage(string $class, string $title, string $text, array $additionalInfo = []): void
     {
-        $message = "<b>" . "APP: " . config('app.name') . "</b>\n<b>FROM</b>: <code>$class</code>\n" . $message;
+        $lineBreak = "\n";
+        $bold = ['*', '*'];
+        $code = ['```json', '```'];
+        $dateTime = "$bold[0][=== " . date('H:i:s d-m-Y') . " ===]$bold[1]" . $lineBreak . $lineBreak;
+        $appName = config('app.name') ?? ".env is not filled";
+
+        $msgTitle = "$bold[0]Address: $bold[1]" . $appName . $lineBreak . "$bold[0]ERROR CLASS:$bold[1] $class" . $lineBreak . $lineBreak;
+
+        $response = "$bold[0]Error INFO: $bold[1]$lineBreak";
+        $response .= empty($text) ? "MESSAGE IS EMPTY" : $code[0] . "$lineBreak$text$lineBreak" . $code[1];
+
+        $additionalInfoString = "$bold[0]Additional INFO:$bold[1]$lineBreak";
+        $additionalInfoString .= $code[0] . " " . json_encode($additionalInfo, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . $code[1];
+
+        $preparedMessage = $dateTime . $msgTitle . "$bold[0]$title$bold[1]" . $lineBreak . $lineBreak . $response . $lineBreak . $additionalInfoString;
+
         try {
             Telegram::sendMessage([
                 'chat_id' => config('app.chat_id'),
-                'text' => $message,
-                'parse_mode' => 'HTML',
+                'text' => $preparedMessage,
+                'parse_mode' => 'Markdown',
             ]);
+
+            Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
         } catch (\Exception $e) {
             Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }

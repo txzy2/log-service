@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   title: API Сервиса Логирования
   version: 1.0.0
-  description: API для сервиса логирования инцидентов, получения отчетов и управления сервисами. 
-    Позволяет отслеживать и анализировать инциденты в различных сервисах, формировать отчеты 
+  description: API для сервиса логирования инцидентов, получения отчетов и управления сервисами.
+    Позволяет отслеживать и анализировать инциденты в различных сервисах, формировать отчеты
     и управлять конфигурацией сервисов.
   contact:
     name: Kamaev Anton
@@ -11,7 +11,7 @@ info:
     # url: https://kamaev.ru
 
 paths:
-  /api/v1/log/add:
+  /api/v1/log:
     post:
       summary: Добавление лога инцидента
       tags:
@@ -44,6 +44,31 @@ paths:
           description: Успешное получение отчета
         '401':
           $ref: '#/components/responses/AuthError'
+
+  /api/v1/log/export:
+    post:
+      summary: Экспорт логов
+      tags:
+        - Логи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                  description: Дата для экспорта логов (формат Y-m-d)
+                service:
+                  type: string
+                  description: Название сервиса
+      responses:
+        '200':
+          description: Успешный экспорт логов
+        '400':
+          $ref: '#/components/responses/ValidationError'
 
   /api/v1/services:
     get:
@@ -86,6 +111,34 @@ paths:
       responses:
         '200':
           description: Сервис успешно отредактирован
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /api/v1/services/delete:
+    post:
+      summary: Удаление сервиса
+      tags:
+        - Сервисы
+      security:
+        - ServicesToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: string
+                  description: Название сервиса
+      parameters:
+        - $ref: '#/components/parameters/XTimestamp'
+        - $ref: '#/components/parameters/XSignature'
+      responses:
+        '200':
+          description: Сервис успешно удален
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -180,7 +233,7 @@ components:
           description: Название сервиса
         active:
           type: string
-          # enum: [Y, N]
+          enum: [Y, N]
           description: Статус сервиса
 
   responses:

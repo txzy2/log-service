@@ -42,9 +42,9 @@ class Incident extends Model
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "\n<code>$message</code>\n\n"
-            . "<b>Object:</b> <code>{$data['incident']['object']}</code>\n"
-            . "<b>Message:</b> <code>{$data['incident']['message']}</code>"
+            $message,
+            (string) $data['incident']['message'],
+            ['Object' => $data['incident']['object']]
         );
 
         return [
@@ -104,9 +104,14 @@ class Incident extends Model
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "\n<b>Новая ошибка</b> от <code>{$data['service']} ({$data['incident']['type']})</code>\n\n"
-            . "Object: <code>{$existIncident->incident_object}</code>\n"
-            . "Message: <code>{$existIncident->incident_text}</code>\n"
+            "Новая ошибка от {$data['service']} ({$data['incident']['type']})",
+            (string) $existIncident->incident_text,
+            [
+                'INCIDENT_TYPE' => $incidentType->type_name,
+                'CODE' => $incidentType->code,
+                'INCIDENT_OBJECT' => $existIncident->incident_object,
+                'NEXT_SEND_DATE' => now()->addDays((int)$existIncident->incidentType->lifecycle)->format('d-m-Y')
+            ]
         );
 
         $existIncident->save();
@@ -122,20 +127,19 @@ class Incident extends Model
     private static function handleExistingIncident($existIncident, $incidentData): array
     {
         $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
-        $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
+        $lifecycle = $existIncident->incidentType->lifecycle;
         $existIncident->count++;
 
-        if ($diffInDays >= $existIncident->incidentType->lifecycle) {
+        if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
             SenderManager::preparePushOrMail($existIncident);
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
-                "\n<code>ОШИБКА ОБНОВИЛАСЬ</code>\n\n"
-                . "<b>Данные ошибки от {$incidentData['type']}</b> <code>{$existIncident->incident_text}</code>\n"
-                . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
-                . "<b>Count:</b> <code>{$existIncident->count}</code>"
+                "ОШИБКА ОБНОВИЛАСЬ {$incidentData['type']}",
+                (string) $existIncident->incident_text,
+                ['Object' => $existIncident->incident_object, 'count' => $existIncident->count]
             );
 
             return [
@@ -148,10 +152,14 @@ class Incident extends Model
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "\n<code>ОТПРАВЛЯЛАСЬ РАНЕЕ</code>\n\n"
-            . "<b>Ошибка от {$incidentData['type']}: </b> <code>{$existIncident->incident_text}</code>\n"
-            . "<b>Object:</b> <code>{$existIncident->incident_object}</code>\n"
-            . "<b>Count:</b> <code>{$existIncident->count}</code>"
+            "ОТПРАВЛЯЛАСЬ РАНЕЕ",
+            (string) $existIncident->incident_text,
+            [
+                'OBJECT' => $existIncident->incident_object,
+                'COUNT' => $existIncident->count,
+                'LIFECICLE' => $lifecycle,
+                'NEXT_SEND_DATE' => now()->addDays((int)$lifecycle)->format('d-m-Y')
+            ]
         );
 
         return [

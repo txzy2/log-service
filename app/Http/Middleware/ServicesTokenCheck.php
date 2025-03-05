@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ServicesTokenCheck extends Controller
 {
+    private const ERROR_CLASS = __CLASS__;
     /**
      * validateSignature - валидация сигнатуры
      *
@@ -23,7 +24,7 @@ class ServicesTokenCheck extends Controller
     {
         Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
         if (abs(time() - $timestamp) > 250) {
-            throw new \Exception('Истек срок действия токена');
+            throw new \Exception('The token has expired');
         }
 
         $sign = hash_hmac(
@@ -33,7 +34,7 @@ class ServicesTokenCheck extends Controller
         );
         Log::channel('tokens')->info('SYSTEM SIGN', [$sign]);
         if (!hash_equals($sign, $signature)) {
-            throw new \Exception('Неверная подпись запроса');
+            throw new \Exception('Invalid request signature');
         }
 
         return true;
@@ -73,12 +74,11 @@ class ServicesTokenCheck extends Controller
             );
         } catch (\Exception $e) {
             $error = $e->getMessage();
-            Log::channel('tokens')->error("ERROR TO AUTH => <$error>", $userData);
+            Log::channel('tokens')->error(self::ERROR_CLASS . "::handle ERROR TO AUTH $error", $userData);
             return $this->sendError($error, 401);
         }
 
-        Log::channel('tokens')->info('USER IS AUTH', $userData);
+        Log::channel('tokens')->info(self::ERROR_CLASS . '::handle USER IS AUTH', $userData);
         return $next($request);
     }
-
 }

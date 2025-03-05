@@ -26,19 +26,6 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
          */
 
         Route::post('/', [LogController::class, 'addLog']);
-
-        /*
-         * ================================================================
-         * TODO: Идеи для /report
-         * ================================================================
-         *
-         * ВЫБОРКИ:
-         * 1. Сортировка по "Источнику"
-         * 2. Поиск по "Объект инцидента"
-         * 3. Поиск по коду ошибки
-         * 4. Сортировака по дате
-         *
-         */
         Route::post('/report', [LogController::class, 'sendReport']);
         Route::post('/export', [LogController::class, 'exportLogs']);
     });
