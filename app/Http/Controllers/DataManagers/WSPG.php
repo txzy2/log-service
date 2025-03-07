@@ -2,38 +2,10 @@
 
 namespace App\Http\Controllers\DataManagers;
 
-use App\Helpers\Parsers\Parser;
-use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
-use App\Models\Incident;
-use App\Models\IncidentType;
 
 class WSPG extends Controller
 {
-    /**
-     * logging - логируем инцидент
-     * Получаем сырые данные, парсим и сохраняем
-     *
-     * @param array $data
-     * @return array{message: string, success: bool}
-     */
-    public function logging(array $data): array
-    {
-        $serviceMessageParser = ServiceManager::getServiceParser($data['incident']['type']);
-        $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
-        if (!$parsedMessage['success']) {
-            \Illuminate\Support\Facades\Log::channel("debug")->info("WSPG PARSE ERROR", $serviceMessageParser['data']);
-        }
-        $data['incident']['message'] = $parsedMessage['message'];
-        [$code] = Parser::parseStr($data['incident']['message']);
-
-        $existType = IncidentType::where('code', $code)->first();
-        return match (true) {
-            $existType === null => Incident::saveData($data), // Сохраняем, если тип инцидента не найден
-            default => Incident::updateOrCreateData($data, $existType), // Обновляем, если тип инцидента найден
-        };
-    }
-
     /**
      * Публичный метод для проверки токена
      *

@@ -24,17 +24,20 @@ class ServiceManager
     }
 
     /**
-     * getServiceParcer - получает объект парсера для указанного сервиса
+     * getServiceParser - получает объект парсера для указанного сервиса
      *
      * @param string $service
-     * @return object
+     * @return object|bool
      */
-    public static function getServiceParser(string $service): object
+    public static function getServiceParser(string $service): object|bool
     {
         $serviceName = "\\App\\Helpers\\Parsers\\{$service}";
-        return new $serviceName();
-    }
+        if (class_exists($serviceName)) {
+            return new $serviceName();
+        }
 
+        return false;
+    }
     /**
      * prepareRequestData - метод подготовки и валидации сервиса
      *
@@ -79,5 +82,4 @@ class ServiceManager
             'data' => $data
         ];
     }
-
 }

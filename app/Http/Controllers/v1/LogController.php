@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Actions\Logging\Logging;
 use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
@@ -24,11 +25,12 @@ class LogController extends Controller
     public function addLog(Request $request): JsonResponse
     {
         $data = $request->all();
+        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog RAW REQUEST', [$data]);
         $validate = Validator::make(
             $data,
             [
                 'service' => 'required|string',
-                'incident' => 'required|array',
+                'incident' => 'required',
                 'incident.object' => 'required|string',
                 'incident.date' => 'required|date_format:d-m-Y|after_or_equal:today',
                 'incident.message' => 'required|array',
@@ -49,8 +51,9 @@ class LogController extends Controller
         }
         Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$parsedData]);
 
-        $serviceObject = ServiceManager::initServiceObject($parsedData['service']);
-        $return = $serviceObject->logging($parsedData);
+        // $serviceObject = ServiceManager::initServiceObject($parsedData['service']);
+        // $return = $serviceObject->logging($parsedData);
+        $return = Logging::writeOrSaveLog($parsedData);
 
         Log::channel("debug")->info(self::ERROR_CLASS . '::addLog RESULT SAVING', $return);
         return $this->sendResponse($return['message']);

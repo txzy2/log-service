@@ -62,6 +62,7 @@ class ServicesTokenCheck extends Controller
             '*.required' => 'Заголовок :attribute обязателен для запроса'
         ]);
 
+
         if ($validated->fails()) {
             return $this->sendError($validated->errors()->first(), 401);
         }

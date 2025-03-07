@@ -15,7 +15,7 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
 
         /*
          * ================================================================
-         * Старый вариант, обсудить с Сергеем или с Леонидом
+         * NOTE: Старый вариант, обсудить с Сергеем или с Леонидом
          * ================================================================
          *
          * Route::post('/', [LogController::class, 'sendLog'])->middleware(TokenCheck::class);

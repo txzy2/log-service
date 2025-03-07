@@ -83,7 +83,7 @@ class Incident extends Model
             ];
         }
 
-        return self::handleExistingIncident($existIncident, $incidentData);
+        return self::handleExistingIncident($existIncident, $incidentData, $incidentType);
     }
 
     /**
@@ -124,7 +124,7 @@ class Incident extends Model
      * @param mixed $incidentData
      * @return array{message: string, success: bool}
      */
-    private static function handleExistingIncident($existIncident, $incidentData): array
+    private static function handleExistingIncident(object $existIncident, array $incidentData, object $incidentType): array
     {
         $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
         $lifecycle = $existIncident->incidentType->lifecycle;
@@ -134,7 +134,12 @@ class Incident extends Model
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
-            SenderManager::preparePushOrMail($existIncident);
+            if (!empty($incidentType->send_template_id)) {
+                match ($incidentType->send_template_id) {
+                    1 => SenderManager::preparePushOrMail($existIncident)
+                };
+            }
+
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
                 "ОШИБКА ОБНОВИЛАСЬ {$incidentData['type']}",
@@ -152,7 +157,7 @@ class Incident extends Model
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
-            "ОТПРАВЛЯЛАСЬ РАНЕЕ",
+            "ДОБАВЛЯЛАСЬ РАНЕЕ",
             (string) $existIncident->incident_text,
             [
                 'OBJECT' => $existIncident->incident_object,
