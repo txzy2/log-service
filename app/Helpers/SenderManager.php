@@ -25,14 +25,17 @@ class SenderManager
             return;
         }
 
-        $sendType = $getSendType->send_template_id;
-        $template = $getSendType->sendTemplate->template;
-        $recipient = $getSendType->sendTemplate->to;
-
-        match ($sendType) {
-            1 => self::sendIncidentMessage($recipient, $template),
+        match ($getSendType->send_template_id) {
+            1 => self::sendIncidentMessage($getSendType->sendTemplate->to, $getSendType->sendTemplate->template),
             // "telegram" => self::sendTelegram($data),
-            default => Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE", [$data]),
+            default => Log::channel("debug")
+                ->error(
+                    self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE",
+                    [
+                        'DATA' => $data,
+                        'TEMPLATE_ID' => $getSendType->send_template_id
+                    ]
+                ),
         };
     }
 
@@ -122,6 +125,8 @@ class SenderManager
                 'text' => $preparedMessage,
                 'parse_mode' => 'Markdown',
             ]);
+
+            Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
         } catch (\Exception $e) {
             Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }

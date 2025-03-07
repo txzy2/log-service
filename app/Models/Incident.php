@@ -106,7 +106,12 @@ class Incident extends Model
             self::ERROR_CLASS,
             "Новая ошибка от {$data['service']} ({$data['incident']['type']})",
             (string) $existIncident->incident_text,
-            ['INCIDENT_TYPE'=> $incidentType->type_name, 'CODE'=> $incidentType->code, 'INCIDENT_OBJECT' => $existIncident->incident_object]
+            [
+                'INCIDENT_TYPE' => $incidentType->type_name,
+                'CODE' => $incidentType->code,
+                'INCIDENT_OBJECT' => $existIncident->incident_object,
+                'NEXT_SEND_DATE' => now()->addDays((int)$existIncident->incidentType->lifecycle)->format('d-m-Y')
+            ]
         );
 
         $existIncident->save();
@@ -122,10 +127,10 @@ class Incident extends Model
     private static function handleExistingIncident($existIncident, $incidentData): array
     {
         $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
-        $diffInDays = $parseDates['prevDate']->diffInDays($parseDates['currentDate'], true);
+        $lifecycle = $existIncident->incidentType->lifecycle;
         $existIncident->count++;
 
-        if ($diffInDays >= $existIncident->incidentType->lifecycle) {
+        if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
@@ -149,7 +154,12 @@ class Incident extends Model
             self::ERROR_CLASS,
             "ОТПРАВЛЯЛАСЬ РАНЕЕ",
             (string) $existIncident->incident_text,
-            ['Object' => $existIncident->incident_object, 'count' => $existIncident->count]
+            [
+                'OBJECT' => $existIncident->incident_object,
+                'COUNT' => $existIncident->count,
+                'LIFECICLE' => $lifecycle,
+                'NEXT_SEND_DATE' => now()->addDays((int)$lifecycle)->format('d-m-Y')
+            ]
         );
 
         return [
