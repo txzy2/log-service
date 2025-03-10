@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TestConroller;
+use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
 use App\Http\Controllers\v1\ServicesController;
 use App\Http\Middleware\ServicesTokenCheck;
@@ -30,10 +31,18 @@ Route::prefix('v1')->middleware(ServicesTokenCheck::class)->group(function () {
         Route::post('/export', [LogController::class, 'exportLogs']);
     });
 
-    // Контроллеры для работы на фронтенде
-    Route::prefix('services')->group(function () {
-        Route::get('/', [ServicesController::class, 'getServices']);
-        Route::post('/edit', [ServicesController::class, 'editService']);
-        Route::post('/delete', [ServicesController::class, 'deleteService']);
+    // Работа с настройками инстдентов
+    Route::prefix('incidents')->group(function () {
+
+        Route::prefix('types')->group(function () {
+            Route::post('/add', [IncidentController::class, 'addType']);
+            // TODO: Сделать /edit
+        });
+
+        Route::prefix('services')->group(function () {
+            Route::get('/', [ServicesController::class, 'getServices']);
+            Route::post('/edit', [ServicesController::class, 'editService']);
+            Route::post('/delete', [ServicesController::class, 'deleteService']);
+        });
     });
 });

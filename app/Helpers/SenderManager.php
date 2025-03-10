@@ -75,9 +75,9 @@ class SenderManager
                 ]
             ]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage FROM SEND SERVICE", [$e->getMessage()]);
+            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
         } catch (\Exception $e) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage" . $e->getMessage());
+            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage \Exception" . $e->getMessage());
         }
     }
 

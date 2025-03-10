@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,7 +22,8 @@ class ServicesController extends Controller
     public function getServices(): JsonResponse
     {
         $services = Services::all()->toArray();
-        return $this->sendResponse('', $services);
+        $incidentTypes = DB::table('incident_type')->select('type_name', 'code', 'lifecycle')->get()->toArray();
+        return $this->sendResponse('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
     }
 
     /**
