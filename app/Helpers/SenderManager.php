@@ -66,7 +66,7 @@ class SenderManager
         $token = self::generateMailToken($cleanedMessage);
         try {
             $client = new \GuzzleHttp\Client();
-            $client->post(config('app.ws_messages_url') . "api/v1/send_mail", [
+            $result = $client->post(config('app.ws_messages_url') . "/api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
                 'json' => [
                     "token" => $token,
@@ -74,6 +74,8 @@ class SenderManager
                     "messages" => $cleanedMessage
                 ]
             ]);
+
+            Log::channel('debug')->info(static::ERROR_CLASS . '::sendeMessages RESPONSE', [$result]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
         } catch (\Exception $e) {

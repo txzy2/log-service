@@ -1,16 +1,9 @@
 <?php
-/*
- * =====================================
- * NOTE: UNUSED
- * =====================================
- */
 
 namespace App\Http\Middleware;
 
-use App\Helpers\SenderManager;
-use App\Helpers\ServiceManager;
 use App\Http\Controllers\Controller;
-use App\Models\Services;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -18,14 +11,43 @@ use Illuminate\Support\Facades\Validator;
 class TokenCheck extends Controller
 {
     private const ERROR_CLASS = __CLASS__;
+    /**
+     * validateSignature - валидация сигнатуры
+     *
+     * @param int $timestamp
+     * @param string $signature
+     * @param object $request
+     * @return bool
+     * @throws \Exception
+     */
+    private function validateSignature(int $timestamp, string $signature, object $request): bool
+    {
+        Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
+        if (abs(time() - $timestamp) > 250) {
+            throw new \Exception('The token has expired');
+        }
+
+        $sign = hash_hmac(
+            'sha256',
+            $request->method() . $request->path() . $timestamp . $request->getContent(),
+            config('app.services_token')
+        );
+        Log::channel('tokens')->info('SYSTEM SIGN', [$sign]);
+        if (!hash_equals($sign, $signature)) {
+            throw new \Exception('Invalid request signature');
+        }
+
+        return true;
+    }
 
     /**
-     * Проверяет валидность токена для запроса
+     * handle - главный метод проверки сигнатуры
      *
-     * @param array $data Массив с данными запроса
-     * @return array{success: bool, message: string} Результат проверки токена
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @return mixed
      */
-    public function handle(Request $request, \Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $userData = [
             'ip' => $request->ip(),
@@ -33,83 +55,31 @@ class TokenCheck extends Controller
             'auth' => $request->header('Authorization')
         ];
 
-        $validate = Validator::make(
-            $request->all(),
-            [
-                'token' => 'required|string',
-                'service' => 'required|string',
-                'incident' => 'required|array',
-                'incident.object' => 'required|string',
-                'incident.date' => 'required|date_format:d-m-Y',
-                'incident.message' => 'required|array',
-            ],
-            [
-                '*.required' => 'Поле :attribute обязательно для заполнения',
-            ]
-        );
+        $validated = Validator::make($request->headers->all(), [
+            'x-timestamp' => 'required',
+            'x-signature' => 'required',
+        ], [
+            '*.required' => 'Заголовок :attribute обязателен для запроса'
+        ]);
 
-        if ($validate->fails()) {
-            return response()->json($validate->errors(), 400);
+
+        if ($validated->fails()) {
+            return $this->sendError($validated->errors()->first(), 401);
         }
 
-        $data = $request->all();
-
-        $parcedData = ServiceManager::returnParts($data);
-        if (!$parcedData['success']) {
-            Log::channel("tokens")->info(self::ERROR_CLASS . " ({$data['service']})", $userData);
-            return $this->sendError("Ошибка парсинга сервиса. Передан неверный сервис", 400);
-        }
-
-        $checkResult = $this->tokenValidate($parcedData['data']);
-
-        if (!$checkResult['success']) {
-            Log::channel("tokens")->info(self::ERROR_CLASS . " ({$data['service']})", $userData);
-            SenderManager::telegramSendMessage(
-                self::ERROR_CLASS,
-                "\n{$checkResult['message']}: <code>{$data['service']}</code>"
+        try {
+            $this->validateSignature(
+                (int) $request->header('X-Timestamp'),
+                $request->header('X-Signature'),
+                $request
             );
-            return $this->sendResponse($checkResult['message'], [], false);
+        } catch (\Exception $e) {
+            $error = $e->getMessage();
+            Log::channel('tokens')->error(self::ERROR_CLASS . "::handle ERROR TO AUTH $error", $userData);
+            return $this->sendError($error, 401);
         }
 
-        Log::channel('tokens')->info("USER IS AUTHORIZED", $userData);
+        Log::channel('tokens')->info(self::ERROR_CLASS . '::handle USER IS AUTH', $userData);
         return $next($request);
-    }
-
-    /**
-     * Проверяет токен для указанного сервиса
-     *
-     * @param array $data Массив с данными сервиса
-     * @return array{success: bool, message: string}
-     */
-    private function tokenValidate(array $data): array
-    {
-        $return = [
-            'success' => false,
-            'message' => ""
-        ];
-
-        $service = $data['service'];
-
-        $existService = Services::where('name', $service)->first();
-        if (!$existService) {
-            $return['message'] = "Введен неверный сервис";
-            return $return;
-        }
-
-        if ($existService->active === "N") {
-            Log::channel("tokens")->info(self::ERROR_CLASS . "SERVICE IS INACTIVE" . " ({$service})", $data);
-            $return['message'] = "Сервис не активен";
-            return $return;
-        }
-
-        $serviceObject = ServiceManager::initServiceObject($existService->name);
-        $result = $serviceObject->validateToken($data);
-
-        $return = [
-            'success' => $result['success'],
-            'message' => $result['message'],
-        ];
-
-        return $return;
     }
 }
