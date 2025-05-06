@@ -37,9 +37,7 @@ class IncidentType extends Model
             'message' => 'Такой тип ошибки уже существует'
         ];
 
-        $existType = self::where('code', $data['code'])
-            ->orWhere('type_name', $data['type_name'])
-            ->first();
+        $existType = self::where('code', $data['code'])->orWhere('type_name', $data['type_name'])->first();
         if ($existType) {
             return $return;
         }

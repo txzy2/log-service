@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\IncidentType;
+use App\Enums\SendTemplateType;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -19,21 +20,20 @@ class SenderManager
      */
     public static function preparePushOrMail(object $data): void
     {
-        $getSendType = IncidentType::where('id', $data->incident_type_id)->first();
-        if (!$getSendType) {
+        $sendType = IncidentType::where('id', $data->incident_type_id)->first();
+        if (!$sendType) {
             Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
-        match ($getSendType->send_template_id) {
-            1 => self::sendIncidentMessage($getSendType->sendTemplate->to, $getSendType->sendTemplate->template),
-            // "telegram" => self::sendTelegram($data),
+        match (SendTemplateType::from($sendType->alias)) {
+            SendTemplateType::PUSH_MAIL => self::sendIncidentMessage($sendType->sendTemplate->to, $sendType->sendTemplate->template),
             default => Log::channel("debug")
                 ->error(
                     self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE",
                     [
                         'DATA' => $data,
-                        'TEMPLATE_ID' => $getSendType->send_template_id
+                        'TEMPLATE_ID' => $sendType->send_template_id
                     ]
                 ),
         };

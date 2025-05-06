@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Actions\Logging\Logging;
-use App\Helpers\ServiceManager;
+use App\Actions\LogIncident;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\Services;
@@ -45,7 +44,7 @@ class LogController extends Controller
             return $this->sendError($validate->errors(), 400);
         }
 
-        return $this->sendResponse(Logging::writeOrSaveLog($data)['message']);
+        return $this->sendSuccess(LogIncident::writeOrSaveLog($data)['message']);
     }
 
     /**
@@ -78,7 +77,7 @@ class LogController extends Controller
 
         $return = Incident::getIncidentDataByParams($data);
         Log::channel('debug')->info(self::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
-        return $this->sendResponse($return['message'], $return['data'], $return['success']);
+        return $this->sendSuccess($return['message'], $return['data'], $return['success']);
     }
 
     /**

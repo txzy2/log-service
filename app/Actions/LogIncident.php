@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Logging;
+namespace App\Actions;
 
 use App\Helpers\Parsers\Parser;
 use App\Helpers\ServiceManager;
@@ -8,7 +8,7 @@ use App\Models\Incident;
 use App\Models\IncidentType;
 use Illuminate\Support\Facades\Log;
 
-class Logging
+class LogIncident
 {
     private const ERROR_CLASS = __CLASS__;
 
@@ -37,7 +37,7 @@ class Logging
         $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
 
         if (!$parsedMessage['success']) {
-            Log::channel("debug")->info(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
+            Log::channel("debug")->error(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
             $return['message'] = "Ошибка парсинга сервиса";
             return $return;
         }
@@ -48,7 +48,7 @@ class Logging
         $existType = IncidentType::where('code', $code)->first();
         $return['message'] = match (true) {
             $existType === null => Incident::saveData($prepredData)['message'], // Сохраняем, если тип инцидента не найден
-            default => Incident::updateOrCreateData($prepredData, $existType)['message'], // Обновляем, если тип инцидента найден
+            default => Incident::processIncidentData($prepredData, $existType)['message'], // Обновляем, если тип инцидента найден
         };
 
         return $return;

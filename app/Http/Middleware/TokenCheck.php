@@ -2,49 +2,53 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\Controller;
+use App\DTO\SignaturePayload;
+use App\Traits\RespondsWithMessages;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class TokenCheck extends Controller
+class TokenCheck
 {
+    use RespondsWithMessages;
+
     private const ERROR_CLASS = __CLASS__;
+    private const TOKEN_TTL_SECONDS = 250;
+
     /**
-     * validateSignature - валидация сигнатуры
+     * Проверяет подпись запроса
      *
-     * @param int $timestamp
-     * @param string $signature
-     * @param object $request
-     * @return bool
+     * @param SignaturePayload $payload
+     * @return void
      * @throws \Exception
      */
-    private function validateSignature(int $timestamp, string $signature, object $request): bool
+    private function checkSignature(SignaturePayload $payload): void
     {
         Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
-        if (abs(time() - $timestamp) > 250) {
+
+        if (abs(time() - $payload->timestamp) > self::TOKEN_TTL_SECONDS) {
             throw new \Exception('The token has expired');
         }
 
-        $sign = hash_hmac(
+        $expected = hash_hmac(
             'sha256',
-            $request->method() . $request->path() . $timestamp . $request->getContent(),
+            $payload->method . $payload->path . $payload->timestamp . $payload->content,
             config('app.services_token')
         );
-        Log::channel('tokens')->info('SYSTEM SIGN', [$sign]);
-        if (!hash_equals($sign, $signature)) {
+
+        Log::channel('tokens')->info('SYSTEM SIGN', [$expected]);
+
+        if (!hash_equals($expected, $payload->signature)) {
             throw new \Exception('Invalid request signature');
         }
-
-        return true;
     }
 
     /**
-     * handle - главный метод проверки сигнатуры
+     * handle — главный метод мидлвари
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next): mixed
@@ -62,17 +66,20 @@ class TokenCheck extends Controller
             '*.required' => 'Заголовок :attribute обязателен для запроса'
         ]);
 
-
         if ($validated->fails()) {
             return $this->sendError($validated->errors()->first(), 401);
         }
 
         try {
-            $this->validateSignature(
+            $payload = new SignaturePayload(
                 (int) $request->header('X-Timestamp'),
                 $request->header('X-Signature'),
-                $request
+                $request->method(),
+                $request->path(),
+                $request->getContent()
             );
+
+            $this->checkSignature($payload);
         } catch (\Exception $e) {
             $error = $e->getMessage();
             Log::channel('tokens')->error(self::ERROR_CLASS . "::handle ERROR TO AUTH $error", $userData);

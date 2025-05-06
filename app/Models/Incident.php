@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\SendTemplateType;
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use Carbon\Carbon;
-use DateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +40,7 @@ class Incident extends Model
     {
         $message = "Новая не отслеживаемая ошибка от {$data['service']}";
         Log::channel("unknown_errors")
-            ->info($message, [$data['incident']['message']]);
+            ->warning($message, [$data['incident']['message']]);
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
@@ -62,7 +62,7 @@ class Incident extends Model
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function updateOrCreateData(array $data, object $incidentType): array
+    public static function processIncidentData(array $data, object $incidentType): array
     {
         $incidentData = $data['incident'];
         $existIncident = self::firstOrNew(
@@ -98,9 +98,10 @@ class Incident extends Model
      */
     private static function handleNewIncident(object $existIncident, object $incidentType, array $data): void
     {
-        if (!empty($incidentType->send_template_id)) {
-            match ($incidentType->send_template_id) {
-                1 => SenderManager::preparePushOrMail($existIncident)
+        if (!empty($incidentType->alias)) {
+            match (SendTemplateType::from($incidentType->alias)) {
+                SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident),
+                default => null,
             };
         }
 
