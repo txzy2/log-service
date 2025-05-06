@@ -6,6 +6,7 @@ use App\Helpers\Parsers\Parser;
 use App\Helpers\ServiceManager;
 use App\Models\Incident;
 use App\Models\IncidentType;
+use Illuminate\Support\Facades\Log;
 
 class Logging
 {
@@ -19,27 +20,37 @@ class Logging
      */
     public static function writeOrSaveLog(array $data): array
     {
-        $serviceMessageParser = ServiceManager::getServiceParser($data['incident']['type']);
-        if ($serviceMessageParser !== false) {
-            $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
-            if (!$parsedMessage['success']) {
-                \Illuminate\Support\Facades\Log::channel("debug")->info(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
-                return $parsedMessage;
-            }
+        $return = [
+            "success" => true,
+            "message" => ""
+        ];
 
-            $data['incident']['message'] = $parsedMessage['message'];
-            [$code] = Parser::parseStr($data['incident']['message']);
+        $prepredData = ServiceManager::prepareRequestData($data);
+        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$prepredData]);
 
-            $existType = IncidentType::where('code', $code)->first();
-            return match (true) {
-                $existType === null => Incident::saveData($data), // Сохраняем, если тип инцидента не найден
-                default => Incident::updateOrCreateData($data, $existType), // Обновляем, если тип инцидента найден
-            };
+        if (isset($prepredData['error'])) {
+            $return['message'] = $prepredData['message'];
+            return $return;
         }
 
-        return [
-            "success" => false,
-            "message" => "Парсер для {$data['incident']['type']} не найден"
-        ];
+        $serviceMessageParser = ServiceManager::getServiceParser($prepredData['incident']['type']);
+        $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
+
+        if (!$parsedMessage['success']) {
+            Log::channel("debug")->info(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
+            $return['message'] = "Ошибка парсинга сервиса";
+            return $return;
+        }
+
+        $prepredData['incident']['message'] = $parsedMessage['message'];
+        [$code] = Parser::parseStr($parsedMessage['message']);
+
+        $existType = IncidentType::where('code', $code)->first();
+        $return['message'] = match (true) {
+            $existType === null => Incident::saveData($prepredData)['message'], // Сохраняем, если тип инцидента не найден
+            default => Incident::updateOrCreateData($prepredData, $existType)['message'], // Обновляем, если тип инцидента найден
+        };
+
+        return $return;
     }
 }

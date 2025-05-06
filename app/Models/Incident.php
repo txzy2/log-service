@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
+use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -69,7 +71,7 @@ class Incident extends Model
                 'incident_text' => $incidentData['message'],
                 'incident_type_id' => $incidentType->id,
                 'service' => $data['service'],
-                'source' => $incidentData['type'],
+                'source' => $data['incident']['type'],
                 'date' => $incidentData['date'],
                 'count' => 1
             ]
@@ -94,7 +96,7 @@ class Incident extends Model
      * @param mixed $data
      * @return void
      */
-    private static function handleNewIncident($existIncident, $incidentType, $data): void
+    private static function handleNewIncident(object $existIncident, object $incidentType, array $data): void
     {
         if (!empty($incidentType->send_template_id)) {
             match ($incidentType->send_template_id) {
@@ -110,7 +112,10 @@ class Incident extends Model
                 'INCIDENT_TYPE' => $incidentType->type_name,
                 'CODE' => $incidentType->code,
                 'INCIDENT_OBJECT' => $existIncident->incident_object,
-                'NEXT_SEND_DATE' => now()->addDays((int)$existIncident->incidentType->lifecycle)->format('d-m-Y')
+                'NEXT_SEND_DATE' => Carbon::parse($data['incident']['date'])
+                    ->addDays((int)$existIncident->incidentType->lifecycle)
+                    ->format('d-m-Y'),
+                'SEND_TO' => IncidentType::with('sendTemplate')->find($incidentType->send_template_id)->sendTemplate?->to
             ]
         );
 
@@ -163,7 +168,9 @@ class Incident extends Model
                 'OBJECT' => $existIncident->incident_object,
                 'COUNT' => $existIncident->count,
                 'LIFECICLE' => $lifecycle,
-                'NEXT_SEND_DATE' => now()->addDays((int)$lifecycle)->format('d-m-Y')
+                'NEXT_SEND_DATE' => Carbon::parse($existIncident->date)
+                    ->addDays((int)$existIncident->incidentType->lifecycle)
+                    ->format('d-m-Y')
             ]
         );
 

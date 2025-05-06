@@ -46,7 +46,7 @@ class ServiceManager
      */
     public static function prepareRequestData(array $data): array
     {
-        $parsedData = self::returnParts($data);
+        $parsedData = static::returnParts($data);
         if (!$parsedData['success']) {
             Log::channel("debug")->info(self::ERROR_CLASS . "::prepareRequestData ({$data['service']})", $data);
             return ['error' => "Ошибка парсинга сервиса"];

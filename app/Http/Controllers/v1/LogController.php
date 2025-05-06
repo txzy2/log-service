@@ -45,15 +45,7 @@ class LogController extends Controller
             return $this->sendError($validate->errors(), 400);
         }
 
-        $parsedData = ServiceManager::prepareRequestData($data);
-        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$parsedData]);
-        if (isset($parsedData['error'])) {
-            return $this->sendError($parsedData['error'], 400);
-        }
-
-        $return = Logging::writeOrSaveLog($parsedData);
-        Log::channel("debug")->info(self::ERROR_CLASS . '::addLog RESULT SAVING', $return);
-        return $this->sendResponse($return['message']);
+        return $this->sendResponse(Logging::writeOrSaveLog($data)['message']);
     }
 
     /**
