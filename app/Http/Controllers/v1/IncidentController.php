@@ -41,6 +41,6 @@ class IncidentController extends Controller
         }
 
         $addData = IncidentType::validateAndAddType($data);
-        return $this->sendSuccess($addData['message'], $addData['data'], $addData['success']);
+        return $this->sendSuccess($addData['message'], $addData['data']);
     }
 }
