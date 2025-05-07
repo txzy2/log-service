@@ -22,13 +22,13 @@ class Parser
     }
 
     /**
-     * parceDates - парсим даты
+     * parseDates - парсим даты
      *
      * @param string $prevDate
      * @param string $currentDate
      * @return array{currentDate: Carbon, prevDate: Carbon}
      */
-    public static function parceDates(string $prevDate, string $currentDate): array
+    public static function parseDates(string $prevDate, string $currentDate): array
     {
         $prevDate = Carbon::parse($prevDate)->startOfDay();
         $currentDate = Carbon::parse($currentDate)->startOfDay();

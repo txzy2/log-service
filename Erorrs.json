@@ -1,60 +1,77 @@
 [
-	{
-		"token": "21a769ddd54ac7bc5d233d98c3a4e9e9c7a2ae960c2dda10761230443c7ea3db",
-		"service": "WSPG|Moneta",
-		"incident": {
-			"object": "41231895|2839482|2903492034",
-			"message": {
-				"error": {
-					"Envelope": {
-						"Body": {
-							"fault": {
-								"faultcode": "Client",
-								"faultstring": "Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.",
-								"detail": {
-									"faultDetail": "400.1.26"
-								}
-							}
-						}
-					}
-				}
-			},
-			"date": "21-05-2025"
-		}
-	},
-
-	{
-		"service": "WSPG|VSK",
-		"incident": {
-			"object": "41231895",
-			"message": {
-				"code": "3",
-				"code_c": "INVALID_ARGUMENT",
-				"message": "Невалидные входящие параметры",
-				"details": [
-					{
-						"domain": "partapi-rest-gateway",
-						"metadata": {
-							"field": "traceId=684c92f8d85340008780181520c6499f",
-							"description": "Переданная премия отличается от сохранённой в системе"
-						}
-					}
-				]
-			},
-			"date": "21-05-2025"
-		}
-	},
-
-	{
-		"service": "ADS|Internal",
-		"incident": {
-			"object": "8pKAsQBDiRykpTD|408",
-			"message": {
-				"code": "400.1.1",
-				"type": "INVALID_PARTICIPIANT",
-				"message": "Невалидный participiant для сайта",
-			},
-			"date": "21-05-2025"
-		}
-	}
+    {
+        "service": "WSPG|Moneta",
+        "incident": {
+            "object": "41231895",
+            "object_data": [
+                {
+                    "key": "КПП",
+                    "value": "2839482"
+                },
+                {
+                    "key": "ИНН",
+                    "value": "2903492034"
+                },
+                {
+                    "key": "Банковский счет",
+                    "value": "2342342903492034"
+                }
+            ],
+            "message": {
+                "error": {
+                    "Envelope": {
+                        "Body": {
+                            "fault": {
+                                "faultcode": "Client",
+                                "faultstring": "Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.",
+                                "detail": {
+                                    "faultDetail": "400.1.26"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "date": "2025-05-07"
+        }
+    },
+    {
+        "service": "WSPG|VSK",
+        "incident": {
+            "object": "41231895",
+            "message": {
+                "code": "3",
+                "code_c": "INVALID_ARGUMENT",
+                "message": "Невалидные входящие параметры",
+                "details": [
+                    {
+                        "domain": "partapi-rest-gateway",
+                        "metadata": {
+                            "field": "traceId=684c92f8d85340008780181520c6499f",
+                            "description": "Переданная премия отличается от сохранённой в системе"
+                        }
+                    }
+                ]
+            },
+            "date": "2025-05-21"
+        }
+    },
+    {
+        "service": "ADS|Internal",
+        "incident": {
+            "object": "8pKAsQBDiRykpTD",
+            "object_data": [
+                {
+                    "key": "client_id",
+                    "value": "408"
+                }
+            ],
+            "message": {
+                "code": "400.1.1",
+                "type": "INVALID_PARTICIPIANT",
+                "message": "Невалидный participiant для сайта"
+            },
+            "date": "2025-05-21"
+        }
+    }
 ]

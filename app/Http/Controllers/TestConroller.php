@@ -8,6 +8,7 @@ class TestConroller extends Controller
 {
     public function test(): JsonResponse
     {
-        return parent::sendResponse();
+        return parent::sendSuccess('success');
     }
 }
+

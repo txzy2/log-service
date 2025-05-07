@@ -23,7 +23,7 @@ class ServicesController extends Controller
     {
         $services = Services::all()->toArray();
         $incidentTypes = DB::table('incident_type')->select('type_name', 'code', 'lifecycle')->get()->toArray();
-        return $this->sendResponse('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
+        return $this->sendSuccess('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
     }
 
     /**
@@ -53,7 +53,7 @@ class ServicesController extends Controller
         }
 
         Services::where('name', $data['name'])->update(['active' => $data['active']]);
-        return $this->sendResponse('Сервис успешно отредактирован');
+        return $this->sendSuccess('Сервис успешно отредактирован');
     }
 
     /**
@@ -83,6 +83,6 @@ class ServicesController extends Controller
         $existService->delete();
 
         Log::channel('debug')->info(self::ERROR_CLASS . "::deleteService", ["{$data['service']} deleted"]);
-        return $this->sendResponse('Сервис успешно удален', Services::all()->toArray());
+        return $this->sendSuccess('Сервис успешно удален', Services::all()->toArray());
     }
 }

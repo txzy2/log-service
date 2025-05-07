@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\IncidentType;
 use App\Enums\SendTemplateType;
+use App\Models\SendTemplate;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -18,25 +19,56 @@ class SenderManager
      * @param object $data
      * @return void
      */
-    public static function preparePushOrMail(object $data): void
+    public static function preparePushOrMail(object $data, int $sendTemplateId): void
     {
-        $sendType = IncidentType::where('id', $data->incident_type_id)->first();
-        if (!$sendType) {
+        $existIncidentType = IncidentType::where('send_template_id', $sendTemplateId)->first();
+        if (!$existIncidentType) {
             Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
-        match (SendTemplateType::from($sendType->alias)) {
-            SendTemplateType::PUSH_MAIL => self::sendIncidentMessage($sendType->sendTemplate->to, $sendType->sendTemplate->template),
+        $existSendTemplate = SendTemplate::where('id', $sendTemplateId)->first();
+
+        match (SendTemplateType::from($existIncidentType->alias)) {
+            SendTemplateType::PUSH_MAIL => static::prepareAndSendEmail($existSendTemplate->to, $existSendTemplate->template, $data),
             default => Log::channel("debug")
                 ->error(
                     self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE",
                     [
                         'DATA' => $data,
-                        'TEMPLATE_ID' => $sendType->send_template_id
+                        'TEMPLATE_ID' => $existSendTemplate->send_template_id
                     ]
                 ),
         };
+    }
+
+    protected static function prepareAndSendEmail(string $to, string $template, object $data): void
+    {
+        $replacements = [
+            '{{inn}}' => '',
+            '{{kpp}}' => '',
+            '{{bank_acc}}' => '',
+            '{{transit}}' => $data->incident_object ?? ''
+        ];
+
+        $mapping = [
+            'ИНН' => '{{inn}}',
+            'КПП' => '{{kpp}}',
+            'Банковский счет' => '{{bank_acc}}'
+        ];
+
+        $incidentObjects = json_decode($data->incident_object_alias, true);
+
+        if (is_array($incidentObjects)) {
+            foreach ($incidentObjects as $item) {
+                if (isset($mapping[$item['key']])) {
+                    $replacements[$mapping[$item['key']]] = $item['value'];
+                }
+            }
+        }
+
+        $template = str_replace(array_keys($replacements), array_values($replacements), $template);
+        static::sendIncidentMessage($to, $template);
     }
 
     /**
@@ -59,11 +91,11 @@ class SenderManager
                 "to" => $email,
                 "subject" => "Уведомление",
                 "body" => $template,
-                "isHTML" => false
+                "isHTML" => true
             ];
         }
 
-        $token = self::generateMailToken($cleanedMessage);
+        $token = static::generateMailToken($cleanedMessage);
         try {
             $client = new \GuzzleHttp\Client();
             $result = $client->post(config('app.ws_messages_url') . "/api/v1/send_mail", [

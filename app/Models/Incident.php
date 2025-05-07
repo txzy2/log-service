@@ -23,6 +23,7 @@ class Incident extends Model
     protected $fillable = [
         'incident_object',
         'incident_text',
+        'incident_object_alias',
         'incident_type_id',
         'source',
         'service',
@@ -39,8 +40,9 @@ class Incident extends Model
     public static function saveData(array $data): array
     {
         $message = "Новая не отслеживаемая ошибка от {$data['service']}";
-        Log::channel("unknown_errors")
-            ->warning($message, [$data['incident']['message']]);
+        Log::channel("unknown_errors")->warning(
+            "Новая не отслеживаемая ошибка от WSPG: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        );
 
         SenderManager::telegramSendMessage(
             self::ERROR_CLASS,
@@ -70,6 +72,7 @@ class Incident extends Model
             [
                 'incident_text' => $incidentData['message'],
                 'incident_type_id' => $incidentType->id,
+                'incident_object_alias' => json_encode($data['incident']['object_data']),
                 'service' => $data['service'],
                 'source' => $data['incident']['type'],
                 'date' => $incidentData['date'],
@@ -78,14 +81,14 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            self::handleNewIncident($existIncident, $incidentType, $data);
+            self::handleNewIncident($incidentType, $existIncident);
             return [
                 'success' => true,
                 'message' => 'Данные успешно сохранены и отправлены'
             ];
         }
 
-        return self::handleExistingIncident($existIncident, $incidentData, $incidentType);
+        return self::handleExistingIncident($existIncident, $incidentType, $incidentData);
     }
 
     /**
@@ -96,31 +99,27 @@ class Incident extends Model
      * @param mixed $data
      * @return void
      */
-    private static function handleNewIncident(object $existIncident, object $incidentType, array $data): void
+    protected static function handleNewIncident(object $incidentType, object $data): void
     {
         if (!empty($incidentType->alias)) {
+            $data->save();
+
             match (SendTemplateType::from($incidentType->alias)) {
-                SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident),
+                SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($data, $incidentType->send_template_id),
                 default => null,
             };
+
+            SenderManager::telegramSendMessage(
+                self::ERROR_CLASS,
+                "Новая ошибка от {$data->service} ({$data->source})",
+                (string) $data->incident_text,
+                [
+                    'INCIDENT_TYPE' => $incidentType->type_name,
+                    'CODE' => $incidentType->code,
+                    'INCIDENT_OBJECT' => $data->incident_object,
+                ]
+            );
         }
-
-        SenderManager::telegramSendMessage(
-            self::ERROR_CLASS,
-            "Новая ошибка от {$data['service']} ({$data['incident']['type']})",
-            (string) $existIncident->incident_text,
-            [
-                'INCIDENT_TYPE' => $incidentType->type_name,
-                'CODE' => $incidentType->code,
-                'INCIDENT_OBJECT' => $existIncident->incident_object,
-                'NEXT_SEND_DATE' => Carbon::parse($data['incident']['date'])
-                    ->addDays((int)$existIncident->incidentType->lifecycle)
-                    ->format('d-m-Y'),
-                'SEND_TO' => IncidentType::with('sendTemplate')->find($incidentType->send_template_id)->sendTemplate?->to
-            ]
-        );
-
-        $existIncident->save();
     }
 
     /**
@@ -130,9 +129,9 @@ class Incident extends Model
      * @param mixed $incidentData
      * @return array{message: string, success: bool}
      */
-    private static function handleExistingIncident(object $existIncident, array $incidentData, object $incidentType): array
+    private static function handleExistingIncident(object $existIncident, object $incidentType, array $data): array
     {
-        $parseDates = Parser::parceDates($existIncident->date, $incidentData['date']);
+        $parseDates = Parser::parseDates($existIncident->date, $data['date']);
         $lifecycle = $existIncident->incidentType->lifecycle;
         $existIncident->count++;
 
@@ -140,17 +139,22 @@ class Incident extends Model
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
-            if (!empty($incidentType->send_template_id)) {
-                match ($incidentType->send_template_id) {
-                    1 => SenderManager::preparePushOrMail($existIncident)
+            if (!empty($incidentType->alias)) {
+                Log::channel('debug')->info(self::ERROR_CLASS . ' handleExistingIncident existIncident to array', [$existIncident->toArray()]);
+                match (SendTemplateType::from($incidentType->alias)) {
+                    SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),
+                    default => null,
                 };
             }
 
             SenderManager::telegramSendMessage(
                 self::ERROR_CLASS,
-                "ОШИБКА ОБНОВИЛАСЬ {$incidentData['type']}",
+                "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->incident_object})",
                 (string) $existIncident->incident_text,
-                ['Object' => $existIncident->incident_object, 'count' => $existIncident->count]
+                [
+                    'SERVICE AND SOURCE' => $existIncident->service . "|" . $existIncident->source,
+                    'count' => $existIncident->count
+                ]
             );
 
             return [
