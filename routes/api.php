@@ -14,7 +14,6 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
     Route::prefix('log')->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
         Route::post('/report', [LogController::class, 'sendReport']);
-        Route::post('/export', [LogController::class, 'exportLogs']);
     });
 
     // Работа с настройками инстдентов

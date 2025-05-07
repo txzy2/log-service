@@ -79,38 +79,4 @@ class LogController extends Controller
         Log::channel('debug')->info(self::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
         return $this->sendSuccess($return['message'], $return['data'], $return['success']);
     }
-
-    /**
-     * exportLogs - контроллер для экспорта логов
-     *
-     * @param Request $request
-     * @return mixed|JsonResponse
-     */
-    public function exportLogs(Request $request): mixed
-    {
-        $data = $request->all();
-        Log::channel('debug')->info(self::ERROR_CLASS . '::exportLogs REQUEST', $data);
-        $validator = Validator::make(
-            $data,
-            [
-                'date' => 'nullable|date_format:Y-m-d',
-                'service' => 'nullable|string',
-            ],
-            [
-                'date.date_format' => 'Неверный формат даты',
-                'service.string' => 'Сервис должен быть строкой',
-            ]
-        );
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->errors()->first(), 400);
-        }
-
-        $existService = Services::validateService($data['service']);
-        if (!$existService['success']) {
-            return $this->sendError($existService['message'], 200);
-        }
-
-        return Incident::exportLogs($data);
-    }
 }
