@@ -6,7 +6,7 @@ Route::get('/', function () {
     abort(404);
 });
 
-Route::get('/openapi', function () {
+Route::get('/docs', function () {
     return view('redoc');
 });
 

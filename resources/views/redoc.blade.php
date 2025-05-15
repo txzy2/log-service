@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>API Documentation</title>
-    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
-</head>
-<body>
-    <div id="redoc-container"></div>
-    <script>
-        Redoc.init('/docs/openapi.yaml', {}, document.getElementById('redoc-container'));
-    </script>
-</body>
+  <head>
+    <title>API Docs</title>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  </head>
+  <body>
+    <redoc spec-url="{{ asset('openapi.yaml') }}"></redoc>
+  </body>
 </html>
