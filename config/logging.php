@@ -5,7 +5,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
-$storage_logs_path = 'logs/' . date("Y") . '/' . date("Y-m") . '/' . date("d");
+$storage_logs_path = 'logs/' . date("Y") . '/' . date("m") . '/' . date("d");
 
 return [
     'default' => env('LOG_CHANNEL', 'stack'),

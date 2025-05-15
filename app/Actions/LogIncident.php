@@ -44,8 +44,8 @@ class LogIncident
 
         $prepredData['incident']['message'] = $parsedMessage['message'];
         [$code] = Parser::parseStr($parsedMessage['message']);
-
         $existType = IncidentType::where('code', $code)->first();
+
         $return['message'] = match (true) {
             $existType === null => Incident::saveData($prepredData)['message'], // Сохраняем, если тип инцидента не найден
             default => Incident::processIncidentData($prepredData, $existType)['message'], // Обновляем, если тип инцидента найден

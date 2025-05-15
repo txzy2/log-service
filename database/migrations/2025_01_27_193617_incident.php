@@ -32,6 +32,7 @@ return new class extends Migration {
             $table->string('incident_object');
             $table->string('incident_text');
             $table->unsignedBigInteger('incident_type_id');
+            $table->string('incident_object_alias');
             $table->string('service');
             $table->string('source');
             $table->date('date');
