@@ -21,6 +21,7 @@
     "tightenco/ziggy": "^2.0"
   },
   "require-dev": {
+    "ensi/laravel-openapi-client-generator": "*",
     "fakerphp/faker": "^1.23",
     "knuckleswtf/scribe": "^4.39",
     "laravel/pail": "^1.1",

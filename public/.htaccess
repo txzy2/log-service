@@ -23,3 +23,9 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+AddType application/x-yaml .yaml .yml
+
+<FilesMatch "\.(yaml|yml)$">
+    Require all granted
+</FilesMatch>
