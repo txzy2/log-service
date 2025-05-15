@@ -7,7 +7,7 @@
 <body>
     <div id="redoc-container"></div>
     <script>
-        Redoc.init('/docs/openapi.json', {}, document.getElementById('redoc-container'));
+        Redoc.init('/docs/openapi.yaml', {}, document.getElementById('redoc-container'));
     </script>
 </body>
 </html>
