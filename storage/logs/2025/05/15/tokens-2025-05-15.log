@@ -1,0 +1,34 @@
+[2025-05-15 18:10:32] local.INFO: SYSTEM TIMESTAMP [1747321832] 
+[2025-05-15 18:10:32] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:11:43] local.INFO: SYSTEM TIMESTAMP [1747321903] 
+[2025-05-15 18:11:43] local.INFO: SYSTEM SIGN ["a42816c819ef7dbeca96dcba6fdd0ea0849fbcfdfef749a85c4ed6969b87b85a"] 
+[2025-05-15 18:11:43] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH Invalid request signature {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:11:54] local.INFO: SYSTEM TIMESTAMP [1747321914] 
+[2025-05-15 18:11:54] local.INFO: SYSTEM SIGN ["a42816c819ef7dbeca96dcba6fdd0ea0849fbcfdfef749a85c4ed6969b87b85a"] 
+[2025-05-15 18:11:54] local.INFO: App\Http\Middleware\TokenCheck::handle USER IS AUTH {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:27:16] local.INFO: SYSTEM TIMESTAMP [1747322836] 
+[2025-05-15 18:27:16] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:35:40] local.INFO: SYSTEM TIMESTAMP [1747323340] 
+[2025-05-15 18:35:40] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:35:41] local.INFO: SYSTEM TIMESTAMP [1747323341] 
+[2025-05-15 18:35:41] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:35:41] local.INFO: SYSTEM TIMESTAMP [1747323341] 
+[2025-05-15 18:35:41] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:35:42] local.INFO: SYSTEM TIMESTAMP [1747323342] 
+[2025-05-15 18:35:42] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:35:42] local.INFO: SYSTEM TIMESTAMP [1747323342] 
+[2025-05-15 18:35:42] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:49:20] local.INFO: SYSTEM TIMESTAMP [1747324160] 
+[2025-05-15 18:49:20] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH The token has expired {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:49:35] local.INFO: SYSTEM TIMESTAMP [1747324175] 
+[2025-05-15 18:49:35] local.INFO: SYSTEM SIGN ["186936d31c431ff541077242ac2221bbb01ee1c98ef2d32ca04d1f9df1147d32"] 
+[2025-05-15 18:49:35] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH Invalid request signature {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:49:41] local.INFO: SYSTEM TIMESTAMP [1747324181] 
+[2025-05-15 18:49:41] local.INFO: SYSTEM SIGN ["186936d31c431ff541077242ac2221bbb01ee1c98ef2d32ca04d1f9df1147d32"] 
+[2025-05-15 18:49:41] local.INFO: App\Http\Middleware\TokenCheck::handle USER IS AUTH {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:50:49] local.INFO: SYSTEM TIMESTAMP [1747324249] 
+[2025-05-15 18:50:49] local.INFO: SYSTEM SIGN ["30a7a391c506437915e1abf5299adc1b4a2ecb4d788b24a359728442d6695f8a"] 
+[2025-05-15 18:50:49] local.ERROR: App\Http\Middleware\TokenCheck::handle ERROR TO AUTH Invalid request signature {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 
+[2025-05-15 18:51:03] local.INFO: SYSTEM TIMESTAMP [1747324263] 
+[2025-05-15 18:51:03] local.INFO: SYSTEM SIGN ["30a7a391c506437915e1abf5299adc1b4a2ecb4d788b24a359728442d6695f8a"] 
+[2025-05-15 18:51:03] local.INFO: App\Http\Middleware\TokenCheck::handle USER IS AUTH {"ip":"172.18.0.1","userAgent":"PostmanRuntime/7.43.4","auth":"Bearer oPL0QuUAF13k6gqFsFdA"} 

@@ -29,7 +29,7 @@ class LogIncident
         Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$prepredData]);
 
         if (isset($prepredData['error'])) {
-            $return['message'] = $prepredData['message'];
+            $return['message'] = $prepredData['error'];
             return $return;
         }
 

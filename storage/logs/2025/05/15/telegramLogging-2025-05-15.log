@@ -1,0 +1,50 @@
+[2025-05-15 18:11:55] local.ERROR: App\Helpers\SenderManager::telegramSendMessage SUCCESS SEND ["*[=== 18:11:54 15-05-2025 ===]*
+
+*Address: *[LOGGER SERVICE DEV v1.0.3]
+*ERROR CLASS:* App\\Models\\Incident
+
+*ДОБАВЛЯЛАСЬ РАНЕЕ*
+
+*Error INFO: *
+```json
+400.1.26|Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.
+```
+*Additional INFO:*
+```json {
+    \"OBJECT\": \"41231892\",
+    \"COUNT\": 6,
+    \"LIFECICLE\": \"7\",
+    \"NEXT_SEND_DATE\": \"01-06-2025\"
+}```"] 
+[2025-05-15 18:49:46] local.ERROR: App\Helpers\SenderManager::telegramSendMessage SUCCESS SEND ["*[=== 18:49:46 15-05-2025 ===]*
+
+*Address: *[LOGGER SERVICE DEV v1.0.3]
+*ERROR CLASS:* App\\Models\\Incident
+
+*Новая ошибка от WSPG (Moneta)*
+
+*Error INFO: *
+```json
+400.1.26|Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.
+```
+*Additional INFO:*
+```json {
+    \"INCIDENT_TYPE\": \"Block Acc\",
+    \"CODE\": \"400.1.26\",
+    \"INCIDENT_OBJECT\": \"412318ц92\"
+}```"] 
+[2025-05-15 18:51:04] local.ERROR: App\Helpers\SenderManager::telegramSendMessage SUCCESS SEND ["*[=== 18:51:03 15-05-2025 ===]*
+
+*Address: *[LOGGER SERVICE DEV v1.0.3]
+*ERROR CLASS:* App\\Models\\Incident
+
+*Новая не отслеживаемая ошибка от WSPG*
+
+*Error INFO: *
+```json
+400.1.6|Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.
+```
+*Additional INFO:*
+```json {
+    \"Object\": \"412318ц92\"
+}```"] 
