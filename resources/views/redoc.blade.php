@@ -6,12 +6,12 @@
   </head>
   <body>
     <div id="redoc-container"></div>
+
     <script>
-      Redoc.init(
-        "{{ asset('openapi.yaml') }}",
-        {},
-        document.getElementById('redoc-container')
-      );
+      const specUrl = window.location.protocol + "//" +
+                     window.location.host + "/openapi.yaml";
+
+      Redoc.init(specUrl, {}, document.getElementById('redoc-container'));
     </script>
   </body>
 </html>
