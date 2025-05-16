@@ -5,6 +5,13 @@
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   </head>
   <body>
-    <redoc spec-url="{{ asset('openapi.yaml') }}"></redoc>
+    <div id="redoc-container"></div>
+    <script>
+      Redoc.init(
+        "{{ asset('openapi.yaml') }}",
+        {},
+        document.getElementById('redoc-container')
+      );
+    </script>
   </body>
 </html>
