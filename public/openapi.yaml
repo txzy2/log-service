@@ -48,7 +48,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
   x-logo:
-    url: https://example.com/logo.png
+    url: https://kamaeff-site.ru/logo.svg
     altText: Логотип сервиса логирования
 
 servers:
@@ -56,7 +56,7 @@ servers:
     description: Продакшн сервер
   - url: https://staging-api.example.com/v1
     description: Стейджинг сервер
-  - url: http://localhost:8000/api/v1
+  - url: http://localhost:580/api/v1
     description: Локальный сервер разработки
 
 tags:
