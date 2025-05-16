@@ -2,18 +2,90 @@ openapi: 3.0.0
 info:
   title: API Сервиса Логирования
   version: 1.0.0
-  description: API для сервиса логирования инцидентов, получения отчетов и управления сервисами.
+  description: |
+    API для сервиса логирования инцидентов, получения отчетов и управления сервисами.
     Позволяет отслеживать и анализировать инциденты в различных сервисах, формировать отчеты
     и управлять конфигурацией сервисов.
+
+    ## Аутентификация
+    Все запросы должны содержать следующие заголовки:
+    - X-Timestamp: Unix timestamp в секундах
+    - X-Signature: HMAC SHA256 подпись запроса
+
+    Подпись формируется как HMAC SHA256 от конкатенации:
+    - HTTP метод
+    - Путь запроса
+    - Timestamp
+    - Тело запроса
+
+    Ключ для подписи: services_token из конфигурации
+
+    Время жизни токена: 250 секунд
+
+    ## Обработка ошибок
+    Все ошибки возвращаются в формате:
+    ```json
+    {
+      "success": false,
+      "message": "Описание ошибки"
+    }
+    ```
+
+    ## Коды ответов
+    - 200: Успешное выполнение запроса
+    - 400: Ошибка валидации или бизнес-логики
+    - 401: Ошибка аутентификации
+    - 500: Внутренняя ошибка сервера
+
+    ## Логирование
+    Все запросы логируются в следующие каналы:
+    - debug: Общая отладочная информация
+    - tokens: Информация об аутентификации
   contact:
     name: Kamaev Anton
     email: kamaeff2@gmail.com
-    # url: https://kamaev.ru
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-logo:
+    url: https://example.com/logo.png
+    altText: Логотип сервиса логирования
+
+servers:
+  - url: https://api.example.com/v1
+    description: Продакшн сервер
+  - url: https://staging-api.example.com/v1
+    description: Стейджинг сервер
+  - url: http://localhost:8000/api/v1
+    description: Локальный сервер разработки
+
+tags:
+  - name: Логи
+    description: Операции с логами инцидентов
+  - name: Отчеты
+    description: Генерация и получение отчетов
+  - name: Сервисы
+    description: Управление сервисами
+  - name: Инциденты
+    description: Управление типами инцидентов
 
 paths:
   /api/v1/log:
     post:
       summary: Добавление лога инцидента
+      description: |
+        Принимает данные инцидента, валидирует их и сохраняет в системе.
+        Автоматически определяет тип инцидента и обрабатывает его.
+
+        ### Процесс обработки
+        1. Валидация входных данных
+        2. Определение типа инцидента
+        3. Сохранение в базу данных
+        4. Отправка уведомлений (если настроено)
+      operationId: addLog
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
       tags:
         - Логи
       requestBody:
@@ -22,15 +94,113 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LogRequest'
+            examples:
+              basic:
+                summary: Базовый пример
+                value:
+                  service: 'payment-service'
+                  incident:
+                    object: 'transaction'
+                    date: '2024-03-20'
+                    message: [{'code': 'ERR-001', 'text': 'Ошибка доступа'}]
+                    object_data: [{'key': 'КПП', 'value': '2839482'}]
+              full:
+                summary: Полный пример
+                value:
+                  service: 'payment-service'
+                  incident:
+                    object: 'transaction'
+                    date: '2024-03-20'
+                    message:
+                      [
+                        {'code': 'ERR-001', 'text': 'Ошибка доступа'},
+                        {'code': 'ERR-002', 'text': 'Таймаут операции'}
+                      ]
+                    object_data:
+                      [
+                        {'key': 'КПП', 'value': '2839482'},
+                        {'key': 'ИНН', 'value': '2903492034'}
+                      ]
       responses:
         '200':
           description: Успешное добавление лога
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: 'Инцидент успешно сохранен'
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missingField:
+                  value:
+                    success: false
+                    message: 'Поле service обязательно для заполнения'
+                invalidDate:
+                  value:
+                    success: false
+                    message: 'Переданная дата не может быть меньше текущей даты'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      x-codeSamples:
+        - lang: PHP
+          source: |
+            $response = $client->post('/api/v1/log', [
+                'headers' => [
+                    'X-Timestamp' => time(),
+                    'X-Signature' => $signature
+                ],
+                'json' => [
+                    'service' => 'payment-service',
+                    'incident' => [
+                        'object' => 'transaction',
+                        'date' => '2024-03-20',
+                        'message' => [
+                            ['code' => 'ERR-001', 'text' => 'Ошибка доступа']
+                        ],
+                        'object_data' => [
+                            ['key' => 'КПП', 'value' => '2839482']
+                        ]
+                    ]
+                ]
+            ]);
+        - lang: JavaScript
+          source: |
+            const response = await axios.post('/api/v1/log', {
+                service: 'payment-service',
+                incident: {
+                    object: 'transaction',
+                    date: '2024-03-20',
+                    message: [
+                        {code: 'ERR-001', text: 'Ошибка доступа'}
+                    ],
+                    object_data: [
+                        {key: 'КПП', value: '2839482'}
+                    ]
+                }
+            }, {
+                headers: {
+                    'X-Timestamp': Math.floor(Date.now() / 1000),
+                    'X-Signature': signature
+                }
+            });
 
   /api/v1/log/report:
     post:
       summary: Получение отчета
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
       tags:
         - Отчеты
       requestBody:
@@ -38,16 +208,57 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReportRequest'
+              type: object
+              required:
+                - service
+              properties:
+                service:
+                  type: string
+                  description: Название сервиса
+                date:
+                  type: string
+                  format: date
+                  description: Дата отчета (YYYY-MM-DD)
       responses:
         '200':
           description: Успешное получение отчета
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    description: Данные отчета
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
         '401':
-          $ref: '#/components/responses/AuthError'
+          description: Ошибка аутентификации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid request signature'
 
   /api/v1/log/export:
     post:
       summary: Экспорт логов
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
       tags:
         - Логи
       requestBody:
@@ -56,91 +267,253 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - date
+                - service
               properties:
                 date:
                   type: string
                   format: date
-                  description: Дата для экспорта логов (формат Y-m-d)
+                  description: Дата для экспорта логов (YYYY-MM-DD)
                 service:
                   type: string
                   description: Название сервиса
       responses:
         '200':
           description: Успешный экспорт логов
-        '400':
-          $ref: '#/components/responses/ValidationError'
-
-  /api/v1/services:
-    get:
-      summary: Получение списка сервисов
-      tags:
-        - Сервисы
-      security:
-        - ServicesToken: []
-      parameters:
-        - $ref: '#/components/parameters/XTimestamp'
-        - $ref: '#/components/parameters/XSignature'
-      responses:
-        '200':
-          description: Список сервисов
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Service'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: string
+                    format: binary
+                    description: Файл с логами
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Ошибка аутентификации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'The token has expired'
+
+  /api/v1/services:
+    get:
+      summary: Получение списка сервисов и типов инцидентов
+      description: Возвращает список всех сервисов и доступных типов инцидентов
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
+      tags:
+        - Сервисы
+      responses:
+        '200':
+          description: Список сервисов и типов инцидентов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: ''
+                  data:
+                    type: object
+                    properties:
+                      services:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Service'
+                      incidentTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type_name:
+                              type: string
+                              description: Название типа инцидента
+                            code:
+                              type: string
+                              description: Код типа инцидента
+                            lifecycle:
+                              type: integer
+                              description: Время жизни инцидента в секундах
         '401':
           $ref: '#/components/responses/AuthError'
 
   /api/v1/services/edit:
     post:
       summary: Редактирование сервиса
+      description: Изменяет статус активности сервиса
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
       tags:
         - Сервисы
-      security:
-        - ServicesToken: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ServiceEditRequest'
-      parameters:
-        - $ref: '#/components/parameters/XTimestamp'
-        - $ref: '#/components/parameters/XSignature'
-      responses:
-        '200':
-          description: Сервис успешно отредактирован
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/AuthError'
-
-  /api/v1/services/delete:
-    post:
-      summary: Удаление сервиса
-      tags:
-        - Сервисы
-      security:
-        - ServicesToken: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+                - active
+              properties:
+                name:
+                  type: string
+                  description: Название сервиса
+                active:
+                  type: string
+                  enum: [Y, N]
+                  description: Статус активности сервиса
+      responses:
+        '200':
+          description: Сервис успешно отредактирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Сервис успешно отредактирован'
+        '400':
+          description: Ошибка валидации или сервис не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /api/v1/services/delete:
+    post:
+      summary: Удаление сервиса
+      description: Удаляет сервис из системы
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
+      tags:
+        - Сервисы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - service
               properties:
                 service:
                   type: string
-                  description: Название сервиса
-      parameters:
-        - $ref: '#/components/parameters/XTimestamp'
-        - $ref: '#/components/parameters/XSignature'
+                  description: Название сервиса для удаления
       responses:
         '200':
           description: Сервис успешно удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Сервис успешно удален'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
         '400':
-          $ref: '#/components/responses/ValidationError'
+          description: Ошибка валидации или сервис не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /api/v1/incident/type:
+    post:
+      summary: Добавление нового типа инцидента
+      description: Добавляет новый тип инцидента в систему
+      security:
+        - ApiSignature: []
+        - ApiTimestamp: []
+      tags:
+        - Инциденты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type_name
+                - code
+                - lifecycle
+              properties:
+                type_name:
+                  type: string
+                  description: Название типа инцидента
+                send_template_id:
+                  type: integer
+                  minimum: 1
+                  description: ID шаблона для отправки
+                code:
+                  type: string
+                  description: Код типа инцидента
+                lifecycle:
+                  type: integer
+                  minimum: 1
+                  description: Время жизни инцидента в секундах
+      responses:
+        '200':
+          description: Тип инцидента успешно добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Тип инцидента успешно добавлен'
+                  data:
+                    type: object
+                    description: Данные добавленного типа инцидента
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
         '401':
           $ref: '#/components/responses/AuthError'
 
@@ -149,53 +522,109 @@ components:
     LogRequest:
       type: object
       required:
-        - token
         - service
         - incident
       properties:
-        token:
-          type: string
-          description: Токен авторизации
         service:
           type: string
-          description: Название сервиса
+          description: Наименование сервиса-источника
+          example: 'service_name'
         incident:
           type: object
           required:
             - object
             - date
             - message
+            - object_data
           properties:
             object:
               type: string
               description: Объект инцидента
+              example: 'user_profile'
             date:
               type: string
-              format: date-time
-              description: Дата инцидента (формат d-m-Y H:i:s)
+              format: date
+              description: Дата инцидента (YYYY-MM-DD)
+              example: '2024-03-20'
             message:
               type: array
-              description: Массив сообщений инцидента. Каждое сообщение должно содержать информацию об ошибке или предупреждении
+              description: Детали инцидента
               items:
-                type: string
-              example: ["Ошибка подключения к БД", "Таймаут операции"]
+                type: object
+                required:
+                  - code
+                  - text
+                properties:
+                  code:
+                    type: string
+                    description: Код ошибки
+                    example: 'ERR-001'
+                  text:
+                    type: string
+                    description: Текст ошибки
+                    example: 'Ошибка доступа'
+            object_data:
+              type: array
+              description: Дополнительные данные об объекте инцидента
+              items:
+                type: object
+                required:
+                  - key
+                  - value
+                properties:
+                  key:
+                    type: string
+                    description: Название параметра
+                    example: 'КПП'
+                  value:
+                    type: string
+                    description: Значение параметра
+                    example: '2839482'
 
-    ReportRequest:
+    SuccessResponse:
       type: object
       required:
-        - token
-        - service
+        - success
+        - message
       properties:
-        token:
+        success:
+          type: boolean
+          description: Статус выполнения операции
+          example: true
+        message:
           type: string
-          description: Токен для доступа к отчетам
-        service:
+          description: Сообщение о результате операции
+          example: 'Операция выполнена успешно'
+        data:
+          type: object
+          description: Дополнительные данные ответа
+          nullable: true
+
+    ValidationError:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
           type: string
-          description: Название сервиса
-        date:
+          example: 'Поле service обязательно для заполнения'
+
+    ServerError:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
           type: string
-          format: date
-          description: Дата отчета (формат Y-m-d)
+          example: 'Внутренняя ошибка сервера'
 
     Service:
       type: object
@@ -206,79 +635,54 @@ components:
       properties:
         id:
           type: integer
-          description: Уникальный идентификатор сервиса в системе
-          example: 1
-        name:
-          type: string
-          description: Уникальное название сервиса в системе
-          example: "payment-service"
-        active:
-          type: string
-          enum: ["Y", "N"]
-          description: Статус активности сервиса (Y - активен, N - неактивен)
-          example: "Y"
-
-    ServiceEditRequest:
-      type: object
-      required:
-        - id
-        - name
-        - active
-      properties:
-        id:
-          type: integer
-          description: Идентификатор сервиса
+          description: Уникальный идентификатор сервиса
         name:
           type: string
           description: Название сервиса
         active:
           type: string
           enum: [Y, N]
-          description: Статус сервиса
-
-  responses:
-    ValidationError:
-      description: Ошибка валидации
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              errors:
-                type: object
-                additionalProperties:
-                  type: array
-                  items:
-                    type: string
-
-    AuthError:
-      description: Ошибка авторизации
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          description: Статус активности сервиса
 
   securitySchemes:
-    ServicesToken:
+    ApiSignature:
       type: apiKey
-      name: Authorization
       in: header
-
-  parameters:
-    XTimestamp:
-      name: X-Timestamp
-      in: header
-      required: true
-      schema:
-        type: string
-      description: Временная метка в формате Unix timestamp
-    XSignature:
       name: X-Signature
+      description: HMAC SHA256 подпись запроса
+    ApiTimestamp:
+      type: apiKey
       in: header
-      required: true
-      schema:
-        type: string
-      description: Подпись запроса (HMAC SHA256 от timestamp + services_token)
+      name: X-Timestamp
+      description: Unix timestamp в секундах
+
+  responses:
+    AuthError:
+      description: Ошибка аутентификации
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - message
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: 'Invalid request signature'
+          examples:
+            expired:
+              value:
+                success: false
+                message: 'The token has expired'
+            invalid:
+              value:
+                success: false
+                message: 'Invalid request signature'
+
+externalDocs:
+  description: Документация по интеграции
+  url: https://example.com/docs

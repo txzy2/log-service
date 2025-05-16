@@ -31,6 +31,7 @@ class LogController extends Controller
                 'service' => 'required|string',
                 'incident' => 'required',
                 'incident.object' => 'required|string',
+                'incident.object_data' => 'required|array',
                 'incident.date' => 'required|date_format:Y-m-d|after_or_equal:today',
                 'incident.message' => 'required|array',
             ],
