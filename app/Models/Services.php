@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 class Services extends Model
 {
+    use HasFactory;
     private const ERROR_CLASS = __CLASS__;
 
     protected $table = 'incident_services';
