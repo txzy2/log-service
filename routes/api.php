@@ -31,3 +31,8 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
         });
     });
 });
+
+Route::fallback(fn() => response()->json([
+    'success' => false,
+    'message' => 'Not found'
+], 404));

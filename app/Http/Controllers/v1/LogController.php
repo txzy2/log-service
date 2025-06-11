@@ -45,7 +45,8 @@ class LogController extends Controller
             return $this->sendError($validate->errors(), 400);
         }
 
-        return $this->sendSuccess(LogIncident::writeOrSaveLog($data)['message']);
+        $result = LogIncident::writeOrSaveLog($data);
+        return $this->sendSuccess($result['success'] ? $result['message'] : "Операция завершена с ошибкой: {$result['message']}");
     }
 
     /**

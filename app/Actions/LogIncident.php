@@ -29,6 +29,7 @@ class LogIncident
         Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$prepredData]);
 
         if (isset($prepredData['error'])) {
+            $return['success'] = false;
             $return['message'] = $prepredData['error'];
             return $return;
         }
@@ -38,19 +39,17 @@ class LogIncident
 
         if (!$parsedMessage['success']) {
             Log::channel("debug")->error(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
+            $return['success'] = false;
             $return['message'] = "Ошибка парсинга сервиса";
             return $return;
         }
 
         $prepredData['incident']['message'] = $parsedMessage['message'];
-        [$code] = Parser::parseStr($parsedMessage['message']);
-        $existType = IncidentType::where('code', $code)->first();
+        $existType = IncidentType::where('code', $parsedMessage['code'])->first();
 
-        $return['message'] = match (true) {
-            $existType === null => Incident::saveData($prepredData)['message'], // Сохраняем, если тип инцидента не найден
-            default => Incident::processIncidentData($prepredData, $existType)['message'], // Обновляем, если тип инцидента найден
+        return match (true) {
+            $existType === null => Incident::saveData($prepredData), // Сохраняем, если тип инцидента не найден
+            default => Incident::processIncidentData($prepredData, $existType), // Обновляем, если тип инцидента найден
         };
-
-        return $return;
     }
 }

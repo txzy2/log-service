@@ -140,7 +140,7 @@ class Incident extends Model
             $existIncident->save();
 
             if (!empty($incidentType->alias)) {
-                Log::channel('debug')->info(self::ERROR_CLASS . ' handleExistingIncident existIncident to array', [$existIncident->toArray()]);
+                Log::channel('debug')->info(self::ERROR_CLASS . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
                 match (SendTemplateType::from($incidentType->alias)) {
                     SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),
                     default => null,
