@@ -72,7 +72,7 @@ class SenderManager
     }
 
     /**
-     * SendIncidentMessage - отправляет сообщение об инциденте
+     * SendIncidentMessage - отправляет сообщение об инциденте на почту
      *
      * @param string $recipient - кому отправлять
      * @param string $template - текст сообщения
@@ -116,7 +116,7 @@ class SenderManager
     }
 
     /**
-     * sendIncidentMessage - отправляет сообщение об инциденте
+     * generateMailToken - генерирует токен для сервиса рассылки
      *
      * @param array $messages
      * @return string

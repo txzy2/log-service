@@ -39,6 +39,7 @@ class Incident extends Model
      */
     public static function saveData(array $data): array
     {
+        // TODO: Сделать отправку в clickhouse
         $message = "Новая не отслеживаемая ошибка от {$data['service']}";
         Log::channel("unknown_errors")->warning(
             "Новая не отслеживаемая ошибка от WSPG: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
