@@ -27,12 +27,11 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
         Route::prefix('services')->group(function () {
             Route::get('/', [ServicesController::class, 'getServices']);
             Route::post('/edit', [ServicesController::class, 'editService']);
-            Route::post('/delete', [ServicesController::class, 'deleteService']);
         });
     });
 });
 
 Route::fallback(fn() => response()->json([
     'success' => false,
-    'message' => 'Not found'
+    'message' => 'Not found',
 ], 404));

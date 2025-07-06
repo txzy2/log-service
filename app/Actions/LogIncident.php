@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Actions;
 
-use App\Helpers\Parsers\Parser;
 use App\Helpers\ServiceManager;
 use App\Models\Incident;
 use App\Models\IncidentType;
@@ -22,7 +20,7 @@ class LogIncident
     {
         $return = [
             "success" => true,
-            "message" => ""
+            "message" => "",
         ];
 
         $prepredData = ServiceManager::prepareRequestData($data);
@@ -48,7 +46,7 @@ class LogIncident
         $existType = IncidentType::where('code', $parsedMessage['code'])->first();
 
         return match (true) {
-            $existType === null => Incident::saveData($prepredData), // Сохраняем, если тип инцидента не найден
+            $existType === null => Incident::saveData($prepredData),            // Сохраняем, если тип инцидента не найден
             default => Incident::processIncidentData($prepredData, $existType), // Обновляем, если тип инцидента найден
         };
     }

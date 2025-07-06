@@ -175,7 +175,7 @@ class Incident extends Model
                 'COUNT' => $existIncident->count,
                 'LIFECICLE' => $lifecycle,
                 'NEXT_SEND_DATE' => Carbon::parse($existIncident->date)
-                    ->addDays((int)$existIncident->incidentType->lifecycle)
+                    ->addDays((int) $existIncident->incidentType->lifecycle)
                     ->format('d-m-Y')
             ]
         );
