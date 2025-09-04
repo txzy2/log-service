@@ -24,7 +24,7 @@ class LogController extends Controller
     public function addLog(Request $request): JsonResponse
     {
         $data = $request->all();
-        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog RAW REQUEST', [$data]);
+        Log::channel("debug")->info(static::ERROR_CLASS . ':addLog RAW REQUEST', [$data]);
         $validate = Validator::make(
             $data,
             [
@@ -58,7 +58,7 @@ class LogController extends Controller
     public function sendReport(Request $request): JsonResponse
     {
         $data = $request->all();
-        Log::channel("debug")->info(self::ERROR_CLASS . '::sendReport REQUEST', $data);
+        Log::channel("debug")->info(static::ERROR_CLASS . '::sendReport REQUEST', $data);
         $validate = Validator::make(
             $data,
             [
@@ -78,7 +78,7 @@ class LogController extends Controller
         }
 
         $return = Incident::getIncidentDataByParams($data);
-        Log::channel('debug')->info(self::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
+        Log::channel('debug')->info(static::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
         return $this->sendSuccess($return['message'], $return['data'], $return['success']);
     }
 }

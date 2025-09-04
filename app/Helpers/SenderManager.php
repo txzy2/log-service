@@ -23,7 +23,7 @@ class SenderManager
     {
         $existIncidentType = IncidentType::where('send_template_id', $sendTemplateId)->first();
         if (!$existIncidentType) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
+            Log::channel("debug")->error(static::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
@@ -33,12 +33,10 @@ class SenderManager
             SendTemplateType::PUSH_MAIL => static::prepareAndSendEmail($existSendTemplate->to, $existSendTemplate->template, $data),
             default => Log::channel("debug")
                 ->error(
-                    self::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE",
-                    [
+                    static::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE", [
                         'DATA' => $data,
                         'TEMPLATE_ID' => $existSendTemplate->send_template_id
-                    ]
-                ),
+                    ]),
         };
     }
 
@@ -109,9 +107,9 @@ class SenderManager
 
             Log::channel('debug')->info(static::ERROR_CLASS . '::sendeMessages RESPONSE', [$result]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
+            Log::channel("debug")->error(static::ERROR_CLASS . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
         } catch (\Exception $e) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::sendIncidentMessage \Exception" . $e->getMessage());
+            Log::channel("debug")->error(static::ERROR_CLASS . "::sendIncidentMessage \Exception" . $e->getMessage());
         }
     }
 
@@ -160,9 +158,9 @@ class SenderManager
                 'parse_mode' => 'Markdown',
             ]);
 
-            Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
+            Log::channel('telegramLogging')->error(static::ERROR_CLASS . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
         } catch (\Exception $e) {
-            Log::channel('telegramLogging')->error(self::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
+            Log::channel('telegramLogging')->error(static::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }
     }
 }

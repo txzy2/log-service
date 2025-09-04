@@ -71,15 +71,15 @@ class TokenCheck
         }
 
         try {
-            $payload = new SignaturePayload(
-                (int) $request->header('X-Timestamp'),
-                $request->header('X-Signature'),
-                $request->method(),
-                $request->path(),
-                $request->getContent()
+            $this->checkSignature(
+                new SignaturePayload(
+                    (int) $request->header('X-Timestamp'),
+                    $request->header('X-Signature'),
+                    $request->method(),
+                    $request->path(),
+                    $request->getContent()
+                )
             );
-
-            $this->checkSignature($payload);
         } catch (\Exception $e) {
             $error = $e->getMessage();
             Log::channel('tokens')->error(self::ERROR_CLASS . "::handle ERROR TO AUTH $error", $userData);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions;
 
 use App\Helpers\ServiceManager;
@@ -24,7 +25,6 @@ class LogIncident
         ];
 
         $prepredData = ServiceManager::prepareRequestData($data);
-        Log::channel("debug")->info(self::ERROR_CLASS . ':addLog PARSED REQUEST', [$prepredData]);
 
         if (isset($prepredData['error'])) {
             $return['success'] = false;
@@ -36,7 +36,7 @@ class LogIncident
         $parsedMessage = $serviceMessageParser->parse($data['incident']['message']);
 
         if (!$parsedMessage['success']) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
+            Log::channel("debug")->error(static::ERROR_CLASS . "::logging PARSE ERROR", $parsedMessage);
             $return['success'] = false;
             $return['message'] = "Ошибка парсинга сервиса";
             return $return;
@@ -51,3 +51,4 @@ class LogIncident
         };
     }
 }
+

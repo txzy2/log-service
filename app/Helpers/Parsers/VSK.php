@@ -2,9 +2,9 @@
 
 namespace App\Helpers\Parsers;
 
-class VSK
+class VSK extends Parser
 {
-    public function parse($message): array
+    public function parse(array $message): array
     {
         $result = [
             'success' => false,
@@ -17,7 +17,7 @@ class VSK
         };
     }
 
-    private function parseError($message): array
+    protected function parseError(array $message): array
     {
         $default = [
             'success' => false,

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
@@ -53,5 +54,5 @@ class ServicesController extends Controller
         Services::where('name', $data['name'])->update(['active' => $data['active']]);
         return $this->sendSuccess('Сервис успешно отредактирован');
     }
-
 }
+
