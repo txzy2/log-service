@@ -3,6 +3,7 @@
 namespace App\Helpers\Parsers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 abstract class Parser {
     /**
@@ -26,15 +27,24 @@ abstract class Parser {
      * @return array
      */
     public static function returnParts(array $data): array {
+        $return = [
+            'success' => false,
+            'data' => $data,
+            'message' => 'Отсутствуют необходимые данные'
+        ];
+
         if (!isset($data['service']) || !isset($data['incident'])) {
-            return [
-                'success' => false,
-                'data' => $data,
-                'message' => 'Отсутствуют необходимые данные'
-            ];
+            return $return;
         }
 
+        // BUG: Если ввести строку например WSPG|Moneta|Some -> то все равно пройдет
         [$data['service'], $data['incident']['type']] = static::parseStr($data['service']);
+        Log::channel('debug')->info('Service: ' . $data['service'] . ' Type: ' . $data['incident']['type']);
+        if(empty($data['service']) || empty($data['incident']['type'])) {
+            $return['message'] = 'Неполный формат данных (service|type)';
+            return $return;
+        }
+
         return [
             'success' => true,
             'data' => $data

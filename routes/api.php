@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/test', [TestConroller::class, 'test']);
 
+// TODO: Раскомментировать после разработки
 // Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
 Route::prefix('v1')->group(function () {
     // Работа с логами

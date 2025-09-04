@@ -19,7 +19,7 @@ class ServcieCheck {
     public function handle(Request $request, Closure $next): mixed {
         $parts = Parser::returnParts(['service' => $request->input('service'), 'incident' => $request->input('incident')]);
         if($parts['success']) {
-            $existService = Services::validateService($parts['data']['service']);
+            $existService = Services::validateActiveService($parts['data']['service']);
             if(!$existService['success']) {
                 return $this->sendError($existService['message'], Response::HTTP_BAD_REQUEST);
             }
