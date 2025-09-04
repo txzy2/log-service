@@ -48,7 +48,7 @@ class ServiceManager {
             return ['error' => "Ошибка парсинга сервиса"];
         }
 
-        $existService = Services::validateService($parsedData['data']['service']);
+        $existService = Services::validateActiveService($parsedData['data']['service']);
         if (!$existService['success']) {
             return ['error' => $existService['message']];
         }
