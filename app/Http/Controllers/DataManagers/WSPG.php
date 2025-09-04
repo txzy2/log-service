@@ -4,16 +4,14 @@ namespace App\Http\Controllers\DataManagers;
 
 use App\Http\Controllers\Controller;
 
-class WSPG extends Controller
-{
+class WSPG extends Controller {
     /**
      * Публичный метод для проверки токена
      *
      * @param array $data Массив с данными запроса
      * @return array{success: bool, message: string} Результат проверки токена
      */
-    public function validateToken(array $data): array
-    {
+    public function validateToken(array $data): array {
         return $this->checkToken($data);
     }
 
@@ -24,8 +22,7 @@ class WSPG extends Controller
      * @param array $data Массив с данными запроса
      * @return array{success: bool, message: string} Результат проверки токена
      */
-    private function checkToken(array $data): array
-    {
+    private function checkToken(array $data): array {
         $incident = $data["incident"];
         $message = is_array($incident['message'])
             ? json_encode($incident['message'], JSON_UNESCAPED_UNICODE)

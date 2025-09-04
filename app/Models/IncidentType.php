@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class IncidentType extends Model
-{
+class IncidentType extends Model {
     use HasFactory;
 
     private const ERROR_CLASS = __CLASS__;
@@ -29,8 +28,7 @@ class IncidentType extends Model
      * @param array $data Данные для нового типа инцидента.
      * @return array Массив с результатом операции, включая статус и сообщение.
      */
-    public static function validateAndAddType(array $data): array
-    {
+    public static function validateAndAddType(array $data): array {
         $return = [
             'success' => false,
             'data' => [],
@@ -59,13 +57,11 @@ class IncidentType extends Model
         return $return;
     }
 
-    public function sendTemplate()
-    {
+    public function sendTemplate() {
         return $this->belongsTo(SendTemplate::class, 'send_template_id');
     }
 
-    public function incidents()
-    {
+    public function incidents() {
         return $this->hasMany(Incident::class, 'incident_type_id');
     }
 }

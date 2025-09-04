@@ -4,14 +4,16 @@ use App\Http\Controllers\TestConroller;
 use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
 use App\Http\Controllers\v1\ServicesController;
+use App\Http\Middleware\ServcieCheck;
 use App\Http\Middleware\TokenCheck;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test', [TestConroller::class, 'test']);
 
-Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
+// Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
+Route::prefix('v1')->group(function () {
     // Работа с логами
-    Route::prefix('log')->group(function () {
+    Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
         Route::post('/report', [LogController::class, 'sendReport']);
     });

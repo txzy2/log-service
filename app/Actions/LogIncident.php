@@ -7,8 +7,7 @@ use App\Models\Incident;
 use App\Models\IncidentType;
 use Illuminate\Support\Facades\Log;
 
-class LogIncident
-{
+class LogIncident {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -17,15 +16,13 @@ class LogIncident
      * @param array $data
      * @return array
      */
-    public static function writeOrSaveLog(array $data): array
-    {
+    public static function writeOrSaveLog(array $data): array {
         $return = [
             "success" => true,
             "message" => "",
         ];
 
         $prepredData = ServiceManager::prepareRequestData($data);
-
         if (isset($prepredData['error'])) {
             $return['success'] = false;
             $return['message'] = $prepredData['error'];

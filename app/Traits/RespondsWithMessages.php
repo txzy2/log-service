@@ -4,8 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 
-trait RespondsWithMessages
-{
+trait RespondsWithMessages {
     /**
      * Формирует и возвращает JSON-ответ с ошибкой.
      *
@@ -13,8 +12,7 @@ trait RespondsWithMessages
      * @param int $code
      * @return JsonResponse
      */
-    protected function sendError(string $message, int $code = 400): JsonResponse
-    {
+    protected function sendError(string $message, int $code = 400): JsonResponse {
         return response()->json([
             'success' => false,
             'message' => $message,
@@ -29,8 +27,7 @@ trait RespondsWithMessages
      * @param int $code
      * @return JsonResponse
      */
-    protected function sendSuccess(string $message, array $data = [], int $code = 200): JsonResponse
-    {
+    protected function sendSuccess(string $message, array $data = [], int $code = 200): JsonResponse {
         $response = [
             'success' => true,
             'message' => $message,

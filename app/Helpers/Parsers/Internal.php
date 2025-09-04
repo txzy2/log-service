@@ -2,10 +2,8 @@
 
 namespace App\Helpers\Parsers;
 
-class Internal
-{
-    public function parse(array $message): array
-    {
+class Internal {
+    public function parse(array $message): array {
         \Illuminate\Support\Facades\Log::channel('debug')->info('parse req', $message);
 
         if (

@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class IncidentController extends Controller
-{
+class IncidentController extends Controller {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -18,8 +17,7 @@ class IncidentController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function addType(Request $request)
-    {
+    public function addType(Request $request) {
         $data = $request->all();
 
         Log::channel('debug')->info(self::ERROR_CLASS . '::addType REQUST DATA', [$data]);

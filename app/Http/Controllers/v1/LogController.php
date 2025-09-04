@@ -5,14 +5,12 @@ namespace App\Http\Controllers\v1;
 use App\Actions\LogIncident;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
-use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class LogController extends Controller
-{
+class LogController extends Controller {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -21,8 +19,7 @@ class LogController extends Controller
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function addLog(Request $request): JsonResponse
-    {
+    public function addLog(Request $request): JsonResponse {
         $data = $request->all();
         Log::channel("debug")->info(static::ERROR_CLASS . ':addLog RAW REQUEST', [$data]);
         $validate = Validator::make(
@@ -55,8 +52,7 @@ class LogController extends Controller
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function sendReport(Request $request): JsonResponse
-    {
+    public function sendReport(Request $request): JsonResponse {
         $data = $request->all();
         Log::channel("debug")->info(static::ERROR_CLASS . '::sendReport REQUEST', $data);
         $validate = Validator::make(

@@ -2,16 +2,14 @@
 
 namespace App\Helpers\Parsers;
 
-class Moneta extends Parser
-{
+class Moneta extends Parser {
     /**
      * parse - парсит сообщение
      *
      * @param array $message
      * @return array{success: bool, message: string}
      */
-    public function parse(array $message): array
-    {
+    public function parse(array $message): array {
         $result = [
             'success' => false,
             'message' => ""
@@ -29,8 +27,7 @@ class Moneta extends Parser
      * @param array $message
      * @return array{success: bool, message: string}
      */
-    protected function parseError(array $message): array
-    {
+    protected function parseError(array $message): array {
         $default = [
             'success' => false,
             'message' => '',

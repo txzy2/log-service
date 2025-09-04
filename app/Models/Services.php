@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
-class Services extends Model
-{
+class Services extends Model {
     use HasFactory;
     private const ERROR_CLASS = __CLASS__;
 
@@ -18,13 +17,11 @@ class Services extends Model
         'active',
     ];
 
-    public static function findService(string $service): ?Services
-    {
+    public static function findService(string $service): ?Services {
         return Services::where('name', $service)->first();
     }
 
-    public static function validateService(string $service): array
-    {
+    public static function validateService(string $service): array {
         $existService = Services::where('name', $service)->first();
 
         if (!$existService) {

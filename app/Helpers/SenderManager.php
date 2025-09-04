@@ -9,8 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-class SenderManager
-{
+class SenderManager {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -19,8 +18,7 @@ class SenderManager
      * @param object $data
      * @return void
      */
-    public static function preparePushOrMail(object $data, int $sendTemplateId): void
-    {
+    public static function preparePushOrMail(object $data, int $sendTemplateId): void {
         $existIncidentType = IncidentType::where('send_template_id', $sendTemplateId)->first();
         if (!$existIncidentType) {
             Log::channel("debug")->error(static::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
@@ -40,8 +38,7 @@ class SenderManager
         };
     }
 
-    protected static function prepareAndSendEmail(string $to, string $template, object $data): void
-    {
+    protected static function prepareAndSendEmail(string $to, string $template, object $data): void {
         $replacements = [
             '{{inn}}' => '',
             '{{kpp}}' => '',
@@ -77,8 +74,7 @@ class SenderManager
      * @return void
      * @throws GuzzleException
      */
-    private static function sendIncidentMessage(string $recipient, string $template): void
-    {
+    private static function sendIncidentMessage(string $recipient, string $template): void {
         $emails = str_contains($recipient, ',')
             ? array_map('trim', explode(',', $recipient))
             : [$recipient];
@@ -119,8 +115,7 @@ class SenderManager
      * @param array $messages
      * @return string
      */
-    protected static function generateMailToken(array $messages): string
-    {
+    protected static function generateMailToken(array $messages): string {
         $messages = json_encode($messages);
         $key = config('app.ws_pg_key');
 
@@ -133,8 +128,7 @@ class SenderManager
      * @param string $message
      * @return void
      */
-    public static function telegramSendMessage(string $class, string $title, string $text, array $additionalInfo = []): void
-    {
+    public static function telegramSendMessage(string $class, string $title, string $text, array $additionalInfo = []): void {
         $lineBreak = "\n";
         $bold = ['*', '*'];
         $code = ['```json', '```'];

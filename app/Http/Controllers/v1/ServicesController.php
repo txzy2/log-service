@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ServicesController extends Controller
-{
+class ServicesController extends Controller {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -18,8 +17,7 @@ class ServicesController extends Controller
      *
      * @return JsonResponse
      */
-    public function getServices(): JsonResponse
-    {
+    public function getServices(): JsonResponse {
         $services = Services::all()->toArray();
         $incidentTypes = DB::table('incident_type')->select('type_name', 'code', 'lifecycle')->get()->toArray();
         return $this->sendSuccess('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
@@ -31,8 +29,7 @@ class ServicesController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function editService(Request $request): JsonResponse
-    {
+    public function editService(Request $request): JsonResponse {
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'required|string',

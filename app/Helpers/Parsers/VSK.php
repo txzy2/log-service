@@ -2,8 +2,7 @@
 
 namespace App\Helpers\Parsers;
 
-class VSK extends Parser
-{
+class VSK extends Parser {
     public function parse(array $message): array
     {
         $result = [
@@ -17,8 +16,7 @@ class VSK extends Parser
         };
     }
 
-    protected function parseError(array $message): array
-    {
+    protected function parseError(array $message): array {
         $default = [
             'success' => false,
             'message' => '',

@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class TokenCheck
-{
+class TokenCheck {
     use RespondsWithMessages;
 
     private const ERROR_CLASS = __CLASS__;
@@ -23,8 +22,7 @@ class TokenCheck
      * @return void
      * @throws \Exception
      */
-    private function checkSignature(SignaturePayload $payload): void
-    {
+    private function checkSignature(SignaturePayload $payload): void {
         Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
 
         if (abs(time() - $payload->timestamp) > self::TOKEN_TTL_SECONDS) {
@@ -51,8 +49,7 @@ class TokenCheck
      * @param Closure $next
      * @return mixed
      */
-    public function handle(Request $request, Closure $next): mixed
-    {
+    public function handle(Request $request, Closure $next): mixed {
         $userData = [
             'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),

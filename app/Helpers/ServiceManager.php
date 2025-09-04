@@ -7,8 +7,7 @@ use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
-class ServiceManager
-{
+class ServiceManager {
     private const ERROR_CLASS = __CLASS__;
 
     /**
@@ -17,8 +16,7 @@ class ServiceManager
      * @param string $service
      * @return object
      */
-    public static function initServiceObject(string $service): object
-    {
+    public static function initServiceObject(string $service): object {
         $serviceName = "\\App\\Http\\Controllers\\DataManagers\\{$service}";
         return new $serviceName();
     }
@@ -29,8 +27,7 @@ class ServiceManager
      * @param string $service
      * @return object|bool
      */
-    public static function getServiceParser(string $service): object|bool
-    {
+    public static function getServiceParser(string $service): object|bool {
         $serviceName = "\\App\\Helpers\\Parsers\\{$service}";
         if (class_exists($serviceName)) {
             return new $serviceName();
@@ -44,9 +41,8 @@ class ServiceManager
      * @param array $data
      * @return array|JsonResponse
      */
-    public static function prepareRequestData(array $data): array
-    {
-        $parsedData = static::returnParts($data);
+    public static function prepareRequestData(array $data): array {
+        $parsedData = Parser::returnParts($data);
         if (!$parsedData['success']) {
             Log::channel("debug")->error(self::ERROR_CLASS . "::prepareRequestData ({$data['service']})", $data);
             return ['error' => "Ошибка парсинга сервиса"];
@@ -60,26 +56,4 @@ class ServiceManager
         return $parsedData['data'];
     }
 
-    /**
-     * returnParts - проверяет и возвращает наименования сервиса и тип инцидента
-     *
-     * @param array $data
-     * @return array
-     */
-    public static function returnParts(array $data): array
-    {
-        if (!isset($data['service']) || !isset($data['incident'])) {
-            return [
-                'success' => false,
-                'data' => $data,
-                'message' => 'Отсутствуют необходимые данные'
-            ];
-        }
-
-        [$data['service'], $data['incident']['type']] = Parser::parseStr($data['service']);
-        return [
-            'success' => true,
-            'data' => $data
-        ];
-    }
 }
