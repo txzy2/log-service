@@ -4,7 +4,7 @@ namespace App\Helpers\Parsers;
 
 use Carbon\Carbon;
 
-class Parser
+abstract class Parser
 {
     /**
      * parseStr - парсит строку на основе разделителя '|'
@@ -38,4 +38,23 @@ class Parser
             'currentDate' => $currentDate
         ];
     }
+
+    /**
+     * parse - парсит сообщение
+     *
+     * @param array $message
+     *
+     * @return array
+     */
+    abstract public function parse(array $message): array;
+
+    /**
+     * parseError - парсит сообщение ошибки
+     *
+     * @param array $message
+     *
+     * @return array
+     */
+    abstract protected function parseError(array $message): array;
+
 }

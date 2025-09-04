@@ -46,7 +46,7 @@ class Incident extends Model
         );
 
         SenderManager::telegramSendMessage(
-            self::ERROR_CLASS,
+            static::ERROR_CLASS,
             $message,
             (string) $data['incident']['message'],
             ['Object' => $data['incident']['object']]
@@ -68,7 +68,7 @@ class Incident extends Model
     public static function processIncidentData(array $data, object $incidentType): array
     {
         $incidentData = $data['incident'];
-        $existIncident = self::firstOrNew(
+        $existIncident = static::firstOrNew(
             ['incident_object' => $incidentData['object']],
             [
                 'incident_text' => $incidentData['message'],
@@ -82,14 +82,14 @@ class Incident extends Model
         );
 
         if (!$existIncident->exists) {
-            self::handleNewIncident($incidentType, $existIncident);
+            static::handleNewIncident($incidentType, $existIncident);
             return [
                 'success' => true,
                 'message' => 'Данные успешно сохранены и отправлены'
             ];
         }
 
-        return self::handleExistingIncident($existIncident, $incidentType, $incidentData);
+        return static::handleExistingIncident($existIncident, $incidentType, $incidentData);
     }
 
     /**
@@ -111,7 +111,7 @@ class Incident extends Model
             };
 
             SenderManager::telegramSendMessage(
-                self::ERROR_CLASS,
+                static::ERROR_CLASS,
                 "Новая ошибка от {$data->service} ({$data->source})",
                 (string) $data->incident_text,
                 [
@@ -141,7 +141,7 @@ class Incident extends Model
             $existIncident->save();
 
             if (!empty($incidentType->alias)) {
-                Log::channel('debug')->info(self::ERROR_CLASS . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
+                Log::channel('debug')->info(static::ERROR_CLASS . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
                 match (SendTemplateType::from($incidentType->alias)) {
                     SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),
                     default => null,
@@ -149,7 +149,7 @@ class Incident extends Model
             }
 
             SenderManager::telegramSendMessage(
-                self::ERROR_CLASS,
+                static::ERROR_CLASS,
                 "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->incident_object})",
                 (string) $existIncident->incident_text,
                 [
@@ -167,7 +167,7 @@ class Incident extends Model
         $existIncident->save();
 
         SenderManager::telegramSendMessage(
-            self::ERROR_CLASS,
+            static::ERROR_CLASS,
             "ДОБАВЛЯЛАСЬ РАНЕЕ",
             (string) $existIncident->incident_text,
             [
@@ -207,7 +207,7 @@ class Incident extends Model
             return $return;
         }
 
-        $query = self::query()
+        $query = static::query()
             ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
                 'incident.id',

@@ -37,12 +37,12 @@ class IncidentType extends Model
             'message' => 'Такой тип ошибки уже существует'
         ];
 
-        $existType = self::where('code', $data['code'])->orWhere('type_name', $data['type_name'])->first();
+        $existType = static::where('code', $data['code'])->orWhere('type_name', $data['type_name'])->first();
         if ($existType) {
             return $return;
         }
 
-        $newType = self::create([
+        $newType = static::create([
             'type_name' => $data['type_name'],
             'code' => $data['code'],
             'send_template_id' => $data['send_template_id'] ?? null,
@@ -50,7 +50,7 @@ class IncidentType extends Model
             'alias' => 'manager'
         ]);
 
-        \Illuminate\Support\Facades\Log::channel('debug')->info(self::ERROR_CLASS . '::validateAndAddType ADD RESULT', [$existType]);
+        \Illuminate\Support\Facades\Log::channel('debug')->info(static::ERROR_CLASS . '::validateAndAddType ADD RESULT', [$existType]);
 
         $return['success'] = $newType ? true : false;
         $return['message'] = $newType ? '' : 'Ошибка сохранения типа';

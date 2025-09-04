@@ -35,7 +35,7 @@ class Services extends Model
         }
 
         if ($existService->active === 'N') {
-            Log::channel("debug")->error(self::ERROR_CLASS . " SERVICE IS INACTIVE" . " ($service)");
+            Log::channel("debug")->error(static::ERROR_CLASS . " SERVICE IS INACTIVE" . " ($service)");
 
             return [
                 'success' => false,
