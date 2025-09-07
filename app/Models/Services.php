@@ -3,12 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
-class Services extends Model {
+class Services extends BaseModel {
     use HasFactory;
-    private const ERROR_CLASS = __CLASS__;
 
     protected $table = 'incident_services';
 
@@ -21,11 +19,17 @@ class Services extends Model {
         return Services::where('name', $service)->first();
     }
 
+    /**
+     * validateActiveService - выполняет проверку валидности сервиса на статус активности и существование
+     *
+     * @param string $service
+     *
+     * @return array
+     */
     public static function validateActiveService(string $service): array {
         $existService = Services::where('name', $service)->where('active', 'Y')->first();
-
         if (!$existService) {
-            Log::channel("debug")->error(static::ERROR_CLASS . " SERVICE IS INACTIVE" . " ($service)");
+            Log::channel("debug")->error(static::getControllerClass() . " SERVICE IS INACTIVE" . " ($service)");
 
             return [
                 'success' => false,

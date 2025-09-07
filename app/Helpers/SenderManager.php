@@ -9,9 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-class SenderManager {
-    private const ERROR_CLASS = __CLASS__;
-
+class SenderManager extends Helpers {
     /**
      * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
      *
@@ -21,7 +19,7 @@ class SenderManager {
     public static function preparePushOrMail(object $data, int $sendTemplateId): void {
         $existIncidentType = IncidentType::where('send_template_id', $sendTemplateId)->first();
         if (!$existIncidentType) {
-            Log::channel("debug")->error(static::ERROR_CLASS . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
+            Log::channel("debug")->error(static::getClassName() . "::sendToSendService ERROR SEND MAIL TO SENDER SERVICE", [$data]);
             return;
         }
 
@@ -31,7 +29,7 @@ class SenderManager {
             SendTemplateType::PUSH_MAIL => static::prepareAndSendEmail($existSendTemplate->to, $existSendTemplate->template, $data),
             default => Log::channel("debug")
                 ->error(
-                    static::ERROR_CLASS . "::sendToSendService ERROR SEND TYPE", [
+                    static::getClassName() . "::sendToSendService ERROR SEND TYPE", [
                         'DATA' => $data,
                         'TEMPLATE_ID' => $existSendTemplate->send_template_id
                     ]),
@@ -101,11 +99,11 @@ class SenderManager {
                 ]
             ]);
 
-            Log::channel('debug')->info(static::ERROR_CLASS . '::sendeMessages RESPONSE', [$result]);
+            Log::channel('debug')->info(static::getClassName() . '::sendeMessages RESPONSE', [$result]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
-            Log::channel("debug")->error(static::ERROR_CLASS . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
+            Log::channel("debug")->error(static::getClassName() . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$e->getMessage()]);
         } catch (\Exception $e) {
-            Log::channel("debug")->error(static::ERROR_CLASS . "::sendIncidentMessage \Exception" . $e->getMessage());
+            Log::channel("debug")->error(static::getClassName() . "::sendIncidentMessage \Exception" . $e->getMessage());
         }
     }
 
@@ -152,9 +150,9 @@ class SenderManager {
                 'parse_mode' => 'Markdown',
             ]);
 
-            Log::channel('telegramLogging')->error(static::ERROR_CLASS . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
+            Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
         } catch (\Exception $e) {
-            Log::channel('telegramLogging')->error(static::ERROR_CLASS . "::telegramSendMessage ERROR", [$e->getMessage()]);
+            Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }
     }
 }

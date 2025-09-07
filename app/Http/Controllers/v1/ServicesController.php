@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ServicesController extends Controller {
-    private const ERROR_CLASS = __CLASS__;
-
     /**
      * getServices - Получение всех сервисов
      *

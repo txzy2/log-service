@@ -7,17 +7,12 @@ use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class Incident extends Model
+class Incident extends BaseModel
 {
     use HasFactory;
 
-    private const ERROR_CLASS = __CLASS__;
     public $timestamps = false;
     protected $table = 'incident';
     protected $fillable = [
@@ -46,7 +41,7 @@ class Incident extends Model
         );
 
         SenderManager::telegramSendMessage(
-            static::ERROR_CLASS,
+            static::getModelClass(),
             $message,
             (string) $data['incident']['message'],
             ['Object' => $data['incident']['object']]
@@ -111,7 +106,7 @@ class Incident extends Model
             };
 
             SenderManager::telegramSendMessage(
-                static::ERROR_CLASS,
+                static::getModelClass(),
                 "Новая ошибка от {$data->service} ({$data->source})",
                 (string) $data->incident_text,
                 [
@@ -141,7 +136,7 @@ class Incident extends Model
             $existIncident->save();
 
             if (!empty($incidentType->alias)) {
-                Log::channel('debug')->info(static::ERROR_CLASS . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
+                Log::channel('debug')->info(static::getModelClass() . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
                 match (SendTemplateType::from($incidentType->alias)) {
                     SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),
                     default => null,
@@ -149,7 +144,7 @@ class Incident extends Model
             }
 
             SenderManager::telegramSendMessage(
-                static::ERROR_CLASS,
+                static::getModelClass(),
                 "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->incident_object})",
                 (string) $existIncident->incident_text,
                 [
@@ -167,7 +162,7 @@ class Incident extends Model
         $existIncident->save();
 
         SenderManager::telegramSendMessage(
-            static::ERROR_CLASS,
+            static::getModelClass(),
             "ДОБАВЛЯЛАСЬ РАНЕЕ",
             (string) $existIncident->incident_text,
             [
@@ -201,7 +196,7 @@ class Incident extends Model
             "data" => []
         ];
 
-        $existService = Services::validateService($data['service']);
+        $existService = Services::validateActiveService($data['service']);
         if (!$existService['success']) {
             $return['message'] = $existService['message'];
             return $return;
@@ -231,7 +226,7 @@ class Incident extends Model
         }
 
         if (!empty($data['date'])) {
-            $query->where("date", $data['date']);
+            $query->where("date", "=", $data['date']);
         }
 
         if (!empty($data['code'])) {

@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class IncidentType extends Model {
+class IncidentType extends BaseModel {
     use HasFactory;
-
-    private const ERROR_CLASS = __CLASS__;
 
     protected $table = 'incident_type';
 
@@ -48,7 +45,7 @@ class IncidentType extends Model {
             'alias' => 'manager'
         ]);
 
-        \Illuminate\Support\Facades\Log::channel('debug')->info(static::ERROR_CLASS . '::validateAndAddType ADD RESULT', [$existType]);
+        \Illuminate\Support\Facades\Log::channel('debug')->info(static::getModelClass() . '::validateAndAddType ADD RESULT', [$existType]);
 
         $return['success'] = $newType ? true : false;
         $return['message'] = $newType ? '' : 'Ошибка сохранения типа';

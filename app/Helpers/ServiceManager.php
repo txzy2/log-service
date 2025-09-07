@@ -7,9 +7,7 @@ use App\Models\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
-class ServiceManager {
-    private const ERROR_CLASS = __CLASS__;
-
+class ServiceManager extends Helpers {
     /**
      * initServiceObject - инициализация сервиса
      *
@@ -44,7 +42,7 @@ class ServiceManager {
     public static function prepareRequestData(array $data): array {
         $parsedData = Parser::returnParts($data);
         if (!$parsedData['success']) {
-            Log::channel("debug")->error(self::ERROR_CLASS . "::prepareRequestData ({$data['service']})", $data);
+            Log::channel("debug")->error(static::getClassName() . "::prepareRequestData ({$data['service']})", $data);
             return ['error' => "Ошибка парсинга сервиса"];
         }
 

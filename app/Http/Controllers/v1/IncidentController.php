@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class IncidentController extends Controller {
-    private const ERROR_CLASS = __CLASS__;
-
     /**
      * addType - добавляет новый тип инцидента в БД
      *
@@ -20,7 +18,7 @@ class IncidentController extends Controller {
     public function addType(Request $request) {
         $data = $request->all();
 
-        Log::channel('debug')->info(self::ERROR_CLASS . '::addType REQUST DATA', [$data]);
+        Log::channel('debug')->info(static::getControllerClass() . '::addType REQUST DATA', [$data]);
         $validated = Validator::make(
             $data,
             [
@@ -39,6 +37,9 @@ class IncidentController extends Controller {
         }
 
         $addData = IncidentType::validateAndAddType($data);
-        return $this->sendSuccess($addData['message'], $addData['data']);
+        return match ($addData['success']) {
+            true => $this->sendSuccess($addData['message'], $addData['data']),
+            default => $this->sendError($addData['message'], 400)
+        };
     }
 }

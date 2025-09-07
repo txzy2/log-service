@@ -2,10 +2,11 @@
 
 namespace App\Helpers\Parsers;
 
+use App\Helpers\Helpers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-abstract class Parser {
+abstract class Parser extends Helpers {
     /**
      * parseStr - парсит строку на основе разделителя '|'
      *

@@ -3,9 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class SendTemplate extends Model {
+class SendTemplate extends BaseModel {
     use HasFactory;
 
     protected $table = 'send_template';

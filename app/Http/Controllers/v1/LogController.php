@@ -21,7 +21,7 @@ class LogController extends Controller {
      */
     public function addLog(Request $request): JsonResponse {
         $data = $request->all();
-        Log::channel("debug")->info(static::ERROR_CLASS . ':addLog RAW REQUEST', [$data]);
+        Log::channel("debug")->info(static::getControllerClass() . ':addLog RAW REQUEST', [$data]);
         $validate = Validator::make(
             $data,
             [
@@ -43,7 +43,11 @@ class LogController extends Controller {
         }
 
         $result = LogIncident::writeOrSaveLog($data);
-        return $this->sendSuccess($result['success'] ? $result['message'] : "Операция завершена с ошибкой: {$result['message']}");
+        Log::channel("debug")->info(static::getControllerClass() . ':addLog RESULT', [$result]);
+        return match($result['success']) {
+            true => $this->sendSuccess($result['message']),
+            default => $this->sendError($result['message'], 400),
+        };
     }
 
     /**
@@ -54,7 +58,7 @@ class LogController extends Controller {
      */
     public function sendReport(Request $request): JsonResponse {
         $data = $request->all();
-        Log::channel("debug")->info(static::ERROR_CLASS . '::sendReport REQUEST', $data);
+        Log::channel("debug")->info(static::getControllerClass() . '::sendReport REQUEST', $data);
         $validate = Validator::make(
             $data,
             [
@@ -70,11 +74,14 @@ class LogController extends Controller {
         );
 
         if ($validate->fails()) {
-            return response()->json($validate->errors(), 400);
+            return $this->sendError($validate->errors(), 400);
         }
 
         $return = Incident::getIncidentDataByParams($data);
-        Log::channel('debug')->info(static::ERROR_CLASS . '::sendReport RESULT DATA', $return['data']);
-        return $this->sendSuccess($return['message'], $return['data'], $return['success']);
+        Log::channel('debug')->info(static::getControllerClass() . '::sendReport RESULT DATA', $return['data']);
+        return match ($return['success']) {
+            true => $this->sendSuccess($return['message'], $return['data']),
+            default => $this->sendError($return['message'], 400),
+        };
     }
 }
