@@ -40,18 +40,12 @@ class ServiceManager extends Helpers {
      * @return array|JsonResponse
      */
     public static function prepareRequestData(array $data): array {
-        $parsedData = Parser::returnParts($data);
-        if (!$parsedData['success']) {
-            Log::channel("debug")->error(static::getClassName() . "::prepareRequestData ({$data['service']})", $data);
-            return ['error' => "Ошибка парсинга сервиса"];
-        }
-
-        $existService = Services::validateActiveService($parsedData['data']['service']);
+        $existService = Services::validateActiveService($data['service']);
         if (!$existService['success']) {
             return ['error' => $existService['message']];
         }
 
-        return $parsedData['data'];
+        return $existService['success'];
     }
 
 }

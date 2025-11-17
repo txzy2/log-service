@@ -30,12 +30,15 @@ return new class extends Migration
 
         Schema::create('incident', function (Blueprint $table) {
             $table->id();
-            $table->string('incident_object');
-            $table->string('incident_text');
             $table->unsignedBigInteger('incident_type_id');
-            $table->string('incident_object_alias');
+            $table->string('domain');
             $table->string('service');
-            $table->string('source');
+            $table->string('message');
+            $table->string('class');
+            $table->string('function');
+            $table->string('action');
+            $table->string('file');
+            $table->json('additionalFields')->nullable();
             $table->date('date');
             $table->integer('count');
 

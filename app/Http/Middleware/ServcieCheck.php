@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Helpers\Parsers\Parser;
 use App\Models\Services;
 use App\Traits\RespondsWithMessages;
 use Closure;
@@ -17,16 +16,11 @@ class ServcieCheck {
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): mixed {
-        $parts = Parser::returnParts(['service' => $request->input('service'), 'incident' => $request->input('incident')]);
-        if($parts['success']) {
-            $existService = Services::validateActiveService($parts['data']['service']);
-            if(!$existService['success']) {
-                return $this->sendError($existService['message'], Response::HTTP_BAD_REQUEST);
-            }
-
-            return $next($request);
+        $existService = Services::validateActiveService($request->input('service'));
+        if(!$existService['success']) {
+            return $this->sendError($existService['message'], Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->sendError($parts['message'], Response::HTTP_BAD_REQUEST);
+        return $next($request);
     }
 }

@@ -16,11 +16,14 @@ class Incident extends BaseModel
     public $timestamps = false;
     protected $table = 'incident';
     protected $fillable = [
-        'incident_object',
-        'incident_text',
-        'incident_object_alias',
-        'incident_type_id',
-        'source',
+        'domain',
+        'service',
+        'message',
+        'class',
+        'function',
+        'action',
+        'file',
+        'additionalFields',
         'service',
         'date',
         'count',
@@ -34,7 +37,6 @@ class Incident extends BaseModel
      */
     public static function saveData(array $data): array
     {
-        // TODO: Сделать отправку в clickhouse
         $message = "Новая не отслеживаемая ошибка от {$data['service']}";
         Log::channel("unknown_errors")->warning(
             "Новая не отслеживаемая ошибка от WSPG: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
@@ -60,31 +62,36 @@ class Incident extends BaseModel
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function processIncidentData(array $data, object $incidentType): array
-    {
-        $incidentData = $data['incident'];
-        $existIncident = static::firstOrNew(
-            ['incident_object' => $incidentData['object']],
-            [
-                'incident_text' => $incidentData['message'],
-                'incident_type_id' => $incidentType->id,
-                'incident_object_alias' => json_encode($data['incident']['object_data']),
-                'service' => $data['service'],
-                'source' => $data['incident']['type'],
-                'date' => $incidentData['date'],
-                'count' => 1
-            ]
-        );
-
-        if (!$existIncident->exists) {
-            static::handleNewIncident($incidentType, $existIncident);
-            return [
-                'success' => true,
-                'message' => 'Данные успешно сохранены и отправлены'
-            ];
-        }
-
-        return static::handleExistingIncident($existIncident, $incidentType, $incidentData);
+    public static function processIncidentData(array $data, object $incidentType): array {
+        //TODO: Переписать сохранение под новыую логику
+        $createNewIncident = static::create([
+            'message' => $data['message'],
+            'domain' => $data['domain']
+            ''
+        ]);
+        // $incidentData = $data['incident'];
+        // $existIncident = static::firstOrNew(
+        //     ['incident_object' => $incidentData['object']],
+        //     [
+        //         'incident_text' => $incidentData['message'],
+        //         'incident_type_id' => $incidentType->id,
+        //         'incident_object_alias' => json_encode($data['incident']['object_data']),
+        //         'service' => $data['service'],
+        //         'source' => $data['incident']['type'],
+        //         'date' => $incidentData['date'],
+        //         'count' => 1
+        //     ]
+        // );
+        //
+        // if (!$existIncident->exists) {
+        //     static::handleNewIncident($incidentType, $existIncident);
+        //     return [
+        //         'success' => true,
+        //         'message' => 'Данные успешно сохранены и отправлены'
+        //     ];
+        // }
+        //
+        // return static::handleExistingIncident($existIncident, $incidentType, $incidentData);
     }
 
     /**
