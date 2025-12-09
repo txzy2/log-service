@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\v1;
 
 use App\Actions\LogIncident;
+use App\Enums\ErrorsEnum;
 use App\Enums\LevelsEnum;
 use App\Http\Controllers\Controller;
+use App\Jobs\WriteIncident;
 use App\Models\Incident;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,14 +14,16 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class LogController extends Controller {
+class LogController extends Controller
+{
     /**
      * sendLog - главный контроллер логов, который распределяет запросы по сервисам
      *
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function addLog(Request $request): JsonResponse {
+    public function addLog(Request $request): JsonResponse
+    {
         $data = $request->all();
         Log::channel("debug")->info(static::getControllerClass() . ':addLog RAW REQUEST', [$data]);
         $validate = Validator::make(
@@ -45,15 +49,11 @@ class LogController extends Controller {
         );
 
         if ($validate->fails()) {
-            return $this->sendError($validate->errors()->first(), 400);
+            return $this->sendError($validate->errors()->first(), ErrorsEnum::VALIDATION_ERROR->value);
         }
 
-        $result = LogIncident::writeOrSaveLog($data);
-        Log::channel("debug")->info(static::getControllerClass() . ':addLog RESULT', [$result]);
-        return match($result['success']) {
-            true => $this->sendSuccess($result['message']),
-            default => $this->sendError($result['message'], 400),
-        };
+        WriteIncident::dispatch($data)->onQueue("writeIncidentLog");
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 
     /**
@@ -62,7 +62,8 @@ class LogController extends Controller {
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function sendReport(Request $request): JsonResponse {
+    public function sendReport(Request $request): JsonResponse
+    {
         $data = $request->all();
         Log::channel("debug")->info(static::getControllerClass() . '::sendReport REQUEST', $data);
         $validate = Validator::make(

@@ -24,7 +24,7 @@ class Incident extends BaseModel
         'action',
         'file',
         'additionalFields',
-        'service',
+        'incident_type_id',
         'date',
         'count',
     ];
@@ -45,8 +45,8 @@ class Incident extends BaseModel
         SenderManager::telegramSendMessage(
             static::getModelClass(),
             $message,
-            (string) $data['incident']['message'],
-            ['Object' => $data['incident']['object']]
+            (string) $data['message'],
+            ['service' => $data['service']]
         );
 
         return [
@@ -62,36 +62,42 @@ class Incident extends BaseModel
      * @param mixed $incidentTypeId
      * @return array{message: string, success: bool}
      */
-    public static function processIncidentData(array $data, object $incidentType): array {
-        //TODO: Переписать сохранение под новыую логику
+    public static function processIncidentData(array $data, object $incidentType): array
+    {
+        Log::channel("debug")->info("processIncidentData", [
+            'data' => $data,
+            'incident_type_id' => $incidentType->id
+        ]);
+        $additionalFields = (object)[];
+        if (!empty($data['additionalFields'])) {
+            $additionalFields = json_encode($data['additionalFields']);
+        }
+
         $createNewIncident = static::create([
             'message' => $data['message'],
-            'domain' => $data['domain']
-            ''
+            'domain' => $data['domain'],
+            'service' => $data['service'],
+            'class' => $data['class'],
+            'incident_type_id' => $incidentType->id,
+            'function' => $data['function'],
+            'action' => $data['action'],
+            'file' => $data['file'],
+            'additionalFields' => $additionalFields,
+            'date' => $data['date'],
+            'count' => 1
         ]);
-        // $incidentData = $data['incident'];
-        // $existIncident = static::firstOrNew(
-        //     ['incident_object' => $incidentData['object']],
-        //     [
-        //         'incident_text' => $incidentData['message'],
-        //         'incident_type_id' => $incidentType->id,
-        //         'incident_object_alias' => json_encode($data['incident']['object_data']),
-        //         'service' => $data['service'],
-        //         'source' => $data['incident']['type'],
-        //         'date' => $incidentData['date'],
-        //         'count' => 1
-        //     ]
-        // );
-        //
-        // if (!$existIncident->exists) {
-        //     static::handleNewIncident($incidentType, $existIncident);
-        //     return [
-        //         'success' => true,
-        //         'message' => 'Данные успешно сохранены и отправлены'
-        //     ];
-        // }
-        //
-        // return static::handleExistingIncident($existIncident, $incidentType, $incidentData);
+
+        if ($createNewIncident?->id) {
+            return [
+                'success' => true,
+                'message' => 'Данные успешно сохранены'
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка создания инцидента'
+        ];
     }
 
     /**
