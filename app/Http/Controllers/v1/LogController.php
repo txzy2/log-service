@@ -38,13 +38,13 @@ class LogController extends Controller
                 'additionalFields' => 'nullable|array',
                 'file' => 'required|string',
                 'class' => 'required|string',
-                'date' => 'required|date_format:Y-m-d|after_or_equal:today',
+                'date' => 'required',
+                'hash_sum' => 'required|string',
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
                 'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
                 'level.in' => 'Переданный статус не валиден',
-                'date.after_or_equal' => 'Переданная дата не может быть меньше текущей даты',
             ]
         );
 
@@ -53,6 +53,8 @@ class LogController extends Controller
         }
 
         WriteIncident::dispatch($data)->onQueue("writeIncidentLog");
+        // $isWrited = LogIncident::writeOrSaveLog($data);
+        // Log::channel('debug')->info("is log writed?", $isWrited);
         return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 

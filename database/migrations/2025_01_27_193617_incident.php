@@ -31,6 +31,7 @@ return new class extends Migration
         Schema::create('incident', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('incident_type_id');
+            $table->string('level');
             $table->string('domain');
             $table->string('service');
             $table->string('message');

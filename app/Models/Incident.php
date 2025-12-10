@@ -27,6 +27,8 @@ class Incident extends BaseModel
         'incident_type_id',
         'date',
         'count',
+        'hash_sum',
+        'level'
     ];
 
     /**
@@ -73,7 +75,20 @@ class Incident extends BaseModel
             $additionalFields = json_encode($data['additionalFields']);
         }
 
-        $createNewIncident = static::create([
+        $hashSum = hash('sha256', $data['service'].$data['action'].$data['function'].$data['level']);
+        Log::channel('debug')->info("hash_sum", [
+            'request' => $data['hash_sum'],
+            'system' => $hashSum
+        ]);
+        if($hashSum !== $data['hash_sum']) { 
+            return [
+                "success" => false,
+                "message" => "Контрольная сумма не совпадает"
+            ];
+        }
+
+        $createNewIncident = static::firstOrNew(['hash_sum' => $hashSum],[
+            'level' => $data['level'],
             'message' => $data['message'],
             'domain' => $data['domain'],
             'service' => $data['service'],
@@ -87,17 +102,15 @@ class Incident extends BaseModel
             'count' => 1
         ]);
 
-        if ($createNewIncident?->id) {
+        if (!$createNewIncident->exists) {
+            static::handleNewIncident($incidentType, $createNewIncident);
             return [
                 'success' => true,
-                'message' => 'Данные успешно сохранены'
+                'message' => 'Данные успешно сохранены и отправлены'
             ];
         }
 
-        return [
-            'success' => false,
-            'message' => 'Ошибка создания инцидента'
-        ];
+        return static::handleExistingIncident($createNewIncident, $incidentType, $data);
     }
 
     /**
@@ -110,6 +123,7 @@ class Incident extends BaseModel
      */
     protected static function handleNewIncident(object $incidentType, object $data): void
     {
+        Log::channel('debug')->info("handleNewIncident", ['data' => $data, 'incidentType' => $incidentType]);
         if (!empty($incidentType->alias)) {
             $data->save();
 
@@ -125,7 +139,7 @@ class Incident extends BaseModel
                 [
                     'INCIDENT_TYPE' => $incidentType->type_name,
                     'CODE' => $incidentType->code,
-                    'INCIDENT_OBJECT' => $data->incident_object,
+                    'INCIDENT_OBJECT' => $data->hash_sum,
                 ]
             );
         }
@@ -133,9 +147,10 @@ class Incident extends BaseModel
 
     /**
      * handleExistingIncident
-     *
-     * @param mixed $existIncident
-     * @param mixed $incidentData
+     * 
+     * @param object $existIncident
+     * @param object $incidentType
+     * @param array $data
      * @return array{message: string, success: bool}
      */
     private static function handleExistingIncident(object $existIncident, object $incidentType, array $data): array
@@ -158,7 +173,7 @@ class Incident extends BaseModel
 
             SenderManager::telegramSendMessage(
                 static::getModelClass(),
-                "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->incident_object})",
+                "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->hash_sum})",
                 (string) $existIncident->incident_text,
                 [
                     'SERVICE AND SOURCE' => $existIncident->service . "|" . $existIncident->source,
@@ -179,7 +194,7 @@ class Incident extends BaseModel
             "ДОБАВЛЯЛАСЬ РАНЕЕ",
             (string) $existIncident->incident_text,
             [
-                'OBJECT' => $existIncident->incident_object,
+                'OBJECT' => $existIncident->hash_sum,
                 'COUNT' => $existIncident->count,
                 'LIFECICLE' => $lifecycle,
                 'NEXT_SEND_DATE' => Carbon::parse($existIncident->date)
@@ -189,7 +204,7 @@ class Incident extends BaseModel
         );
 
         return [
-            'success' => false,
+            'success' => true,
             'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}"
         ];
     }

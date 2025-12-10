@@ -24,7 +24,6 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'ws_pg_key' => env('WS_PG_KEY'),
     'services_token' => env('SERVICES_TOKEN'),
 
     'report_token' => env('REPORT_TOKEN'),
