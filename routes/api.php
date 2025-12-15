@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TestConroller;
+use App\Http\Controllers\v1\Auth\AuthController;
 use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
 use App\Http\Controllers\v1\ServicesController;
@@ -11,8 +12,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/test', [TestConroller::class, 'test']);
 
 // TODO: Раскомментировать после разработки
-// Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
+// Route::prefix('v1')->group(function () {
     // Работа с логами
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
@@ -32,6 +33,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/edit', [ServicesController::class, 'editService']);
         });
     });
+});
+
+Route::prefix("auth")->group(function() {
+    Route::post("/register", [AuthController::class, 'reg']);
+    Route::post("/token", [AuthController::class, 'token']);
 });
 
 Route::fallback(fn() => response()->json([

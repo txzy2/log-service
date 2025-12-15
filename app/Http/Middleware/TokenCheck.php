@@ -56,6 +56,8 @@ class TokenCheck {
             'auth' => $request->header('Authorization')
         ];
 
+        Log::channel("debug")->info("user data", $userData);
+
         $validated = Validator::make($request->headers->all(), [
             'x-timestamp' => 'required',
             'x-signature' => 'required',
