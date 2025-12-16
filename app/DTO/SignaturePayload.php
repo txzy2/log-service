@@ -5,10 +5,10 @@ namespace App\DTO;
 class SignaturePayload
 {
     public function __construct(
-        public int $timestamp,
-        public string $signature,
-        public string $method,
-        public string $path,
-        public string $content
+        public readonly int $timestamp,
+        public readonly string $signature,
+        public readonly string $method,
+        public readonly string $path,
+        public readonly string $content
     ) {}
 }

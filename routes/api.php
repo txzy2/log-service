@@ -35,11 +35,6 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
     });
 });
 
-Route::prefix("auth")->group(function() {
-    Route::post("/register", [AuthController::class, 'reg']);
-    Route::post("/token", [AuthController::class, 'token']);
-});
-
 Route::fallback(fn() => response()->json([
     'success' => false,
     'message' => 'Not found',

@@ -23,8 +23,6 @@ class TokenCheck {
      * @throws \Exception
      */
     private function checkSignature(SignaturePayload $payload): void {
-        Log::channel('tokens')->info('SYSTEM TIMESTAMP', [time()]);
-
         if (abs(time() - $payload->timestamp) > self::TOKEN_TTL_SECONDS) {
             throw new \Exception('The token has expired');
         }
@@ -34,8 +32,6 @@ class TokenCheck {
             $payload->method . $payload->path . $payload->timestamp . $payload->content,
             config('app.services_token')
         );
-
-        Log::channel('tokens')->info('SYSTEM SIGN', [$expected]);
 
         if (!hash_equals($expected, $payload->signature)) {
             throw new \Exception('Invalid request signature');
