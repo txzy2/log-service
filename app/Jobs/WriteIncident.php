@@ -29,10 +29,13 @@ class WriteIncident implements ShouldQueue
         $this->data = $data;
     }
 
-    public function handle(): void
-    {
+    public function handle(): void {
         \Illuminate\Support\Facades\Log::channel('debug')->info('Write incident to database', $this->data);
-        [$this->data['code'], $this->data['message']] = Parser::parseStr($this->data['message']);
+        if($this->data['level'] !== 'info') {
+            [$this->data['code'], $this->data['message']] = Parser::parseStr($this->data['message']);
+        } else {
+            $this->data['code'] = "";
+        }
         $existType = IncidentType::where('code', $this->data['code'])->first();
 
         $isJobOver = match (true) {

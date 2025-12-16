@@ -37,19 +37,39 @@ class Incident extends BaseModel
      * @param array $data
      * @return array
      */
-    public static function saveData(array $data): array
-    {
+    public static function saveData(array $data): array {
         $message = "Новая не отслеживаемая ошибка от {$data['service']}";
         Log::channel("unknown_errors")->warning(
             "Новая не отслеживаемая ошибка от WSPG: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         );
 
-        SenderManager::telegramSendMessage(
-            static::getModelClass(),
-            $message,
-            (string) $data['message'],
-            ['service' => $data['service']]
-        );
+        $additionalFields = (object)[];
+        if (!empty($data['additionalFields'])) {
+            $additionalFields = json_encode($data['additionalFields']);
+        }
+
+
+        static::create([
+            'level' => $data['level'],
+            'message' => $data['message'],
+            'domain' => $data['domain'],
+            'service' => $data['service'],
+            'class' => $data['class'],
+            'function' => $data['function'],
+            'action' => $data['action'],
+            'file' => $data['file'],
+            'additionalFields' => $additionalFields,
+            'date' => $data['date'],
+            'count' => 1,
+            'hashSum' => "N"
+        ]);
+
+        // SenderManager::telegramSendMessage(
+        //     static::getModelClass(),
+        //     $message,
+        //     (string) $data['message'],
+        //     ['service' => $data['service']]
+        // );
 
         return [
             "success" => true,
@@ -80,7 +100,7 @@ class Incident extends BaseModel
             'request' => $data['hash_sum'],
             'system' => $hashSum
         ]);
-        if($hashSum !== $data['hash_sum']) { 
+        if($hashSum !== $data['hash_sum']) {
             return [
                 "success" => false,
                 "message" => "Контрольная сумма не совпадает"
@@ -147,7 +167,7 @@ class Incident extends BaseModel
 
     /**
      * handleExistingIncident
-     * 
+     *
      * @param object $existIncident
      * @param object $incidentType
      * @param array $data
@@ -189,20 +209,6 @@ class Incident extends BaseModel
 
         $existIncident->save();
 
-        SenderManager::telegramSendMessage(
-            static::getModelClass(),
-            "ДОБАВЛЯЛАСЬ РАНЕЕ",
-            (string) $existIncident->incident_text,
-            [
-                'OBJECT' => $existIncident->hash_sum,
-                'COUNT' => $existIncident->count,
-                'LIFECICLE' => $lifecycle,
-                'NEXT_SEND_DATE' => Carbon::parse($existIncident->date)
-                    ->addDays((int) $existIncident->incidentType->lifecycle)
-                    ->format('d-m-Y')
-            ]
-        );
-
         return [
             'success' => true,
             'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}"
@@ -216,13 +222,14 @@ class Incident extends BaseModel
      * @return array
      *
      * */
-    public static function getIncidentDataByParams(array $data): array
-    {
+    public static function getIncidentDataByParams(array $data): array {
         $return = [
             "success" => false,
             "message" => "Данные не найдены",
             "data" => []
         ];
+
+        //TODO: сделать offset и limit
 
         $existService = Services::validateActiveService($data['service']);
         if (!$existService['success']) {

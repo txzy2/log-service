@@ -64,8 +64,7 @@ class LogController extends Controller
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function sendReport(Request $request): JsonResponse
-    {
+    public function sendReport(Request $request): JsonResponse {
         $data = $request->all();
         Log::channel("debug")->info(static::getControllerClass() . '::sendReport REQUEST', $data);
         $validate = Validator::make(
