@@ -47,7 +47,7 @@ class TokenCheck
      * @return mixed
      */
     public function handle(Request $request, Closure $next): mixed
-    {
+    {       
         $userData = [
             'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),
