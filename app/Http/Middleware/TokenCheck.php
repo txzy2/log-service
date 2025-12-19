@@ -56,32 +56,18 @@ class TokenCheck
 
         Log::channel("debug")->info("user data", $userData);
 
-        $validated = Validator::make($request->headers->all(), [
-            'x-timestamp' => 'required',
-            'x-signature' => 'required',
-        ], [
-            '*.required' => 'Заголовок :attribute обязателен для запроса',
-        ]);
-
-        if ($validated->fails()) {
-            return $this->sendError($validated->errors()->first(), 401);
-        }
-
         try {
-            $this->checkSignature(
-                new SignaturePayload(
-                    (int) $request->header('X-Timestamp'),
-                    $request->header('X-Signature'),
-                    $request->method(),
-                    $request->path(),
-                    $request->getContent()
-                )
-            );
+            $payload = SignaturePayload::fromRequest($request);
+            $this->checkSignature($payload);
+        } catch (\InvalidArgumentException $e) {
+            $error = $e->getMessage();
+            Log::channel('tokens')->error(self::ERROR_CLASS . "::handle Invalid payload: $error", $userData);
+            return $this->sendError('Invalid payload: ' . $e->getMessage(), 400);
         } catch (\Exception $e) {
             $error = $e->getMessage();
-            Log::channel('tokens')->error(self::ERROR_CLASS . "::handle ERROR TO AUTH $error", $userData);
+            Log::channel('tokens')->error(self::ERROR_CLASS . "::handle Exception: $error", $userData);
             return $this->sendError($error, 401);
-        }
+        } 
 
         Log::channel('tokens')->info(self::ERROR_CLASS . '::handle USER IS AUTH', $userData);
         return $next($request);
