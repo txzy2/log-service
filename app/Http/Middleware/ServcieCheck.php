@@ -17,8 +17,12 @@ class ServcieCheck
      */
     public function handle(Request $request, Closure $next): mixed
     {
+        if(empty($request->input("service"))) {
+            return $this->sendError("Введен пустой сервис", Response::HTTP_BAD_REQUEST);
+        }
+
         $existService = Services::validateActiveService($request->input('service'));
-        if (! $existService['success']) {
+        if (!$existService['success']) {
             return $this->sendError($existService['message'], Response::HTTP_BAD_REQUEST);
         }
 

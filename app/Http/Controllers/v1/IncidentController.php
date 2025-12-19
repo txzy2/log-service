@@ -2,7 +2,6 @@
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
-use App\Models\IncidentType;
 use App\Services\IncidentTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
