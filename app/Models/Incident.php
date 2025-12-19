@@ -80,28 +80,19 @@ class Incident extends BaseModel
      */
     public static function processIncidentData(IncidentData $data, object $incidentType): array
     {
-        Log::channel("debug")->info("processIncidentData", [
-            'data'             => $data,
-            'incident_type_id' => $incidentType->id,
-        ]);
         $additionalFields = (object) [];
-        if (! empty($data->additionalFields)) {
+        if (!empty($data->additionalFields)) {
             $additionalFields = json_encode($data->additionalFields);
         }
-
-        $hashSum = hash('sha256', $data->service . $data->action . $data->function . $data->level);
-        Log::channel('debug')->info("hash_sum", [
-            'request' => $data->hashSum,
-            'system'  => $hashSum,
-        ]);
-        if ($hashSum !== $data->hashSum) {
+        if (!$data->isValidHash()) {
+            Log::channel('debug')->info(static::getModelClass() . "invalid hash", []);
             return [
                 "success" => false,
                 "message" => "Контрольная сумма не совпадает",
             ];
         }
 
-        $createNewIncident = static::firstOrNew(['hash_sum' => $hashSum], [
+        $createNewIncident = static::firstOrNew(['hash_sum' => $data->hashSum], [
             'level' => $data->level,
             'message' => $data->message,
             'domain' => $data->domain,
@@ -173,11 +164,17 @@ class Incident extends BaseModel
         $lifecycle  = $existIncident->incidentType->lifecycle;
         $existIncident->count++;
 
+        Log::channel("debug")->info("handleExistingIncident", [
+            "Incident"=> $incidentType,
+            "data" => $data,
+            "existIncident" => $existIncident
+        ]);
+
         if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $lifecycle) {
             $existIncident->date = $parseDates['currentDate'];
             $existIncident->save();
 
-            if (! empty($incidentType->alias)) {
+            if (!empty($incidentType->alias)) {
                 Log::channel('debug')->info(static::getModelClass() . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
                 match (SendTemplateType::from($incidentType->alias)) {
                     SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),

@@ -133,7 +133,10 @@ class LogController extends Controller
         }
 
         try {
-            LogIncident::writeOrSaveLog(IncidentData::fromArray($data));
+            $result = LogIncident::writeOrSaveLog(IncidentData::fromArray($data));
+            if(!$result["success"]) {
+                return $this->sendError($result["message"], ErrorsEnum::BAD_REQUEST->value);
+            }
             return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
         } catch (Throwable $e) {
             Log::channel("debug")->info($this->getControllerClass() . "::testAddLog Controller EXCEPTUON", [$e->getMessage()]);

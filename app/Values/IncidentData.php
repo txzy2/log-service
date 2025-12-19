@@ -85,17 +85,17 @@ class IncidentData
     public function toArray(): array
     {
         return [
-            'level'            => $this->level,
-            'service'          => $this->service,
-            'message'          => $this->message,
-            'domain'           => $this->domain,
-            'action'           => $this->action,
-            'function'         => $this->function,
-            'file'             => $this->file,
-            'class'            => $this->class,
-            'date'             => $this->date,
-            'hasSum'           => $this->hashSum,
-            'additionalFields' => ! empty($this->additionalFields)
+            'level' => $this->level,
+            'service' => $this->service,
+            'message' => $this->message,
+            'domain' => $this->domain,
+            'action' => $this->action,
+            'function' => $this->function,
+            'file' => $this->file,
+            'class' => $this->class,
+            'date' => $this->date,
+            'hasSum' => $this->hashSum,
+            'additionalFields' => !empty($this->additionalFields)
                 ? json_encode($this->additionalFields)
                 : null,
         ];
