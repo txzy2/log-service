@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Values\AddTypeData;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IncidentType extends BaseModel
@@ -22,35 +23,35 @@ class IncidentType extends BaseModel
     /**
      * Валидация и добавление нового типа инцидента.
      *
-     * @param array $data Данные для нового типа инцидента.
+     * @param AddTypeData $data Данные для нового типа инцидента.
      * @return array Массив с результатом операции, включая статус и сообщение.
      */
-    public static function validateAndAddType(array $data): array
+    public static function validateAndAddType(AddTypeData $data): array
     {
         $return = [
             'success' => false,
-            'data'    => [],
+            'data' => [],
             'message' => 'Такой тип ошибки уже существует',
         ];
 
-        $existType = static::where('code', $data['code'])->orWhere('type_name', $data['type_name'])->first();
+        $existType = static::where('code', $data->code)->orWhere('type_name', $data->typeName)->first();
         if ($existType) {
             return $return;
         }
 
         $newType = static::create([
-            'type_name'        => $data['type_name'],
-            'code'             => $data['code'],
-            'send_template_id' => $data['send_template_id'] ?? null,
-            'lifecycle'        => $data['lifecycle'],
-            'alias'            => 'manager',
+            'type_name' => $data->typeName,
+            'code' => $data->code,
+            'send_template_id' => $data->sendTemplateId ?? null,
+            'lifecycle' => $data->lifecycle,
+            'alias' => 'manager',
         ]);
 
         \Illuminate\Support\Facades\Log::channel('debug')->info(static::getModelClass() . '::validateAndAddType ADD RESULT', [$existType]);
 
         $return['success'] = $newType ? true : false;
         $return['message'] = $newType ? '' : 'Ошибка сохранения типа';
-        $return['data']    = $newType->toArray();
+        $return['data'] = $newType->toArray();
 
         return $return;
     }

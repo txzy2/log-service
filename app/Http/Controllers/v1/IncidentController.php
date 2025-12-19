@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use App\Values\AddTypeData;
+
 class IncidentController extends Controller
 {
     /**
@@ -23,10 +25,10 @@ class IncidentController extends Controller
         $validated = Validator::make(
             $data,
             [
-                'type_name'        => 'required|string',
+                'type_name' => 'required|string',
                 'send_template_id' => 'nullable|int|min:0|not_in:0',
-                'code'             => 'required|string',
-                'lifecycle'        => 'required|int|min:0|not_in:0',
+                'code' => 'required|string',
+                'lifecycle' => 'required|int|min:0|not_in:0',
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -37,7 +39,7 @@ class IncidentController extends Controller
             return $this->sendError($validated->errors()->first(), 400);
         }
 
-        $addData = IncidentType::validateAndAddType($data);
+        $addData = IncidentType::validateAndAddType(AddTypeData::fromArray($data));
         return match ($addData['success']) {
             true    => $this->sendSuccess($addData['message'], $addData['data']),
             default => $this->sendError($addData['message'], 400)

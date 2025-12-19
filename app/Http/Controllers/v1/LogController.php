@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\WriteIncident;
 use App\Models\Incident;
 use App\Values\IncidentData;
+use App\Values\SendReportFilterData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -44,9 +45,9 @@ class LogController extends Controller
                 'hash_sum' => 'required|string',
             ],
             [
-                '*.required'             => 'Поле :attribute обязательно для заполнения',
+                '*.required' => 'Поле :attribute обязательно для заполнения',
                 'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
-                'level.in'               => 'Переданный статус не валиден',
+                'level.in' => 'Переданный статус не валиден',
             ]
         );
 
@@ -73,13 +74,12 @@ class LogController extends Controller
             $data,
             [
                 'service' => 'required|string',
-                'source'  => "nullable|string",
-                "code"    => "nullable|string",
-                'date'    => 'nullable|date_format:Y-m-d',
+                'source' => "nullable|string",
+                "code" => "nullable|string",
+                'date' => 'nullable|string',
             ],
             [
-                '*.required'       => 'Поле :attribute обязательно для заполнения',
-                'date.date_format' => 'Неверный формат даты',
+                '*.required' => 'Поле :attribute обязательно для заполнения',
             ]
         );
 
@@ -88,7 +88,7 @@ class LogController extends Controller
             return $this->sendError($validate->errors(), 400);
         }
 
-        $return = Incident::getIncidentDataByParams($data);
+        $return = Incident::getIncidentDataByParams(SendReportFilterData::fromArray($data));
         return match ($return['success']) {
             true => $this->sendSuccess($return['message'], $return['data']),
             default => $this->sendError($return['message'], 400),

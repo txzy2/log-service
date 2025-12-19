@@ -17,7 +17,7 @@ class ServicesController extends Controller
      */
     public function getServices(): JsonResponse
     {
-        $services      = Services::all()->toArray();
+        $services = Services::all()->toArray();
         $incidentTypes = DB::table('incident_type')->select('type_name', 'code', 'lifecycle')->get()->toArray();
         return $this->sendSuccess('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
     }
@@ -30,13 +30,13 @@ class ServicesController extends Controller
      */
     public function editService(Request $request): JsonResponse
     {
-        $data      = $request->all();
+        $data = $request->all();
         $validator = Validator::make($data, [
-            'name'   => 'required|string',
+            'name' => 'required|string',
             'active' => 'required|in:Y,N',
         ], [
             '*.required' => 'Поле :attribute обязательно для заполнения',
-            'active.in'  => 'Поле :attribute должно быть Y или N',
+            'active.in' => 'Поле :attribute должно быть Y или N',
         ]);
 
         if ($validator->fails()) {

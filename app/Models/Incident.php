@@ -6,6 +6,7 @@ use App\Enums\SendTemplateType;
 use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use App\Values\IncidentData;
+use App\Values\SendReportFilterData;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 
@@ -213,7 +214,7 @@ class Incident extends BaseModel
      * @return array
      *
      * */
-    public static function getIncidentDataByParams(array $data): array
+    public static function getIncidentDataByParams(SendReportFilterData $data): array
     {
         $return = [
             "success" => false,
@@ -223,7 +224,7 @@ class Incident extends BaseModel
 
         //TODO: сделать offset и limit
 
-        $existService = Services::validateActiveService($data['service']);
+        $existService = Services::validateActiveService($data->service);
         if (! $existService['success']) {
             $return['message'] = $existService['message'];
             return $return;
@@ -250,15 +251,15 @@ class Incident extends BaseModel
         // }
 
         if (! empty($data['service'])) {
-            $query->where("service", $data['service']);
+            $query->where("service", $data->service);
         }
 
         if (! empty($data['date'])) {
-            $query->where("date", "=", $data['date']);
+            $query->where("date", "=", $data->date);
         }
 
         if (! empty($data['code'])) {
-            $query->where("code", $data['code']);
+            $query->where("code", $data->code);
         }
 
         $returnData = $query->get()->toArray();
@@ -270,18 +271,18 @@ class Incident extends BaseModel
 
             $return['data'] = array_map(function ($item) {
                 return [
-                    "id"        => $item['id'],
-                    "code"      => $item['code'],
-                    "service"   => $item['service'],
-                    "action"    => $item['action'],
-                    "incident"  => [
+                    "id" => $item['id'],
+                    "code" => $item['code'],
+                    "service" => $item['service'],
+                    "action" => $item['action'],
+                    "incident" => [
                         "message" => $item['message'],
-                        "domain"  => $item['domain'],
+                        "domain" => $item['domain'],
                     ],
-                    "type"      => $item['type_name'],
-                    "count"     => $item['count'],
+                    "type" => $item['type_name'],
+                    "count" => $item['count'],
                     "lifecycle" => $item['lifecycle'],
-                    "date"      => $item['date'],
+                    "date" => $item['date'],
                 ];
             }, $returnData);
         }

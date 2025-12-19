@@ -12,7 +12,7 @@ class TokenCheck
 {
     use RespondsWithMessages;
 
-    private const ERROR_CLASS       = __CLASS__;
+    private const ERROR_CLASS = __CLASS__;
     private const TOKEN_TTL_SECONDS = 250;
 
     /**
@@ -49,9 +49,9 @@ class TokenCheck
     public function handle(Request $request, Closure $next): mixed
     {
         $userData = [
-            'ip'        => $request->ip(),
+            'ip' => $request->ip(),
             'userAgent' => $request->header('user-agent'),
-            'auth'      => $request->header('Authorization'),
+            'auth' => $request->header('Authorization'),
         ];
 
         Log::channel("debug")->info("user data", $userData);
