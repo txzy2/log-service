@@ -74,7 +74,6 @@ class LogController extends Controller
             $data,
             [
                 'service' => 'required|string',
-                'source' => "nullable|string",
                 "code" => "nullable|string",
                 'date' => 'nullable|string',
             ],

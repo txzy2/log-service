@@ -245,7 +245,7 @@ class Incident extends BaseModel
         $query = static::query()
             ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
-                'incident.id',
+                'incident.uuid',
                 'incident.message',
                 'incident.class',
                 'incident.action',
@@ -258,32 +258,28 @@ class Incident extends BaseModel
                 'incident_type.lifecycle',
             ]);
 
-        // if (!empty($data['source'])) {
-        //     $query->where("source", $data['source']);
-        // }
-
-        if (! empty($data['service'])) {
+        if (!empty($data->service)) {
             $query->where("service", $data->service);
         }
 
-        if (! empty($data['date'])) {
+        if (!empty($data->date)) {
             $query->where("date", "=", $data->date);
         }
 
-        if (! empty($data['code'])) {
+        if (!empty($data->code)) {
             $query->where("code", $data->code);
         }
 
         $returnData = $query->get()->toArray();
         Log::channel("debug")->info("return report data from DB", $returnData);
 
-        if (! empty($returnData)) {
+        if (!empty($returnData)) {
             $return['success'] = true;
             $return['message'] = "";
 
             $return['data'] = array_map(function ($item) {
                 return [
-                    "id" => $item['id'],
+                    "id" => $item['uuid'],
                     "code" => $item['code'],
                     "service" => $item['service'],
                     "action" => $item['action'],
