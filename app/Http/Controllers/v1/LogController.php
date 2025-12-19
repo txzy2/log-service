@@ -73,7 +73,7 @@ class LogController extends Controller
         $validate = Validator::make(
             $data,
             [
-                'service' => 'required|string',
+                'service' => 'nullable|string',
                 "code" => "nullable|string",
                 'date' => 'nullable|string',
             ],

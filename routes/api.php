@@ -17,12 +17,10 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
         Route::post('/test', [LogController::class, 'testAddLog']);
-        Route::post('/report', [LogController::class, 'sendReport']);
     });
 
     // Работа с настройками инстдентов
     Route::prefix('incidents')->group(function () {
-
         Route::prefix('types')->group(function () {
             Route::post('/add', [IncidentController::class, 'addType']);
             // TODO: Сделать /edit
@@ -33,6 +31,8 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
             Route::post('/edit', [ServicesController::class, 'editService']);
         });
     });
+
+    Route::post('/report', [LogController::class, 'sendReport']);
 });
 
 Route::fallback(fn() => response()->json([

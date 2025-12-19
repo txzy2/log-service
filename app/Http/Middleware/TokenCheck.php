@@ -34,7 +34,7 @@ class TokenCheck
             config('app.services_token')
         );
 
-        if (! hash_equals($expected, $payload->signature)) {
+        if (!hash_equals($expected, $payload->signature)) {
             throw new \Exception('Invalid request signature');
         }
     }

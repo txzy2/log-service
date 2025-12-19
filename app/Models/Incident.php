@@ -219,6 +219,30 @@ class Incident extends BaseModel
         ];
     }
 
+    /**
+     * applyFilerByParam - Применение по полям
+     * 
+     * @param SendReportFilterData $params
+     * @param mixed $query
+     * @param string $paramKey
+     * @param string $column
+     * @return void
+     */
+    private static function applyFilerByParam(
+        SendReportFilterData $params,
+        $query,
+        string $paramKey,
+        string $column
+    ): void {
+        if (isset($params->$paramKey) && !empty($params->$paramKey)) {
+            if ($column === 'date') {
+                $query->whereDate($column, $params->$paramKey);
+            } else {
+                $query->where($column, $params->$paramKey);
+            }
+        }
+    }
+
     /*
      * getIncidentDataByParams - получаем данные по параметрам
      *
@@ -226,7 +250,7 @@ class Incident extends BaseModel
      * @return array
      *
      * */
-    public static function getIncidentDataByParams(SendReportFilterData $data): array
+    public static function getIncidentDataByParams(SendReportFilterData $params): array
     {
         $return = [
             "success" => false,
@@ -235,13 +259,7 @@ class Incident extends BaseModel
         ];
 
         //TODO: сделать offset и limit
-
-        $existService = Services::validateActiveService($data->service);
-        if (! $existService['success']) {
-            $return['message'] = $existService['message'];
-            return $return;
-        }
-
+      
         $query = static::query()
             ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
@@ -258,17 +276,9 @@ class Incident extends BaseModel
                 'incident_type.lifecycle',
             ]);
 
-        if (!empty($data->service)) {
-            $query->where("service", $data->service);
-        }
-
-        if (!empty($data->date)) {
-            $query->where("date", "=", $data->date);
-        }
-
-        if (!empty($data->code)) {
-            $query->where("code", $data->code);
-        }
+        static::applyFilerByParam($params,  $query, "service", "service");
+        static::applyFilerByParam($params,  $query, "date", "date");
+        static::applyFilerByParam($params,  $query, "code", "code");
 
         $returnData = $query->get()->toArray();
         Log::channel("debug")->info("return report data from DB", $returnData);
@@ -294,7 +304,8 @@ class Incident extends BaseModel
                 ];
             }, $returnData);
         }
-
+    
+       
         return $return;
     }
 
