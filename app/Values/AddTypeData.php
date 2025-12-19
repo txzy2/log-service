@@ -9,6 +9,7 @@ class AddTypeData
     public readonly string $sendTemplateId,
     public readonly string $code,
     public readonly int $lifecycle,
+    public readonly string $sendTo,
   ) {}
 
   public static function fromArray(array $data): self
@@ -18,6 +19,7 @@ class AddTypeData
       sendTemplateId: $data["send_template_id"],
       code: $data["code"],
       lifecycle: $data["lifecycle"],
+      sendTo: $data["send_to"],
     );
   }
 }

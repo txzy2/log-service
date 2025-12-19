@@ -31,7 +31,7 @@ class Services extends BaseModel
     {
         $existService = Services::where('name', $service)->where('active', 'Y')->first();
         if (! $existService) {
-            Log::channel("debug")->error(static::getControllerClass() . " SERVICE IS INACTIVE" . " ($service)");
+            Log::channel("debug")->error(static::getModelClass() . " SERVICE IS INACTIVE" . " ($service)");
 
             return [
                 'success' => false,

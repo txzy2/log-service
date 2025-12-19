@@ -3,6 +3,7 @@ namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\IncidentType;
+use App\Services\IncidentTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -11,6 +12,13 @@ use App\Values\AddTypeData;
 
 class IncidentController extends Controller
 {
+    protected IncidentTypeService $incidentTypeService;
+
+    public function __construct(IncidentTypeService $incidentTypeService)
+    {
+        $this->incidentTypeService = $incidentTypeService;
+    }
+
     /**
      * addType - добавляет новый тип инцидента в БД
      *
@@ -26,9 +34,10 @@ class IncidentController extends Controller
             $data,
             [
                 'type_name' => 'required|string',
-                'send_template_id' => 'nullable|int|min:0|not_in:0',
+                'send_template_id' => 'nullable|int|min:1',
                 'code' => 'required|string',
-                'lifecycle' => 'required|int|min:0|not_in:0',
+                'lifecycle' => 'required|int|min:1',
+                'send_to' => 'required|string'
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -38,8 +47,8 @@ class IncidentController extends Controller
         if ($validated->fails()) {
             return $this->sendError($validated->errors()->first(), 400);
         }
-
-        $addData = IncidentType::validateAndAddType(AddTypeData::fromArray($data));
+        
+        $addData = $this->incidentTypeService->create(AddTypeData::fromArray($data));
         return match ($addData['success']) {
             true    => $this->sendSuccess($addData['message'], $addData['data']),
             default => $this->sendError($addData['message'], 400)

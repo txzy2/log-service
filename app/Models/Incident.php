@@ -7,15 +7,20 @@ use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use App\Values\IncidentData;
 use App\Values\SendReportFilterData;
+use Exception;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 
 class Incident extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
-    public $timestamps  = false;
-    protected $table    = 'incident';
+    public $timestamps = false;
+    protected $primaryKey = 'uuid';
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $table = 'incident';
     protected $fillable = [
         'domain',
         'service',
@@ -93,22 +98,29 @@ class Incident extends BaseModel
             ];
         }
 
-        $createNewIncident = static::firstOrNew(['hash_sum' => $data->hashSum], [
-            'level' => $data->level,
-            'message' => $data->message,
-            'domain' => $data->domain,
-            'service' => $data->service,
-            'class' => $data->class,
-            'incident_type_id' => $incidentType->id,
-            'function' => $data->function,
-            'action' => $data->action,
-            'file' => $data->file,
-            'additionalFields' => $additionalFields,
-            'date' => $data->date,
-            'count' => 1,
-        ]);
+        try {
+            $createNewIncident = static::firstOrNew(['hash_sum' => $data->hashSum], [
+                'level' => $data->level,
+                'message' => $data->message,
+                'domain' => $data->domain,
+                'service' => $data->service,
+                'class' => $data->class,
+                'incident_type_id' => $incidentType->id ?? null,
+                'function' => $data->function,
+                'action' => $data->action,
+                'file' => $data->file,
+                'additionalFields' => $additionalFields,
+                'date' => $data->date,
+                'count' => 1,
+            ]);
+        } catch(Exception $e) {
+            Log::channel("debug")->info("EXCEPTION save", [$e->getMessage()]);
+        }
 
-        if (! $createNewIncident->exists) {
+        Log::channel("debug")->info("EXCEPTION save", [$createNewIncident->exists]);
+       
+
+        if (!$createNewIncident->exists) {
             static::handleNewIncident($incidentType, $createNewIncident);
             return [
                 'success' => true,
@@ -130,12 +142,12 @@ class Incident extends BaseModel
     protected static function handleNewIncident(IncidentType $incidentType, Incident $data): void
     {
         // Log::channel('debug')->info(message: "handleNewIncident", ['data' => $data, 'incidentType' => $incidentType]);
-        if (! empty($incidentType->alias)) {
-            $data->save();
+        $data->save();
 
+        if (!empty($incidentType->id)) {
             match (SendTemplateType::from($incidentType->alias)) {
                 SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($data, $incidentType->send_template_id),
-                default                     => null,
+                default => null,
             };
 
             SenderManager::telegramSendMessage(
@@ -148,7 +160,7 @@ class Incident extends BaseModel
                     'INCIDENT_OBJECT' => $data->hash_sum,
                 ]
             );
-        }
+        }     
     }
 
     /**

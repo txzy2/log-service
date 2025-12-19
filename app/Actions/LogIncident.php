@@ -2,10 +2,10 @@
 
 namespace App\Actions;
 
-use App\Helpers\Parsers\Parser;
 use App\Models\Incident;
 use App\Models\IncidentType;
 use App\Values\IncidentData;
+use Illuminate\Support\Facades\Log;
 
 class LogIncident
 {
