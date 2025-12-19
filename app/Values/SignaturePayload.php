@@ -1,6 +1,5 @@
 <?php
-
-namespace App\DTO;
+namespace App\Values;
 
 class SignaturePayload
 {

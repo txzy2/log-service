@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Helpers\Parsers\Parser;
 use App\Models\Incident;
 use App\Models\IncidentType;
+use App\Values\IncidentData;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -24,22 +24,19 @@ class WriteIncident implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct(IncidentData $data)
     {
         $this->data = $data;
     }
 
-    public function handle(): void {
-        \Illuminate\Support\Facades\Log::channel('debug')->info('Write incident to database', $this->data);
-        if($this->data['level'] !== 'info') {
-            [$this->data['code'], $this->data['message']] = Parser::parseStr($this->data['message']);
-        } else {
-            $this->data['code'] = "";
-        }
-        $existType = IncidentType::where('code', $this->data['code'])->first();
+    public function handle(): void
+    {
+        [$code, $message] = $this->data->parseCodeAndMessage();
+        $existType = IncidentType::where('code', $code)->first();
+        $this->data->setNewMessage($message);
 
         $isJobOver = match (true) {
-            $existType === null => Incident::saveData($this->data),            // Сохраняем, если тип инцидента не найден
+            $existType === null => Incident::saveData($this->data), // Сохраняем, если тип инцидента не найден
             default => Incident::processIncidentData($this->data, $existType), // Обновляем, если тип инцидента найден
         };
 
@@ -50,8 +47,8 @@ class WriteIncident implements ShouldQueue
             );
         } else {
             \Illuminate\Support\Facades\Log::channel('debug')->info('Incident successfully processed', [
-                'code' => $this->data['code'],
-                'result' => $isJobOver
+                'code'   => $code,
+                'result' => $isJobOver,
             ]);
         }
     }

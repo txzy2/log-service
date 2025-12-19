@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
@@ -8,24 +7,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class IncidentController extends Controller {
+class IncidentController extends Controller
+{
     /**
      * addType - добавляет новый тип инцидента в БД
      *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function addType(Request $request) {
+    public function addType(Request $request)
+    {
         $data = $request->all();
 
         Log::channel('debug')->info(static::getControllerClass() . '::addType REQUST DATA', [$data]);
         $validated = Validator::make(
             $data,
             [
-                'type_name' => 'required|string',
+                'type_name'        => 'required|string',
                 'send_template_id' => 'nullable|int|min:0|not_in:0',
-                'code' => 'required|string',
-                'lifecycle' => 'required|int|min:0|not_in:0'
+                'code'             => 'required|string',
+                'lifecycle'        => 'required|int|min:0|not_in:0',
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -38,7 +39,7 @@ class IncidentController extends Controller {
 
         $addData = IncidentType::validateAndAddType($data);
         return match ($addData['success']) {
-            true => $this->sendSuccess($addData['message'], $addData['data']),
+            true    => $this->sendSuccess($addData['message'], $addData['data']),
             default => $this->sendError($addData['message'], 400)
         };
     }

@@ -8,11 +8,13 @@ use App\Enums\LevelsEnum;
 use App\Http\Controllers\Controller;
 use App\Jobs\WriteIncident;
 use App\Models\Incident;
+use App\Values\IncidentData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class LogController extends Controller
 {
@@ -42,19 +44,18 @@ class LogController extends Controller
                 'hash_sum' => 'required|string',
             ],
             [
-                '*.required' => 'Поле :attribute обязательно для заполнения',
+                '*.required'             => 'Поле :attribute обязательно для заполнения',
                 'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
-                'level.in' => 'Переданный статус не валиден',
+                'level.in'               => 'Переданный статус не валиден',
             ]
         );
 
         if ($validate->fails()) {
+            Log::channel("debug")->warning(static::getControllerClass() . "::addLog VALIDATION ERROR", $validate->errors()->all());
             return $this->sendError($validate->errors()->first(), ErrorsEnum::VALIDATION_ERROR->value);
         }
 
-        WriteIncident::dispatch($data)->onQueue("writeIncidentLog");
-        // $isWrited = LogIncident::writeOrSaveLog($data);
-        // Log::channel('debug')->info("is log writed?", $isWrited);
+        WriteIncident::dispatch(IncidentData::fromArray($data))->onQueue("writeIncidentLog");
         return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 
@@ -64,32 +65,79 @@ class LogController extends Controller
      * @param Request $request
      * @return mixed|JsonResponse
      */
-    public function sendReport(Request $request): JsonResponse {
+    public function sendReport(Request $request): JsonResponse
+    {
         $data = $request->all();
         Log::channel("debug")->info(static::getControllerClass() . '::sendReport REQUEST', $data);
         $validate = Validator::make(
             $data,
             [
                 'service' => 'required|string',
-                'source' => "nullable|string",
-                "code" => "nullable|string",
-                'date' => 'nullable|date_format:Y-m-d'
+                'source'  => "nullable|string",
+                "code"    => "nullable|string",
+                'date'    => 'nullable|date_format:Y-m-d',
             ],
             [
-                '*.required' => 'Поле :attribute обязательно для заполнения',
+                '*.required'       => 'Поле :attribute обязательно для заполнения',
                 'date.date_format' => 'Неверный формат даты',
             ]
         );
 
         if ($validate->fails()) {
+            Log::channel("debug")->warning(static::getControllerClass() . "::sendReport VALIDATION ERROR", $validate->errors()->all());
             return $this->sendError($validate->errors(), 400);
         }
 
         $return = Incident::getIncidentDataByParams($data);
-        Log::channel('debug')->info(static::getControllerClass() . '::sendReport RESULT DATA', $return['data']);
         return match ($return['success']) {
             true => $this->sendSuccess($return['message'], $return['data']),
             default => $this->sendError($return['message'], 400),
         };
+    }
+
+    /**
+     * testAddLog - тестовый контроллер для логов (Идет не через очередь)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function testAddLog(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        Log::channel("debug")->info(static::getControllerClass() . ':addLog RAW REQUEST', [$data]);
+        $validate = Validator::make(
+            $data,
+            [
+                'level' => ['required', Rule::in(LevelsEnum::cases())],
+                'service' => 'required|string',
+                'message' => 'required|string',
+                'domain' => 'required|string',
+                'action' => 'required|string',
+                'function' => 'required|string',
+                'additionalFields' => 'nullable|array',
+                'file' => 'required|string',
+                'class' => 'required|string',
+                'date' => 'required',
+                'hash_sum' => 'required|string',
+            ],
+            [
+                '*.required' => 'Поле :attribute обязательно для заполнения',
+                'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
+                'level.in' => 'Переданный статус не валиден',
+            ]
+        );
+
+        if ($validate->fails()) {
+            Log::channel("debug")->warning(static::getControllerClass() . "::testAddLog VALIDATION ERROR", $validate->errors()->all());
+            return $this->sendError($validate->errors()->first(), ErrorsEnum::VALIDATION_ERROR->value);
+        }
+
+        try {
+            LogIncident::writeOrSaveLog(IncidentData::fromArray($data));
+            return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
+        } catch (Throwable $e) {
+            Log::channel("debug")->info($this->getControllerClass() . "::testAddLog Controller EXCEPTUON", [$e->getMessage()]);
+            return $this->sendError($e->getMessage(), ErrorsEnum::INTERNAL_ERROR->value);
+        }
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\TestConroller;
-use App\Http\Controllers\v1\Auth\AuthController;
 use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
 use App\Http\Controllers\v1\ServicesController;
@@ -17,6 +16,7 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
     // Работа с логами
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
+        Route::post('/test', [LogController::class, 'testAddLog']);
         Route::post('/report', [LogController::class, 'sendReport']);
     });
 

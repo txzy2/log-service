@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 
-class Services extends BaseModel {
+class Services extends BaseModel
+{
     use HasFactory;
 
     protected $table = 'incident_services';
@@ -15,7 +15,8 @@ class Services extends BaseModel {
         'active',
     ];
 
-    public static function findService(string $service): ?Services {
+    public static function findService(string $service): ?Services
+    {
         return Services::where('name', $service)->first();
     }
 
@@ -26,9 +27,10 @@ class Services extends BaseModel {
      *
      * @return array
      */
-    public static function validateActiveService(string $service): array {
+    public static function validateActiveService(string $service): array
+    {
         $existService = Services::where('name', $service)->where('active', 'Y')->first();
-        if (!$existService) {
+        if (! $existService) {
             Log::channel("debug")->error(static::getControllerClass() . " SERVICE IS INACTIVE" . " ($service)");
 
             return [

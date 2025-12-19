@@ -1,18 +1,18 @@
 <?php
-
 namespace App\Http\Middleware;
 
-use App\DTO\SignaturePayload;
 use App\Traits\RespondsWithMessages;
+use App\Values\SignaturePayload;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class TokenCheck {
+class TokenCheck
+{
     use RespondsWithMessages;
 
-    private const ERROR_CLASS = __CLASS__;
+    private const ERROR_CLASS       = __CLASS__;
     private const TOKEN_TTL_SECONDS = 250;
 
     /**
@@ -22,7 +22,8 @@ class TokenCheck {
      * @return void
      * @throws \Exception
      */
-    private function checkSignature(SignaturePayload $payload): void {
+    private function checkSignature(SignaturePayload $payload): void
+    {
         if (abs(time() - $payload->timestamp) > self::TOKEN_TTL_SECONDS) {
             throw new \Exception('The token has expired');
         }
@@ -33,7 +34,7 @@ class TokenCheck {
             config('app.services_token')
         );
 
-        if (!hash_equals($expected, $payload->signature)) {
+        if (! hash_equals($expected, $payload->signature)) {
             throw new \Exception('Invalid request signature');
         }
     }
@@ -45,11 +46,12 @@ class TokenCheck {
      * @param Closure $next
      * @return mixed
      */
-    public function handle(Request $request, Closure $next): mixed {
+    public function handle(Request $request, Closure $next): mixed
+    {
         $userData = [
-            'ip' => $request->ip(),
+            'ip'        => $request->ip(),
             'userAgent' => $request->header('user-agent'),
-            'auth' => $request->header('Authorization')
+            'auth'      => $request->header('Authorization'),
         ];
 
         Log::channel("debug")->info("user data", $userData);
@@ -58,7 +60,7 @@ class TokenCheck {
             'x-timestamp' => 'required',
             'x-signature' => 'required',
         ], [
-            '*.required' => 'Заголовок :attribute обязателен для запроса'
+            '*.required' => 'Заголовок :attribute обязателен для запроса',
         ]);
 
         if ($validated->fails()) {

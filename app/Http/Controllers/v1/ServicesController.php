@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
@@ -9,14 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ServicesController extends Controller {
+class ServicesController extends Controller
+{
     /**
      * getServices - Получение всех сервисов
      *
      * @return JsonResponse
      */
-    public function getServices(): JsonResponse {
-        $services = Services::all()->toArray();
+    public function getServices(): JsonResponse
+    {
+        $services      = Services::all()->toArray();
         $incidentTypes = DB::table('incident_type')->select('type_name', 'code', 'lifecycle')->get()->toArray();
         return $this->sendSuccess('', ['services' => $services, 'incidentTypes' => $incidentTypes]);
     }
@@ -27,14 +28,15 @@ class ServicesController extends Controller {
      * @param Request $request
      * @return JsonResponse
      */
-    public function editService(Request $request): JsonResponse {
-        $data = $request->all();
+    public function editService(Request $request): JsonResponse
+    {
+        $data      = $request->all();
         $validator = Validator::make($data, [
-            'name' => 'required|string',
+            'name'   => 'required|string',
             'active' => 'required|in:Y,N',
         ], [
             '*.required' => 'Поле :attribute обязательно для заполнения',
-            'active.in' => 'Поле :attribute должно быть Y или N',
+            'active.in'  => 'Поле :attribute должно быть Y или N',
         ]);
 
         if ($validator->fails()) {
@@ -42,7 +44,7 @@ class ServicesController extends Controller {
         }
 
         $existService = Services::findService($data['service']);
-        if (!$existService['success']) {
+        if (! $existService['success']) {
             return $this->sendError('Сервис не найден', 400);
         }
 
@@ -50,4 +52,3 @@ class ServicesController extends Controller {
         return $this->sendSuccess('Сервис успешно отредактирован');
     }
 }
-
