@@ -7,6 +7,7 @@ use App\Helpers\Parsers\Parser;
 use App\Helpers\SenderManager;
 use App\Values\IncidentData;
 use App\Values\SendReportFilterData;
+use App\Values\TelegramSendData;
 use Exception;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class Incident extends BaseModel
 {
-    use HasFactory, HasUuids;
+    use HasFactory;
+    use HasUuids;
 
     public $timestamps = false;
     protected $primaryKey = 'uuid';
@@ -45,18 +47,17 @@ class Incident extends BaseModel
      */
     public static function saveData(IncidentData $data): array
     {
-        Log::channel("unknown_errors")->warning(
+        Log::channel('unknown_errors')->warning(
             "Новая не отслеживаемая ошибка от {$data->service}: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         );
 
-        Log::channel("debug")->info("saveData type data", [\gettype($data)]);
-
         $additionalFields = (object) [];
-        if (! empty($data->additionalFields)) {
+
+        if (!empty($data->additionalFields)) {
             $additionalFields = json_encode($data->additionalFields);
         }
 
-        static::create( [
+        static::create([
             'level' => $data->level,
             'message' => $data->message,
             'domain' => $data->domain,
@@ -72,8 +73,8 @@ class Incident extends BaseModel
         ]);
 
         return [
-            "success" => true,
-            "message" => "Данные успешно сохранены",
+            'success' => true,
+            'message' => 'Данные успешно сохранены',
         ];
     }
 
@@ -87,14 +88,16 @@ class Incident extends BaseModel
     public static function processIncidentData(IncidentData $data, object $incidentType): array
     {
         $additionalFields = (object) [];
+
         if (!empty($data->additionalFields)) {
             $additionalFields = json_encode($data->additionalFields);
         }
+
         if (!$data->isValidHash()) {
-            Log::channel('debug')->info(static::getModelClass() . "invalid hash", []);
+            Log::channel('debug')->error(static::getModelClass() . 'invalid hash', []);
             return [
-                "success" => false,
-                "message" => "Контрольная сумма не совпадает",
+                'success' => false,
+                'message' => 'Контрольная сумма не совпадает',
             ];
         }
 
@@ -113,15 +116,13 @@ class Incident extends BaseModel
                 'date' => $data->date,
                 'count' => 1,
             ]);
-        } catch(Exception $e) {
-            Log::channel("debug")->info("EXCEPTION save", [$e->getMessage()]);
+        } catch (Exception $e) {
+            Log::channel('debug')->error('EXCEPTION save', [$e->getMessage()]);
         }
-
-        Log::channel("debug")->info("EXCEPTION save", [$createNewIncident->exists]);
-       
 
         if (!$createNewIncident->exists) {
             static::handleNewIncident($incidentType, $createNewIncident);
+
             return [
                 'success' => true,
                 'message' => 'Данные успешно сохранены и отправлены',
@@ -134,33 +135,28 @@ class Incident extends BaseModel
     /**
      * handleNewIncident
      *
-     * @param mixed $existIncident
      * @param IncidentType $incidentType
      * @param Incident $data
      * @return void
      */
-    protected static function handleNewIncident(IncidentType $incidentType, Incident $data): void
-    {
-        // Log::channel('debug')->info(message: "handleNewIncident", ['data' => $data, 'incidentType' => $incidentType]);
-        $data->save();
-
+    protected static function handleNewIncident(IncidentType $incidentType, Incident $data): void {
+        Log::channel("debug")->info("DATA TYPE", [\gettype($data)]);
         if (!empty($incidentType->id)) {
-            match (SendTemplateType::from($incidentType->alias)) {
-                SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($data, $incidentType->send_template_id),
-                default => null,
-            };
-
+            SenderManager::preparePushOrMail($data, $incidentType);
+            
             SenderManager::telegramSendMessage(
-                static::getModelClass(),
-                "Новая ошибка от {$data->service} ({$data->source})",
-                (string) $data->incident_text,
-                [
-                    'INCIDENT_TYPE' => $incidentType->type_name,
-                    'CODE' => $incidentType->code,
-                    'INCIDENT_OBJECT' => $data->hash_sum,
-                ]
+                new TelegramSendData(
+                    static::getModelClass(),
+                    "Новая ошибка от {$data->service}",
+                    (string) $data->incident_text,
+                    [
+                        'INCIDENT_TYPE' => $incidentType->type_name,
+                        'CODE' => $incidentType->code,
+                        'INCIDENT_OBJECT' => $data->hash_sum,
+                    ]
+                )
             );
-        }     
+        }
     }
 
     /**
@@ -174,13 +170,13 @@ class Incident extends BaseModel
     private static function handleExistingIncident(object $existIncident, object $incidentType, IncidentData $data): array
     {
         $parseDates = Parser::parseDates($existIncident->date, $data->date);
-        $lifecycle  = $existIncident->incidentType->lifecycle;
+        $lifecycle = $existIncident->incidentType->lifecycle;
         $existIncident->count++;
 
-        Log::channel("debug")->info("handleExistingIncident", [
-            "Incident"=> $incidentType,
-            "data" => $data,
-            "existIncident" => $existIncident
+        Log::channel('debug')->info('handleExistingIncident', [
+            'Incident' => $incidentType,
+            'data' => $data,
+            'existIncident' => $existIncident,
         ]);
 
         if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $lifecycle) {
@@ -188,22 +184,18 @@ class Incident extends BaseModel
             $existIncident->save();
 
             if (!empty($incidentType->alias)) {
-                Log::channel('debug')->info(static::getModelClass() . '::handleExistingIncident existIncident to array', [$existIncident->toArray()]);
-                match (SendTemplateType::from($incidentType->alias)) {
-                    SendTemplateType::PUSH_MAIL => SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id),
-                    default => null,
-                };
+                SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id);
             }
 
-            SenderManager::telegramSendMessage(
+            SenderManager::telegramSendMessage(new TelegramSendData(
                 static::getModelClass(),
                 "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->hash_sum})",
                 (string) $existIncident->incident_text,
                 [
-                    'SERVICE AND SOURCE' => $existIncident->service . "|" . $existIncident->source,
+                    'SERVICE AND SOURCE' => $existIncident->service . '|' . $existIncident->source,
                     'count' => $existIncident->count,
                 ]
-            );
+            ));
 
             return [
                 'success' => true,
@@ -221,7 +213,7 @@ class Incident extends BaseModel
 
     /**
      * applyFilerByParam - Применение по полям
-     * 
+     *
      * @param SendReportFilterData $params
      * @param mixed $query
      * @param string $paramKey
@@ -253,13 +245,13 @@ class Incident extends BaseModel
     public static function getIncidentDataByParams(SendReportFilterData $params): array
     {
         $return = [
-            "success" => false,
-            "message" => "Данные не найдены",
-            "data"    => [],
+            'success' => false,
+            'message' => 'Данные не найдены',
+            'data' => [],
         ];
 
         //TODO: сделать offset и limit
-      
+
         $query = static::query()
             ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
@@ -276,36 +268,35 @@ class Incident extends BaseModel
                 'incident_type.lifecycle',
             ]);
 
-        static::applyFilerByParam($params,  $query, "service", "service");
-        static::applyFilerByParam($params,  $query, "date", "date");
-        static::applyFilerByParam($params,  $query, "code", "code");
+        static::applyFilerByParam($params, $query, 'service', 'service');
+        static::applyFilerByParam($params, $query, 'date', 'date');
+        static::applyFilerByParam($params, $query, 'code', 'code');
 
         $returnData = $query->get()->toArray();
-        Log::channel("debug")->info("return report data from DB", $returnData);
+        Log::channel('debug')->info('return report data from DB', $returnData);
 
         if (!empty($returnData)) {
             $return['success'] = true;
-            $return['message'] = "";
+            $return['message'] = '';
 
             $return['data'] = array_map(function ($item) {
                 return [
-                    "id" => $item['uuid'],
-                    "code" => $item['code'],
-                    "service" => $item['service'],
-                    "action" => $item['action'],
-                    "incident" => [
-                        "message" => $item['message'],
-                        "domain" => $item['domain'],
+                    'id' => $item['uuid'],
+                    'code' => $item['code'],
+                    'service' => $item['service'],
+                    'action' => $item['action'],
+                    'incident' => [
+                        'message' => $item['message'],
+                        'domain' => $item['domain'],
                     ],
-                    "type" => $item['type_name'],
-                    "count" => $item['count'],
-                    "lifecycle" => $item['lifecycle'],
-                    "date" => $item['date'],
+                    'type' => $item['type_name'],
+                    'count' => $item['count'],
+                    'lifecycle' => $item['lifecycle'],
+                    'date' => $item['date'],
                 ];
             }, $returnData);
         }
-    
-       
+
         return $return;
     }
 

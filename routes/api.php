@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TestConroller;
 use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
@@ -12,7 +13,7 @@ Route::get('/test', [TestConroller::class, 'test']);
 
 // TODO: Раскомментировать после разработки
 Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
-// Route::prefix('v1')->group(function () {
+    // Route::prefix('v1')->group(function () {
     // Работа с логами
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog']);
@@ -32,10 +33,10 @@ Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
         });
     });
 
-    Route::post('/report', [LogController::class, 'sendReport']);
+    Route::get('/report', [ReportController::class, 'send']);
 });
 
-Route::fallback(fn() => response()->json([
+Route::fallback(fn () => response()->json([
     'success' => false,
     'message' => 'Not found',
 ], 404));

@@ -14,7 +14,7 @@ trait RespondsWithMessages
      * @param int $code
      * @return JsonResponse
      */
-    protected function sendError(?string $message = null, int $code = ErrorsEnum::BAD_REQUEST->value): JsonResponse
+    protected function sendError(?string $message = null, string $code = ErrorsEnum::BAD_REQUEST->value): JsonResponse
     {
         return response()->json([
             'success' => false,

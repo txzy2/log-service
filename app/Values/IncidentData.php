@@ -33,11 +33,12 @@ class IncidentData
             file: $data['file'] ?? '',
             class: $data['class'] ?? '',
             date: $data['date'],
-            hashSum: $data['hash_sum'] // Обратите внимание на преобразование snake_case → camelCase
+            hashSum: $data['hash_sum']
         );
     }
 
-    public function setNewMessage(string $message) {
+    public function setNewMessage(string $message)
+    {
         $this->message = $message;
     }
 

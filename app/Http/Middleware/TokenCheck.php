@@ -54,7 +54,10 @@ class TokenCheck
             'auth' => $request->header('Authorization'),
         ];
 
-        Log::channel("debug")->info("user data", $userData);
+        Log::channel("debug")->info("user data", [
+            "userData"=> $userData,
+            "request"=> $request,
+        ]);
 
         try {
             $payload = SignaturePayload::fromRequest($request);

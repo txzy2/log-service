@@ -23,6 +23,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "friendsofphp/php-cs-fixer": "*",
         "knuckleswtf/scribe": "^4.39",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
