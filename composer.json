@@ -12,14 +12,11 @@
         "php": "^8.2",
         "cybercog/laravel-clickhouse": "dev-master",
         "guzzlehttp/guzzle": "^7.9",
-        "inertiajs/inertia-laravel": "^1.0",
         "irazasyed/telegram-bot-sdk": "^3.14",
         "laravel/framework": "^11.31",
-        "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "mpociot/laravel-apidoc-generator": "*",
-        "tightenco/ziggy": "^2.0"
+        "mpociot/laravel-apidoc-generator": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -63,7 +60,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" --names='server,queue'"
         ],
         "scripts": {
             "openapi": "swagger-cli bundle resources/openapi/openapi.yaml --outfile public/openapi.yaml --type yaml"

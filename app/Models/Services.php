@@ -14,8 +14,7 @@ class Services extends BaseModel
         'active',
     ];
 
-    public static function findService(string $service): ?Services
-    {
+    public static function findService(string $service): ?Services {
         return Services::where('name', $service)->first();
     }
 
@@ -26,8 +25,7 @@ class Services extends BaseModel
      *
      * @return bool
      */
-    public static function findActiveServiceByName(string $service): bool
-    {
+    public static function findActiveServiceByName(string $service): bool {
         return Services::where('name', $service)->where('active', 'Y')->exists();
     }
 }

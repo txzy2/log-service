@@ -2,9 +2,7 @@
 
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TestConroller;
-use App\Http\Controllers\v1\IncidentController;
 use App\Http\Controllers\v1\LogController;
-use App\Http\Controllers\v1\ServicesController;
 use App\Http\Middleware\ServcieCheck;
 use App\Http\Middleware\TokenCheck;
 use Illuminate\Support\Facades\Route;
@@ -12,28 +10,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/test', [TestConroller::class, 'test']);
 
 // TODO: Раскомментировать после разработки
-Route::prefix('v1')->middleware(TokenCheck::class)->group(function () {
-    // Route::prefix('v1')->group(function () {
+Route::prefix('v1')->group(function () {
     // Работа с логами
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
-        Route::post('/', [LogController::class, 'addLog']);
+        Route::post('/', [LogController::class, 'addLog'])->middleware(TokenCheck::class);
         Route::post('/test', [LogController::class, 'testAddLog']);
     });
 
-    // Работа с настройками инстдентов
-    Route::prefix('incidents')->group(function () {
-        Route::prefix('types')->group(function () {
-            Route::post('/add', [IncidentController::class, 'addType']);
-            // TODO: Сделать /edit
-        });
-
-        Route::prefix('services')->group(function () {
-            Route::get('/', [ServicesController::class, 'getServices']);
-            Route::post('/edit', [ServicesController::class, 'editService']);
-        });
-    });
-
-    Route::get('/report', [ReportController::class, 'send']);
+    Route::get('/report', [ReportController::class, 'send'])->middleware(TokenCheck::class);
 });
 
 Route::fallback(fn () => response()->json([
