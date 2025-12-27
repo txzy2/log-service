@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\ErrorsEnum;
 use App\Enums\LevelsEnum;
 use App\Traits\RespondsWithMessages;
-use App\Values\IncidentData;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -14,18 +13,11 @@ use Illuminate\Validation\Rule;
 
 class StoreLogRequest extends FormRequest {
     use RespondsWithMessages;
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     public function authorize(): bool {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array {
         return [
             'level' => ['required', Rule::in(LevelsEnum::cases())],
@@ -51,15 +43,6 @@ class StoreLogRequest extends FormRequest {
     }
 
     /**
-     * Преобразует валидированные данные запроса в IncidentData
-     *
-     * @return IncidentData
-     */
-    public function toIncidentData(): IncidentData {
-        return IncidentData::fromArray($this->validated());
-    }
-
-    /**
      * Переопределяем обработку ошибок валидации
      */
     protected function failedValidation(Validator $validator) {
@@ -69,9 +52,6 @@ class StoreLogRequest extends FormRequest {
         );
 
         $firstError = $validator->errors()->first();
-
-        // ВАЖНО: failedValidation должен ВЫБРОСИТЬ исключение, а не вернуть значение
-        // Оборачиваем результат sendError() в HttpResponseException
         throw new HttpResponseException(
             $this->sendError($firstError, ErrorsEnum::VALIDATION_ERROR->value)
         );

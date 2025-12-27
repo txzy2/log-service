@@ -32,7 +32,6 @@ class SendMail implements ShouldQueue {
         $jobId = $this->job->getJobId();
         SendStatusQueue::create(["job_id" => $jobId, "status" => "started", "message" => json_encode($this->data)]);
 
-        Log::channel("debug")->info("DATA IN QUEUE", ["data" => $this->data, "type" => \gettype($this->data)]);
         $emails = str_contains($this->data['to'], ',')
             ? array_map('trim', explode(',', $this->data['to']))
             : [$this->data['to']];
@@ -48,14 +47,12 @@ class SendMail implements ShouldQueue {
         }
         SendStatusQueue::where("job_id", $jobId)->update(["status" => "process", "message" => json_encode($emails)]);
 
-        $token = static::generateMailToken($cleanedMessage);
-        Log::channel("debug")->info("token", [$token]);
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->post(config('app.ws_messages_url') . "/api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
                 'json' => [
-                    "token" => $token,
+                    "token" => $this->generateMailToken($cleanedMessage),
                     "another_registration_service" => "ws-pg",
                     "messages" => $cleanedMessage
                 ]
@@ -65,10 +62,7 @@ class SendMail implements ShouldQueue {
 
             $status = (isset($result['success']) && !$result['success']) ? "failed" : "sended";
             Log::channel('debug')->info(self::CLASS_NAME . '::sendeMessages RESPONSE', [$responseBody]);
-            SendStatusQueue::where("job_id", $jobId)->update([
-                "status" => $status, 
-                "message" => $responseBody
-            ]);
+            SendStatusQueue::where("job_id", $jobId)->update(["status" => $status, "message" => $responseBody]);
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $error = $e->getMessage();
             Log::channel("debug")->error(self::CLASS_NAME . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$error]);
@@ -86,7 +80,7 @@ class SendMail implements ShouldQueue {
      * @param array $messages
      * @return string
      */
-    protected static function generateMailToken(array $messages): string
+    protected function generateMailToken(array $messages): string
     {
         $messages = json_encode($messages);
         $key = config('app.ws_pg_key');

@@ -6,8 +6,7 @@ use App\Models\Incident;
 use App\Models\IncidentType;
 use App\Values\IncidentData;
 
-class LogIncident
-{
+class LogIncident {
     /**
      * logging - Метод фильтрации и логирования
      *
