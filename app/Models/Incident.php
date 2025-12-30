@@ -301,8 +301,6 @@ class Incident extends BaseModel {
             'data' => [],
         ];
 
-        //TODO: сделать offset и limit
-
         $query = static::query()
             ->leftJoin('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
@@ -327,8 +325,13 @@ class Incident extends BaseModel {
         static::applyFilerByParam($params, $query, 'code', 'incident_type.code');
         static::applyFilerByParam($params, $query, 'demo', 'incident.demo');
 
+        $offset = (int) ($params['offset'] ?? 0);
+        $limit = (int) ($params['limit'] ?? 50);
+        $limit = min($limit, 100);
+        
+        $query->skip($offset)->take($limit);
+
         $returnData = $query->get()->toArray();
-        Log::channel('debug')->info('return report data from DB', $returnData);
 
         if (!empty($returnData)) {
             $return['success'] = true;
