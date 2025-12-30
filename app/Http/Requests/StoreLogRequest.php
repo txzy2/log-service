@@ -31,6 +31,7 @@ class StoreLogRequest extends FormRequest {
             'class' => 'required|string',
             'date' => 'required|date',
             'hash_sum' => 'required|string',
+            'demo' => 'nullable|in:Y,N'
         ];
     }
 

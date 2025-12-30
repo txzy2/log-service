@@ -30,7 +30,7 @@ return new class extends Migration
 
         Schema::create('incident', function (Blueprint $table) {
             $table->uuid()->primary();
-            $table->unsignedBigInteger('incident_type_id');
+            $table->unsignedBigInteger('incident_type_id')->nullable();
             $table->string('level');
             $table->string('domain');
             $table->string('service');
@@ -43,6 +43,8 @@ return new class extends Migration
             $table->timestamp("date");
             $table->integer('count');
             $table->string('hash_sum')->nullable()->unique();
+            $table->enum('demo', ['Y', 'N'])->default('N');
+            $table->timestamps();
 
             $table->foreign('incident_type_id')->references('id')->on('incident_type');
         });

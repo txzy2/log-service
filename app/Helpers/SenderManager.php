@@ -6,14 +6,12 @@ use App\Models\IncidentType;
 use App\Enums\SendTemplateType;
 use App\Jobs\SendMail;
 use App\Models\Incident;
-use App\Models\SendTemplate;
 use App\Services\TemplateServiceFactory;
 use App\Values\TelegramSendData;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-class SenderManager extends Helpers
-{
+class SenderManager extends Helpers {
     /**
      * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
      *

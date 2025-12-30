@@ -13,12 +13,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 
-class Incident extends BaseModel
-{
+class Incident extends BaseModel {
     use HasFactory;
     use HasUuids;
 
-    public $timestamps = false;
+    public $timestamps = true;
     protected $primaryKey = 'uuid';
     protected $keyType = 'string';
     public $incrementing = false;
@@ -37,6 +36,7 @@ class Incident extends BaseModel
         'count',
         'hash_sum',
         'level',
+        'demo',
     ];
 
     protected $casts = [
@@ -63,9 +63,10 @@ class Incident extends BaseModel
             'class' => $data['class'] ?? '',
             'date' => $data['date'],
             'hash_sum' => $data['hash_sum'],
+            'demo' => $data['demo'] ?? 'N',
             'additionalFields' => $data['additionalFields'] ?? null,
         ]);
-        
+
         return $incident;
     }
 
@@ -99,7 +100,7 @@ class Incident extends BaseModel
         if (LevelsEnum::from($this->level) !== LevelsEnum::INFO) {
             return Parser::parseStr($this->message);
         }
-        
+
         return ['', $this->message];
     }
 
@@ -114,8 +115,10 @@ class Incident extends BaseModel
         $existType = IncidentType::where('code', $code)->first();
         $this->message = $message;
 
+        Log::channel("debug")->info(static::getModelClass() . "::process DATA", [$this]);
+
         return match (true) {
-            $existType === null => $this->saveAsUnknown(),
+            $existType === null || $this->demo === 'Y' => $this->saveAsUnknown(),
             default => $this->processWithType($existType),
         };
     }
@@ -130,6 +133,8 @@ class Incident extends BaseModel
         Log::channel('unknown_errors')->warning(
             "Новая не отслеживаемая ошибка от {$this->service}: " . json_encode($this->toArray(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         );
+
+        unset($this->hash_sum);
 
         $this->incident_type_id = null;
         $this->count = 1;
@@ -166,7 +171,7 @@ class Incident extends BaseModel
                 $this->incident_type_id = $incidentType->id;
                 $this->count = 1;
                 $this->save();
-                
+
                 $this->handleNewIncident($incidentType);
 
                 return [
@@ -196,10 +201,10 @@ class Incident extends BaseModel
             'service' => $this->service,
             'type' => $incidentType->type_name
         ]);
-        
+
         if (!empty($incidentType->id)) {
             SenderManager::preparePushOrMail($this, $incidentType);
-            
+
             SenderManager::telegramSendMessage(
                 new TelegramSendData(
                     static::getModelClass(),
@@ -268,16 +273,16 @@ class Incident extends BaseModel
      * @return void
      */
     private static function applyFilerByParam(
-        SendReportFilterData $params,
+        array $params,
         $query,
         string $paramKey,
         string $column
     ): void {
-        if (isset($params->$paramKey) && !empty($params->$paramKey)) {
-            if ($column === 'date') {
-                $query->whereDate($column, $params->$paramKey);
+        if (isset($params[$paramKey]) && !empty($params[$paramKey])) {
+            if (str_contains($column, '.date') || $column === 'date') {
+                $query->whereDate($column, $params[$paramKey]);
             } else {
-                $query->where($column, $params->$paramKey);
+                $query->where($column, $params[$paramKey]);
             }
         }
     }
@@ -289,8 +294,7 @@ class Incident extends BaseModel
      * @return array
      *
      * */
-    public static function getIncidentDataByParams(SendReportFilterData $params): array
-    {
+    public static function getIncidentDataByParams(array $params): array {
         $return = [
             'success' => false,
             'message' => 'Данные не найдены',
@@ -300,7 +304,7 @@ class Incident extends BaseModel
         //TODO: сделать offset и limit
 
         $query = static::query()
-            ->join('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
+            ->leftJoin('incident_type', 'incident.incident_type_id', '=', 'incident_type.id')
             ->select([
                 'incident.uuid',
                 'incident.message',
@@ -310,14 +314,18 @@ class Incident extends BaseModel
                 'incident.date',
                 'incident.count',
                 'incident.service',
+                'incident.demo',
+                'incident.additionalFields',
+                'incident.incident_type_id',
                 'incident_type.type_name',
                 'incident_type.code',
                 'incident_type.lifecycle',
             ]);
 
-        static::applyFilerByParam($params, $query, 'service', 'service');
-        static::applyFilerByParam($params, $query, 'date', 'date');
-        static::applyFilerByParam($params, $query, 'code', 'code');
+        static::applyFilerByParam($params, $query, 'service', 'incident.service');
+        static::applyFilerByParam($params, $query, 'date', 'incident.date');
+        static::applyFilerByParam($params, $query, 'code', 'incident_type.code');
+        static::applyFilerByParam($params, $query, 'demo', 'incident.demo');
 
         $returnData = $query->get()->toArray();
         Log::channel('debug')->info('return report data from DB', $returnData);
@@ -329,17 +337,20 @@ class Incident extends BaseModel
             $return['data'] = array_map(function ($item) {
                 return [
                     'id' => $item['uuid'],
-                    'code' => $item['code'],
-                    'service' => $item['service'],
+                    'domain' => $item['domain'],
                     'action' => $item['action'],
                     'incident' => [
+                        'type' => $item['type_name'] ?? 'unknown',
+                        'code' => $item['code'] ?? null,
+                        'service' => $item['service'],
                         'message' => $item['message'],
-                        'domain' => $item['domain'],
+                        'lifecycle' => $item['lifecycle'] ?? null,
                     ],
-                    'type' => $item['type_name'],
+                    'additional_data' => $item['additionalFields'],
                     'count' => $item['count'],
-                    'lifecycle' => $item['lifecycle'],
                     'date' => $item['date'],
+                    'has_type' => $item['incident_type_id'] !== null,
+                    'demo' => $item['demo']
                 ];
             }, $returnData);
         }
@@ -347,8 +358,7 @@ class Incident extends BaseModel
         return $return;
     }
 
-    public function incidentType()
-    {
+    public function incidentType() {
         return $this->belongsTo(IncidentType::class, 'incident_type_id');
     }
 }

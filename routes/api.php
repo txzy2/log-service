@@ -14,7 +14,6 @@ Route::prefix('v1')->group(function () {
     // Работа с логами
     Route::prefix('log')->middleware(ServcieCheck::class)->group(function () {
         Route::post('/', [LogController::class, 'addLog'])->middleware(TokenCheck::class);
-        Route::post('/test', [LogController::class, 'testAddLog']);
     });
 
     Route::get('/report', [ReportController::class, 'send'])->middleware(TokenCheck::class);

@@ -6,21 +6,14 @@ use App\Enums\ErrorsEnum;
 use App\Models\Incident;
 use App\Services\TemplateServiceInterface;
 
-class MonetaTemplateService implements TemplateServiceInterface
-{
-    public function prepare(Incident $data, string $template): array
-    {
+class MonetaTemplateService implements TemplateServiceInterface {
+    public function prepare(Incident $data, string $template): array {
         $return = [
             "success" => false,
             "data" => "",
         ];
 
         $additionalFields = json_decode($data->additionalFields ?? '[]', true) ?? [];
-
-        // \Illuminate\Support\Facades\Log::channel("debug")->info(__CLASS__ . "->prepare fields", [
-        //     'raw' => $data->additionalFields,
-        //     'decoded' => $additionalFields
-        // ]);
 
         $fields = [];
         foreach ($additionalFields as $item) {
@@ -29,7 +22,6 @@ class MonetaTemplateService implements TemplateServiceInterface
             }
         }
 
-        // Проверяем наличие обязательных полей
         if (isset($fields['transit'])) {
             $replacements = [
                 '{{inn}}' => $fields['inn'] ?? '',

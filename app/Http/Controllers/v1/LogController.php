@@ -21,38 +21,39 @@ class LogController extends Controller {
     public function addLog(StoreLogRequest $request): JsonResponse {
         Log::channel('debug')->info(static::getControllerClass() . ':addLog RAW REQUEST', [$request->validated()]);
 
-        try {
-            WriteIncident::dispatch($request->validated())->onQueue('writeIncidentLog');
-            return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
-        } catch (Throwable $e) {
-            Log::channel('debug')->error(static::getControllerClass() . '::addLog EXCEPTION', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return $this->sendError('Не удалось добавить задачу в очередь', ErrorsEnum::INTERNAL_ERROR->value);
+        if(isset($request->demo) && !empty($request->demo) && $request->demo === 'Y') {
+            return $this->proccessTestRequest($request);
+        } else {
+            return $this->proccessWithQueue($request);
         }
+   
     }
 
     /**
-     * testAddLog - тестовый контроллер для логов (Идет не через очередь)
+     * proccessWithQueue - Боевой запрос
      *
      * @param StoreLogRequest $request
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function testAddLog(StoreLogRequest $request): JsonResponse {
-        Log::channel('debug')->info(static::getControllerClass() . ':testAddLog RAW REQUEST', [$request->validated()]);
+    private function proccessWithQueue(StoreLogRequest $request): JsonResponse {
+        WriteIncident::dispatch($request->validated())->onQueue('writeIncidentLog');
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
+    }
 
-        try {
-            $incident = Incident::fromArray($request->validated());
-            $result = $incident->process();
-            
-            if (!$result['success']) {
-                return $this->sendError($result['message'], ErrorsEnum::BAD_REQUEST->value);
-            }
-            return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
-        } catch (Throwable $e) {
-            Log::channel('debug')->error(static::getControllerClass() . '::testAddLog Controller EXCEPTION', [$e->getMessage()]);
-            return $this->sendError($e->getMessage(), ErrorsEnum::INTERNAL_ERROR->value);
+    /**
+     * proccessTestRequest - Тестовый запрос
+     *
+     * @param StoreLogRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function proccessTestRequest(StoreLogRequest $request): JsonResponse {
+        $incident = Incident::fromArray($request->validated());
+        $result = $incident->process();
+
+        if (!$result['success']) {
+            return $this->sendError($result['message'], ErrorsEnum::BAD_REQUEST->value);
         }
+
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 }
