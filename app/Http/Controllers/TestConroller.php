@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
@@ -11,4 +10,3 @@ class TestConroller extends Controller
         return parent::sendSuccess('success');
     }
 }
-

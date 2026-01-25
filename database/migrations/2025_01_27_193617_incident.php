@@ -21,23 +21,30 @@ return new class extends Migration
         Schema::create('incident_type', function (Blueprint $table) {
             $table->id();
             $table->string('type_name', 50);
-            $table->string('can_send', 1)->default('N');
-            $table->unsignedBigInteger('send_template_id');
+            $table->enum('alias', ['email', 'push'])->nullable();
+            $table->unsignedBigInteger('send_template_id')->nullable();
             $table->string('code', 50);
 
             $table->foreign('send_template_id')->references('id')->on('send_template');
         });
 
         Schema::create('incident', function (Blueprint $table) {
-            $table->id();
-            $table->string('incident_object');
-            $table->string('incident_text');
-            $table->unsignedBigInteger('incident_type_id');
-            $table->string('incident_object_alias');
+            $table->uuid()->primary();
+            $table->unsignedBigInteger('incident_type_id')->nullable();
+            $table->string('level');
+            $table->string('domain');
             $table->string('service');
-            $table->string('source');
-            $table->date('date');
+            $table->string('message');
+            $table->string('class');
+            $table->string('function');
+            $table->string('action');
+            $table->string('file');
+            $table->json('additionalFields')->nullable();
+            $table->timestamp("date");
             $table->integer('count');
+            $table->string('hash_sum')->nullable()->unique();
+            $table->enum('demo', ['Y', 'N'])->default('N');
+            $table->timestamps();
 
             $table->foreign('incident_type_id')->references('id')->on('incident_type');
         });

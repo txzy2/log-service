@@ -15,7 +15,7 @@ abstract class Parser extends Helpers {
      */
     public static function parseStr(string $str): array {
         if (empty($str)) {
-            return ['', ''];
+            return ['', $str];
         }
 
         return strpos($str, '|') === false ? [$str, ''] : explode('|', $str);

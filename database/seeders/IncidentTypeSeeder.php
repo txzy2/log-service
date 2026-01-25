@@ -18,7 +18,7 @@ class IncidentTypeSeeder extends Seeder
             'send_template_id' => 1,
             'code' => '500.1.26',
             'lifecycle' => 7,
-            'alias' => 'manager'
+            'alias' => 'email'
         ]);
     }
 }

@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'name' => env('APP_NAME'),
+    'name'            => env('APP_NAME'),
 
     /*
     |--------------------------------------------------------------------------
@@ -16,7 +16,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'env' => env('APP_ENV', 'production'),
+    'env'             => env('APP_ENV', 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -24,17 +24,15 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'ws_pg_key' => env('WS_PG_KEY'),
-    'services_token' => env('SERVICES_TOKEN'),
+    'services_token'  => env('SERVICES_TOKEN'),
 
-    'report_token' => env('REPORT_TOKEN'),
+    'report_token'    => env('REPORT_TOKEN'),
 
     /**
      * Токены для отправки сообщений на сервис уведомлений
      */
-    'ws_pg_key' => env('WS_PG_KEY'),
+    'ws_pg_key'       => env('WS_PG_KEY'),
     'ws_messages_url' => env('WS_MESSAGES_URL'),
-
 
     /*
     |--------------------------------------------------------------------------
@@ -42,7 +40,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug'           => (bool) env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -50,14 +48,14 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url'             => env('APP_URL', 'http://localhost'),
 
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     */
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone'        => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
@@ -65,9 +63,9 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale'          => env('APP_LOCALE', 'en'),
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale'    => env('APP_FAKER_LOCALE', 'en_US'),
 
     /*
     |--------------------------------------------------------------------------
@@ -75,10 +73,10 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'cipher' => 'AES-256-CBC',
-    'key' => env('APP_KEY'),
-    'previous_keys' => [
-        ...array_filter(
+    'cipher'          => 'AES-256-CBC',
+    'key'             => env('APP_KEY'),
+    'previous_keys'   => [
+         ...array_filter(
             explode(',', env('APP_PREVIOUS_KEYS', ''))
         ),
     ],
@@ -89,9 +87,9 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'maintenance' => [
+    'maintenance'     => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
-        'store' => env('APP_MAINTENANCE_STORE', 'database'),
+        'store'  => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
     /*
@@ -101,7 +99,7 @@ return [
     */
 
     // 'https_proxy' => env('HTTPS_PROXY'),
-    'chat_id' => env('CHAT_ID'),
-    'token' => env('TELEGRAM_BOT_TOKEN'),
+    'chat_id'         => env('CHAT_ID'),
+    'token'           => env('TELEGRAM_BOT_TOKEN'),
 
 ];

@@ -2,86 +2,93 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Actions\LogIncident;
+use App\Enums\ErrorsEnum;
+use App\Enums\LevelsEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLogRequest;
+use App\Jobs\WriteIncident;
 use App\Models\Incident;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
-class LogController extends Controller {
-    private const ERROR_CLASS = __CLASS__;
-
+class LogController extends Controller
+{
     /**
-     * sendLog - главный контроллер логов, который распределяет запросы по сервисам
+     * addLog - главный контроллер логов, который распределяет запросы по сервисам
      *
-     * @param Request $request
-     * @return mixed|JsonResponse
+     * @param StoreLogRequest $request
+     * @return JsonResponse
      */
-    public function addLog(Request $request): JsonResponse {
+    public function addLog(Request $request): JsonResponse
+    {
         $data = $request->all();
-        Log::channel("debug")->info(static::getControllerClass() . ':addLog RAW REQUEST', [$data]);
+        Log::channel('debug')->info(static::getControllerClass() . ':addLog RAW REQUEST', $data);
         $validate = Validator::make(
             $data,
             [
+                'level' => ['required', Rule::in(LevelsEnum::cases())],
                 'service' => 'required|string',
-                'incident' => 'required',
-                'incident.object' => 'required|string',
-                'incident.object_data' => 'required|array',
-                'incident.date' => 'required|date_format:Y-m-d|after_or_equal:today',
-                'incident.message' => 'required|array',
+                'message' => 'required|string',
+                'domain' => 'required|string',
+                'action' => 'required|string',
+                'function' => 'required|string',
+                'additionalFields' => 'nullable|array',
+                'file' => 'required|string',
+                'class' => 'required|string',
+                'date' => 'required|date',
+                'hash_sum' => 'required|string',
+                'demo' => 'nullable|in:Y,N'
             ],
             [
-                '*.required' => 'Поле :attribute обязательно для заполнения',
-                'incident.date.after_or_equal' => 'Переданная дата не может быть меньше текущей даты',
-            ]
+                'required' => 'Поле :attribute обязательно для заполнения',
+                'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
+                'level.in' => 'Переданный статус не валиден',
+            ],
         );
 
         if ($validate->fails()) {
+            Log::channel('debug')->warning(static::getControllerClass() . '::sendReport VALIDATION ERROR', $validate->errors()->all());
             return $this->sendError($validate->errors(), 400);
         }
 
-        $result = LogIncident::writeOrSaveLog($data);
-        Log::channel("debug")->info(static::getControllerClass() . ':addLog RESULT', [$result]);
-        return match($result['success']) {
-            true => $this->sendSuccess($result['message']),
-            default => $this->sendError($result['message'], 400),
-        };
+        if (!empty($data['demo']) && $data['demo'] === 'Y') {
+            return $this->processTestRequest($data);
+        } else {
+            return $this->processWithQueue($data);
+        }
+
     }
 
     /**
-     * sendReport - контроллер для формирования отчетов по логам
+     * processTestRequest - Тестовый запрос
      *
-     * @param Request $request
-     * @return mixed|JsonResponse
+     * @param array $data
+     * @return JsonResponse
      */
-    public function sendReport(Request $request): JsonResponse {
-        $data = $request->all();
-        Log::channel("debug")->info(static::getControllerClass() . '::sendReport REQUEST', $data);
-        $validate = Validator::make(
-            $data,
-            [
-                'service' => 'required|string',
-                'source' => "nullable|string",
-                "code" => "nullable|string",
-                'date' => 'nullable|date_format:Y-m-d'
-            ],
-            [
-                '*.required' => 'Поле :attribute обязательно для заполнения',
-                'date.date_format' => 'Неверный формат даты',
-            ]
-        );
+    private function processTestRequest(array $data): JsonResponse
+    {
+        $incident = Incident::fromArray($data);
+        $result = $incident->process();
 
-        if ($validate->fails()) {
-            return $this->sendError($validate->errors(), 400);
+        if (!$result['success']) {
+            return $this->sendError($result['message'], ErrorsEnum::BAD_REQUEST->value);
         }
 
-        $return = Incident::getIncidentDataByParams($data);
-        Log::channel('debug')->info(static::getControllerClass() . '::sendReport RESULT DATA', $return['data']);
-        return match ($return['success']) {
-            true => $this->sendSuccess($return['message'], $return['data']),
-            default => $this->sendError($return['message'], 400),
-        };
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
+    }
+
+    /**
+     * processWithQueue - Боевой запрос
+     *
+     * @param array $data
+     * @return JsonResponse
+     */
+    private function processWithQueue(array $data): JsonResponse
+    {
+        WriteIncident::dispatch($data)->onQueue('writeIncidentLog');
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 }

@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Facades\Log;
 
-class Services extends BaseModel {
+class Services extends BaseModel
+{
     use HasFactory;
 
     protected $table = 'incident_services';
@@ -20,26 +19,13 @@ class Services extends BaseModel {
     }
 
     /**
-     * validateActiveService - выполняет проверку валидности сервиса на статус активности и существование
+     * findActiveServiceByName - выполняет проверку валидности сервиса на статус активности и существование
      *
      * @param string $service
      *
-     * @return array
+     * @return bool
      */
-    public static function validateActiveService(string $service): array {
-        $existService = Services::where('name', $service)->where('active', 'Y')->first();
-        if (!$existService) {
-            Log::channel("debug")->error(static::getControllerClass() . " SERVICE IS INACTIVE" . " ($service)");
-
-            return [
-                'success' => false,
-                'message' => "Введен неверный сервис или не активен",
-            ];
-        }
-
-        return [
-            'success' => true,
-            'message' => '',
-        ];
+    public static function findActiveServiceByName(string $service): bool {
+        return Services::where('name', $service)->where('active', 'Y')->exists();
     }
 }
