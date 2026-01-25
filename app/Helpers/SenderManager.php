@@ -2,23 +2,20 @@
 
 namespace App\Helpers;
 
-use App\Enums\SendTemplateType;
-use App\Models\Incident;
-use App\Models\IncidentType;
-use App\Services\IncidentNotifications\SenderResolver;
 use App\Values\TelegramSendData;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Throwable;
 
 class SenderManager extends Helpers
 {
-    public function __construct(
-        private readonly IncidentType $incidentType,
-        private readonly Incident $incident,
-    ){ }
 
+    /**
+     * telegramSendMessage - отправляет сообщение в телеграм
+     *
+     * @param TelegramSendData $data
+     * @return void
+     */
     public static function telegramSendMessage(TelegramSendData $data): void
     {
         $lineBreak = "\n";
@@ -50,28 +47,4 @@ class SenderManager extends Helpers
         }
     }
 
-    /*
-     * telegramSendMessage - отправляет сообщение в телеграм
-     *
-     * @param string $message
-     * @return void
-     */
-
-    /**
-     * processNotify - отправляет сообщение об инциденте на сервис рассылки
-     *
-     * @return void
-     */
-    public function processNotify(): void
-    {
-        $this->incidentType->load('sendTemplate'); // Подгружаем таблицу send_template, т.к она связана через send_template_id
-
-        try {
-            $senderObj = SenderResolver::resolve(SendTemplateType::tryFrom($this->incidentType->alias));
-            Log::channel('debug')->info("Incident senderObj", [$senderObj]);
-            $senderObj->send($this->incident, $this->incidentType);
-        } catch (Throwable $e) {
-            Log::channel('debug')->warning("preparePushOrMail Exception {$e->getMessage()}");
-        }
-    }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Listeners;
 
+use App\Enums\SendTemplateType;
 use App\Events\IncidentCreated;
 use App\Events\IncidentUpdatedAfterLifecycle;
 use App\Helpers\SenderManager;
+use App\Services\IncidentNotifications\SenderResolver;
 use App\Values\TelegramSendData;
 use Illuminate\Support\Facades\Log;
 
@@ -25,8 +27,9 @@ class SendIncidentNotifications
     {
         Log::channel('debug')->info("Try to send incident}", [$event->incidentType->alias]);
         if (!empty($event->incidentType->alias)) {
-            $senderManager = new SenderManager($event->incidentType, $event->incident);
-            $senderManager->processNotify();
+            $event->incidentType->load('sendTemplate');
+            $senderObj = SenderResolver::resolve(SendTemplateType::tryFrom($event->incidentType->alias));
+            $senderObj->send($event->incident, $event->incidentType);
         }
 
         if($event->incident->count > 1) {
