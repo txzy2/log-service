@@ -8,13 +8,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
-class WriteIncident implements ShouldQueue {
+class WriteIncident implements ShouldQueue
+{
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const CLASS_NAME = __CLASS__;
+    public int $tries = 16;
     protected array $data;
-    public $tries = 16;
 
     /**
      * Create a new job instance.
@@ -22,7 +24,8 @@ class WriteIncident implements ShouldQueue {
      * @param array $data
      * @return void
      */
-    public function __construct(array $data) {
+    public function __construct(array $data)
+    {
         $this->data = $data;
     }
 
@@ -31,17 +34,18 @@ class WriteIncident implements ShouldQueue {
      *
      * @return void
      */
-    public function handle(): void {
+    public function handle(): void
+    {
         $incident = Incident::fromArray($this->data);
         $isJobOver = $incident->process();
 
         if (!$isJobOver['success']) {
-            \Illuminate\Support\Facades\Log::channel('debug')->warning('Error write incident to database', $isJobOver);
+            Log::channel('debug')->warning('Error write incident to database', $isJobOver);
             $this->release(
                 pow(2, $this->attempts())
             );
         } else {
-            \Illuminate\Support\Facades\Log::channel('debug')->info('Incident successfully processed', [$isJobOver]);
+            Log::channel('debug')->info('Incident successfully processed', [$isJobOver]);
         }
     }
 }

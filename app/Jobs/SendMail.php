@@ -3,6 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\SendStatusQueue;
+use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -10,23 +13,27 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendMail implements ShouldQueue {
+class SendMail implements ShouldQueue
+{
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private const CLASS_NAME = __CLASS__;
-    protected $data;
-    public $tries = 3;
+    public int $tries = 3;
+    protected array $data;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(array $data) {
+    public function __construct(array $data)
+    {
         $this->data = $data;
     }
 
-    public function handle(): void {
+    public function handle(): void
+    {
+        Log::channel('debug')->info('queue send is working', []);
         $jobId = $this->job->getJobId();
         SendStatusQueue::create(["job_id" => $jobId, "status" => "started", "message" => json_encode($this->data)]);
 
@@ -46,7 +53,7 @@ class SendMail implements ShouldQueue {
         SendStatusQueue::where("job_id", $jobId)->update(["status" => "process", "message" => json_encode($emails)]);
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new Client();
             $response = $client->post(config('app.ws_messages_url') . "/api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
                 'json' => [
@@ -61,11 +68,11 @@ class SendMail implements ShouldQueue {
             $status = (isset($result['success']) && !$result['success']) ? "failed" : "sended";
             Log::channel('debug')->info(self::CLASS_NAME . '::sendeMessages RESPONSE', [$responseBody]);
             SendStatusQueue::where("job_id", $jobId)->update(["status" => $status, "message" => $responseBody]);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $error = $e->getMessage();
             Log::channel("debug")->error(self::CLASS_NAME . "::sendIncidentMessage \ClientException FROM SEND SERVICE", [$error]);
             SendStatusQueue::where("job_id", $jobId)->update(["job_id" => $jobId, "status" => "failed", "message" => "CLIENT EXCEPTION: " . $error]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $error = $e->getMessage();
             Log::channel("debug")->error(self::CLASS_NAME . "::sendIncidentMessage \Exception" . $error);
             SendStatusQueue::where("job_id", $jobId)->update(["job_id" => $jobId, "status" => "failed", "message" => "CLIENT EXCEPTION: " . $error]);

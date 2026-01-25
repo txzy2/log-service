@@ -14,14 +14,16 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class LogController extends Controller {
+class LogController extends Controller
+{
     /**
      * addLog - главный контроллер логов, который распределяет запросы по сервисам
      *
      * @param StoreLogRequest $request
      * @return JsonResponse
      */
-    public function addLog(Request $request): JsonResponse {
+    public function addLog(Request $request): JsonResponse
+    {
         $data = $request->all();
         Log::channel('debug')->info(static::getControllerClass() . ':addLog RAW REQUEST', $data);
         $validate = Validator::make(
@@ -51,33 +53,23 @@ class LogController extends Controller {
             Log::channel('debug')->warning(static::getControllerClass() . '::sendReport VALIDATION ERROR', $validate->errors()->all());
             return $this->sendError($validate->errors(), 400);
         }
-     
-        if(isset($data['demo']) && !empty($data['demo']) && $data['demo'] === 'Y') {
-            return $this->proccessTestRequest($data);
+
+        if (!empty($data['demo']) && $data['demo'] === 'Y') {
+            return $this->processTestRequest($data);
         } else {
-            return $this->proccessWithQueue($data);
+            return $this->processWithQueue($data);
         }
-   
+
     }
 
     /**
-     * proccessWithQueue - Боевой запрос
+     * processTestRequest - Тестовый запрос
      *
-     * @param StoreLogRequest $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param array $data
+     * @return JsonResponse
      */
-    private function proccessWithQueue(array $data): JsonResponse {
-        WriteIncident::dispatch($data)->onQueue('writeIncidentLog');
-        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
-    }
-
-    /**
-     * proccessTestRequest - Тестовый запрос
-     *
-     * @param StoreLogRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function proccessTestRequest(array $data): JsonResponse {
+    private function processTestRequest(array $data): JsonResponse
+    {
         $incident = Incident::fromArray($data);
         $result = $incident->process();
 
@@ -85,6 +77,18 @@ class LogController extends Controller {
             return $this->sendError($result['message'], ErrorsEnum::BAD_REQUEST->value);
         }
 
+        return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
+    }
+
+    /**
+     * processWithQueue - Боевой запрос
+     *
+     * @param array $data
+     * @return JsonResponse
+     */
+    private function processWithQueue(array $data): JsonResponse
+    {
+        WriteIncident::dispatch($data)->onQueue('writeIncidentLog');
         return $this->sendSuccess(ErrorsEnum::SUCCESS->getMessage());
     }
 }

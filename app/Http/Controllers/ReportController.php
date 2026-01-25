@@ -8,14 +8,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class ReportController extends Controller {
+class ReportController extends Controller
+{
     /**
      * sendReport - контроллер для формирования отчетов по логам
      *
      * @param Request $request
-     * @return mixed|JsonResponse
+     *
+     * @return JsonResponse
      */
-    public function send(Request $request): JsonResponse {
+    public function report(Request $request): JsonResponse
+    {
         $data = $request->all();
         Log::channel('debug')->info(static::getControllerClass() . '::sendReport REQUEST', $data);
         $validate = Validator::make(

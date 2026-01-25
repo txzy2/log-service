@@ -2,27 +2,31 @@
 
 namespace App\Helpers;
 
-use App\Models\IncidentType;
 use App\Enums\SendTemplateType;
 use App\Jobs\SendMail;
 use App\Models\Incident;
+use App\Models\IncidentType;
 use App\Services\TemplateServiceFactory;
 use App\Values\TelegramSendData;
+use Exception;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-class SenderManager extends Helpers {
+class SenderManager extends Helpers
+{
     /**
      * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
      *
-     * @param object $data
+     * @param Incident $data
+     * @param IncidentType $incidentType
      * @return void
      */
-    public static function preparePushOrMail(Incident $data, IncidentType $incidentType): void {
-        $incidentType->load('sendTemplate'); // Подгружаем таблицу send_template, т.к она связана через send_temolate_id
-        $data->save();
+    public static function preparePushOrMail(Incident $data, IncidentType $incidentType): void
+    {
+        $incidentType->load('sendTemplate'); // Подгружаем таблицу send_template, т.к она связана через send_template_id
 
-        match (SendTemplateType::from($incidentType->alias)) {
+        match (SendTemplateType::tryFrom($incidentType->alias)) {
             SendTemplateType::PUSH_MAIL => static::prepareAndSendEmail(
                 $incidentType->sendTemplate->to,
                 $incidentType->sendTemplate->template,
@@ -39,7 +43,9 @@ class SenderManager extends Helpers {
         };
     }
 
-    protected static function prepareAndSendEmail(string $to, string $template, Incident $data): void {
+    protected static function prepareAndSendEmail(string $to, string $template, Incident $data): void
+    {
+        Log::channel('debug')->info(static::getClassName() . "prepareAndSendEmail is WORK", [$data]);
         try {
             $preparer = TemplateServiceFactory::create($data->class);
             $processedTemplate = $preparer->prepare($data, $template);
@@ -50,12 +56,12 @@ class SenderManager extends Helpers {
                     "template" => $processedTemplate['data']
                 ])->onQueue('sendMailJob');
             }
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             $error = $e->getMessage();
-            Log::channel("debug")->error(static::getClassName() . '::prepareAndSendEmail EXCEPTION PREPEARE EMAIL', [$error]);
+            Log::channel("debug")->error(static::getClassName() . '::prepareAndSendEmail EXCEPTION PREPARE EMAIL', [$error]);
             static::telegramSendMessage(new TelegramSendData(
                 static::getClassName(),
-                "EXCEPTION PREPEARE EMAIL",
+                "EXCEPTION PREPARE EMAIL",
                 $error,
                 [
                     "data" => $data,
@@ -97,7 +103,7 @@ class SenderManager extends Helpers {
             ]);
 
             Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage ERROR", [$e->getMessage()]);
         }
     }

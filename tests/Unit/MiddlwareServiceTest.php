@@ -1,39 +1,53 @@
 <?php
+
 namespace Tests\Unit;
 
+use App\Models\Services;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 class MiddlwareServiceTest extends TestCase
 {
+    /**
+     * A basic unit test example.
+     */
+    public function success_message(): void
+    {
+        $data = $this->getData();
+        $response = $this->post("/api/v1/log", $data);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['success' => true]);
+    }
+
     private function getData(): array
     {
         return [
-            'service'  => 'WSPG|Moneta',
+            'service' => 'WSPG|Moneta',
             'incident' => [
-                'object'      => '41231895',
+                'object' => '41231895',
                 'object_data' => [
                     [
-                        'key'   => 'КПП',
+                        'key' => 'КПП',
                         'value' => '2839482',
                     ],
                     [
-                        'key'   => 'ИНН',
+                        'key' => 'ИНН',
                         'value' => '2903492034',
                     ],
                     [
-                        'key'   => 'Банковский счет',
+                        'key' => 'Банковский счет',
                         'value' => '2342342903492034',
                     ],
                 ],
-                'message'     => [
+                'message' => [
                     'error' => [
                         'Envelope' => [
                             'Body' => [
                                 'fault' => [
-                                    'faultcode'   => 'Client',
+                                    'faultcode' => 'Client',
                                     'faultstring' => 'Операции с данным счетом невозможны. Обратитесь в коммерческий отдел.',
-                                    'detail'      => [
+                                    'detail' => [
                                         'faultDetail' => '400.1.26',
                                     ],
                                 ],
@@ -41,21 +55,9 @@ class MiddlwareServiceTest extends TestCase
                         ],
                     ],
                 ],
-                'date'        => '2025-05-07',
+                'date' => '2025-05-07',
             ],
         ];
-    }
-
-    /**
-     * A basic unit test example.
-     */
-    public function success_message(): void
-    {
-        $data     = $this->getData();
-        $response = $this->post("/api/v1/log", $data);
-
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson(['success' => true]);
     }
 
     /**
@@ -63,13 +65,13 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_validation(): void
     {
-        $invalidData            = $this->getData();
+        $invalidData = $this->getData();
         $invalidData['service'] = 'invalid_service';
 
         $response = $this->postJson("/api/v1/log", $invalidData);
 
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Неполный формат данных (service|type)']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -77,12 +79,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_inactive_service(): void
     {
-        $service = \App\Models\Services::factory()->create([
-            'name'   => 'TEST',
+        $service = Services::factory()->create([
+            'name' => 'TEST',
             'active' => 'N',
         ]);
 
-        $data     = $this->getData();
+        $data = $this->getData();
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
 
@@ -103,7 +105,7 @@ class MiddlwareServiceTest extends TestCase
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Отсутствуют необходимые данные']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -116,7 +118,7 @@ class MiddlwareServiceTest extends TestCase
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Отсутствуют необходимые данные']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -124,12 +126,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_empty_service_field(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = '';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Отсутствуют необходимые данные']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -137,12 +139,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_empty_type_after_separator(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = 'WSPG|';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Неполный формат данных (service|type)']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -150,12 +152,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_empty_service_before_separator(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = '|Moneta';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Неполный формат данных (service|type)']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -163,12 +165,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_nonexistent_service(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = 'NONEXISTENT|Moneta';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Введен неверный сервис или не активен']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -176,12 +178,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_multiple_separators(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = 'WSPG|Moneta|Extra';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Введен неверный сервис или не активен']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -189,12 +191,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_service_with_spaces(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = ' WSPG | Moneta ';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Введен неверный сервис или не активен']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -202,12 +204,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_service_with_special_characters(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = 'WSPG@#$|Moneta';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Введен неверный сервис или не активен']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -215,13 +217,13 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_null_values(): void
     {
-        $data             = $this->getData();
-        $data['service']  = null;
+        $data = $this->getData();
+        $data['service'] = null;
         $data['incident'] = null;
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Отсутствуют необходимые данные']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
     /**
@@ -229,12 +231,12 @@ class MiddlwareServiceTest extends TestCase
      */
     public function test_service_with_only_spaces(): void
     {
-        $data            = $this->getData();
+        $data = $this->getData();
         $data['service'] = '   |   ';
 
         $response = $this->postJson("/api/v1/log", $data);
         $response->assertStatus(400);
-        $response->assertJson(['success' => false, 'message' => 'Неполный формат данных (service|type)']);
+        $response->assertJson(['success' => false, 'message' => 'Ошибка проверки сервиса. Сервис не активен или не найден в реестре']);
     }
 
 }

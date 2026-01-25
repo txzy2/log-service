@@ -3,24 +3,24 @@
 namespace App\Models;
 
 use App\Enums\LevelsEnum;
+use App\Events\IncidentCreated;
+use App\Events\IncidentUpdatedAfterLifecycle;
 use App\Helpers\Parsers\Parser;
-use App\Helpers\SenderManager;
-use App\Models\IncidentType;
 use App\Values\SendReportFilterData;
-use App\Values\TelegramSendData;
 use Exception;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
 
-class Incident extends BaseModel {
+class Incident extends BaseModel
+{
     use HasFactory;
     use HasUuids;
 
     public $timestamps = true;
+    public $incrementing = false;
     protected $primaryKey = 'uuid';
     protected $keyType = 'string';
-    public $incrementing = false;
     protected $table = 'incident';
     protected $fillable = [
         'domain',
@@ -50,7 +50,8 @@ class Incident extends BaseModel {
      * @param array $data
      * @return self
      */
-    public static function fromArray(array $data): self {
+    public static function fromArray(array $data): self
+    {
         $incident = new self();
         $incident->fill([
             'level' => $data['level'],
@@ -70,231 +71,8 @@ class Incident extends BaseModel {
         return $incident;
     }
 
-    /**
-     * Генерирует хэш инцидента
-     *
-     * @return string
-     */
-    protected function generateHash(): string {
-        return hash(
-            'sha256',
-            $this->service . $this->action . $this->function . $this->level
-        );
-    }
-
-    /**
-     * Проверяет валидность хэша
-     *
-     * @return bool
-     */
-    protected function isValidHash(): bool {
-        return $this->hash_sum === $this->generateHash();
-    }
-
-    /**
-     * Парсит код и сообщение из message
-     *
-     * @return array [code, message]
-     */
-    protected function parseCodeAndMessage(): array {
-        if (LevelsEnum::from($this->level) !== LevelsEnum::INFO) {
-            return Parser::parseStr($this->message);
-        }
-
-        return ['', $this->message];
-    }
-
-    /**
-     * Обрабатывает инцидент согласно его типу
-     * (Information Expert - объект знает, как себя обработать)
-     *
-     * @return array
-     */
-    public function process(): array {
-        [$code, $message] = $this->parseCodeAndMessage();
-        $existType = IncidentType::where('code', $code)->first();
-        $this->message = $message;
-
-        Log::channel("debug")->info(static::getModelClass() . "::process DATA", [$this]);
-
-        return match (true) {
-            $existType === null || $this->demo === 'Y' => $this->saveAsUnknown(),
-            default => $this->processWithType($existType),
-        };
-    }
-
-    /**
-     * saveAsUnknown - сохраняем логи, о которых мы ещё не знаем
-     * (Information Expert - объект знает, как сохранить себя как неизвестный)
-     *
-     * @return array
-     */
-    protected function saveAsUnknown(): array {
-        Log::channel('unknown_errors')->warning(
-            "Новая не отслеживаемая ошибка от {$this->service}: " . json_encode($this->toArray(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
-        );
-
-        unset($this->hash_sum);
-
-        $this->incident_type_id = null;
-        $this->count = 1;
-        $this->save();
-
-        return [
-            'success' => true,
-            'message' => 'Данные успешно сохранены',
-        ];
-    }
-
-    /**
-     * processWithType - обрабатываем инцидент с известным типом
-     * (Information Expert - объект знает, как обработать себя с типом)
-     *
-     * @param IncidentType $incidentType
-     * @return array{message: string, success: bool}
-     */
-    protected function processWithType(IncidentType $incidentType): array {
-        if (!$this->isValidHash()) {
-            Log::channel('debug')->error(static::getModelClass() . ' invalid hash', [
-                'service' => $this->service,
-                'hash' => $this->hash_sum
-            ]);
-            return [
-                'success' => false,
-                'message' => 'Контрольная сумма не совпадает',
-            ];
-        }
-
-        try {
-            $existingIncident = static::where('hash_sum', $this->hash_sum)->first();
-            if (!$existingIncident) {
-                $this->incident_type_id = $incidentType->id;
-                $this->count = 1;
-                $this->save();
-
-                $this->handleNewIncident($incidentType);
-
-                return [
-                    'success' => true,
-                    'message' => 'Данные успешно сохранены и отправлены',
-                ];
-            }
-
-            return $this->handleExistingIncident($existingIncident, $incidentType);
-        } catch (Exception $e) {
-            Log::channel('debug')->error('EXCEPTION save', [$e->getMessage()]);
-            return [
-                'success' => false,
-                'message' => 'Ошибка при сохранении: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * handleNewIncident - обрабатывает новый инцидент (отправка уведомлений)
-     *
-     * @param IncidentType $incidentType
-     * @return void
-     */
-    protected function handleNewIncident(IncidentType $incidentType): void {
-        Log::channel("debug")->info("New incident created", [
-            'service' => $this->service,
-            'type' => $incidentType->type_name
-        ]);
-
-        if (!empty($incidentType->id)) {
-            SenderManager::preparePushOrMail($this, $incidentType);
-
-            SenderManager::telegramSendMessage(
-                new TelegramSendData(
-                    static::getModelClass(),
-                    "Новая ошибка от {$this->service}",
-                    (string) $this->incident_text,
-                    [
-                        'INCIDENT_TYPE' => $incidentType->type_name,
-                        'CODE' => $incidentType->code,
-                        'INCIDENT_OBJECT' => $this->hash_sum,
-                    ]
-                )
-            );
-        }
-    }
-
-    /**
-     * handleExistingIncident - обрабатывает существующий инцидент
-     *
-     * @param Incident $existIncident
-     * @param IncidentType $incidentType
-     * @return array{message: string, success: bool}
-     */
-    protected function handleExistingIncident(Incident $existIncident, IncidentType $incidentType): array {
-        $parseDates = Parser::parseDates($existIncident->date, $this->date);
-        $lifecycle = $existIncident->incidentType->lifecycle;
-        $existIncident->count++;
-
-        if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $lifecycle) {
-            $existIncident->date = $parseDates['currentDate'];
-            $existIncident->save();
-
-            if (!empty($incidentType->alias)) {
-                SenderManager::preparePushOrMail($existIncident, $incidentType->send_template_id);
-            }
-
-            SenderManager::telegramSendMessage(new TelegramSendData(
-                static::getModelClass(),
-                "ОШИБКА ОБНОВИЛАСЬ ДЛЯ ({$existIncident->hash_sum})",
-                (string) $existIncident->incident_text,
-                [
-                    'SERVICE AND SOURCE' => $existIncident->service . '|' . $existIncident->source,
-                    'count' => $existIncident->count,
-                ]
-            ));
-
-            return [
-                'success' => true,
-                'message' => 'Данные успешно обновлены',
-            ];
-        }
-
-        $existIncident->save();
-        return [
-            'success' => true,
-            'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}",
-        ];
-    }
-
-    /**
-     * applyFilerByParam - Применение по полям
-     *
-     * @param SendReportFilterData $params
-     * @param mixed $query
-     * @param string $paramKey
-     * @param string $column
-     * @return void
-     */
-    private static function applyFilerByParam(
-        array $params,
-        $query,
-        string $paramKey,
-        string $column
-    ): void {
-        if (isset($params[$paramKey]) && !empty($params[$paramKey])) {
-            if (str_contains($column, '.date') || $column === 'date') {
-                $query->whereDate($column, $params[$paramKey]);
-            } else {
-                $query->where($column, $params[$paramKey]);
-            }
-        }
-    }
-
-    /*
-     * getIncidentDataByParams - получаем данные по параметрам
-     *
-     * @param array $data
-     * @return array
-     *
-     * */
-    public static function getIncidentDataByParams(array $params): array {
+    public static function getIncidentDataByParams(array $params): array
+    {
         $return = [
             'success' => false,
             'message' => 'Данные не найдены',
@@ -325,10 +103,10 @@ class Incident extends BaseModel {
         static::applyFilerByParam($params, $query, 'code', 'incident_type.code');
         static::applyFilerByParam($params, $query, 'demo', 'incident.demo');
 
-        $offset = (int) ($params['offset'] ?? 0);
-        $limit = (int) ($params['limit'] ?? 50);
+        $offset = (int)($params['offset'] ?? 0);
+        $limit = (int)($params['limit'] ?? 50);
         $limit = min($limit, 100);
-        
+
         $query->skip($offset)->take($limit);
 
         $returnData = $query->get()->toArray();
@@ -361,7 +139,200 @@ class Incident extends BaseModel {
         return $return;
     }
 
-    public function incidentType() {
+    /**
+     * applyFilerByParam - Применение по полям
+     *
+     * @param array $params
+     * @param mixed $query
+     * @param string $paramKey
+     * @param string $column
+     * @return void
+     */
+    private static function applyFilerByParam(
+        array  $params,
+        mixed  $query,
+        string $paramKey,
+        string $column
+    ): void
+    {
+        if (!empty($params[$paramKey])) {
+            if (str_contains($column, '.date') || $column === 'date') {
+                $query->whereDate($column, $params[$paramKey]);
+            } else {
+                $query->where($column, $params[$paramKey]);
+            }
+        }
+    }
+
+    /**
+     * Обрабатывает инцидент согласно его типу
+     * (Information Expert - объект знает, как себя обработать)
+     *
+     * @return array
+     */
+    public function process(): array
+    {
+        [$code, $message] = $this->parseCodeAndMessage();
+        $existType = IncidentType::where('code', $code)->first();
+        $this->message = $message;
+
+        Log::channel("debug")->info(static::getModelClass() . "::process DATA", [$this]);
+
+        return match (true) {
+            $existType === null || $this->demo === 'Y' => $this->saveAsUnknown(),
+            default => $this->processWithType($existType),
+        };
+    }
+
+    /**
+     * Парсит код и сообщение из message
+     *
+     * @return array [code, message]
+     */
+    protected function parseCodeAndMessage(): array
+    {
+        if (LevelsEnum::from($this->level) !== LevelsEnum::INFO) {
+            return Parser::parseStr($this->message);
+        }
+
+        return ['', $this->message];
+    }
+
+    /**
+     * saveAsUnknown - сохраняем логи, о которых мы ещё не знаем
+     *
+     * @return array
+     */
+    protected function saveAsUnknown(): array
+    {
+        Log::channel('unknown_errors')->warning(
+            "Новая не отслеживаемая ошибка от {$this->service}: " . json_encode(
+                $this->toArray(),
+                JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
+            )
+        );
+
+        unset($this->hash_sum);
+
+        $this->incident_type_id = null;
+        $this->count = 1;
+        $this->save();
+
+        return [
+            'success' => true,
+            'message' => 'Данные успешно сохранены',
+        ];
+    }
+
+    /**
+     * processWithType - обрабатываем инцидент с известным типом
+     *
+     * @param IncidentType $incidentType
+     * @return array{message: string, success: bool}
+     */
+    protected function processWithType(IncidentType $incidentType): array
+    {
+        if (!$this->isValidHash()) {
+            Log::channel('debug')->error(static::getModelClass() . ' invalid hash', [
+                'service' => $this->service,
+                'hash' => $this->hash_sum
+            ]);
+            return [
+                'success' => false,
+                'message' => 'Контрольная сумма не совпадает',
+            ];
+        }
+
+        try {
+            $existingIncident = static::where('hash_sum', $this->hash_sum)->first();
+            if (!$existingIncident) {
+                $this->incident_type_id = $incidentType->id;
+                $this->count = 1;
+                $this->save();
+
+                event(new IncidentCreated($this, $incidentType));
+
+                return [
+                    'success' => true,
+                    'message' => 'Данные успешно сохранены и отправлены',
+                ];
+            }
+
+            return $this->handleExistingIncident($existingIncident, $incidentType);
+        } catch (Exception $e) {
+            Log::channel('debug')->error('EXCEPTION save', [$e->getMessage()]);
+            return [
+                'success' => false,
+                'message' => 'Ошибка при сохранении: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Проверяет валидность хэша
+     *
+     * @return bool
+     */
+    protected function isValidHash(): bool
+    {
+        return $this->hash_sum === $this->generateHash();
+    }
+
+    /**
+     * Генерирует хэш инцидента
+     *
+     * @return string
+     */
+    protected function generateHash(): string
+    {
+        return hash(
+            'sha256',
+            $this->service . $this->action . $this->function . $this->level
+        );
+    }
+
+    /**
+     * handleExistingIncident - обрабатывает существующий инцидент
+     *
+     * @param Incident $existIncident
+     * @param IncidentType $incidentType
+     * @return array{message: string, success: bool}
+     */
+    protected function handleExistingIncident(Incident $existIncident, IncidentType $incidentType): array
+    {
+        $parseDates = Parser::parseDates($existIncident->date, $this->date);
+        $existIncident->count++;
+
+        if ($parseDates['prevDate']->diffInDays($parseDates['currentDate'], true) >= $existIncident->incidentType->lifecycle) {
+            $existIncident->date = $parseDates['currentDate'];
+            $existIncident->save();
+
+            //NOTE: Listener для отправки Push/Email
+            event(new IncidentUpdatedAfterLifecycle($existIncident, $incidentType));
+
+            return [
+                'success' => true,
+                'message' => 'Данные успешно обновлены',
+            ];
+        }
+
+        $existIncident->save();
+        return [
+            'success' => true,
+            'message' => "Ошибка уже отправлялась ID ошибки: {$existIncident->id}",
+        ];
+    }
+
+    /*
+     * getIncidentDataByParams - получаем данные по параметрам
+     *
+     * @param array $data
+     * @return array
+     *
+     * */
+
+    public function incidentType()
+    {
         return $this->belongsTo(IncidentType::class, 'incident_type_id');
     }
 }

@@ -12,6 +12,17 @@ enum ErrorsEnum: string
     case INTERNAL_ERROR = "500";
     case NOT_FOUND_ADDITIONAL_INFO = "404.4";
 
+    public static function getMessageByCode(string $code): string
+    {
+        foreach (self::cases() as $case) {
+            if ($case->value === $code) {
+                return $case->getMessage();
+            }
+        }
+
+        return 'Неизвестная ошибка';
+    }
+
     public function getMessage(): string
     {
         return match ($this) {
@@ -22,16 +33,5 @@ enum ErrorsEnum: string
             self::INTERNAL_ERROR => 'Ошибка сервера, попробуйте позже',
             self::NOT_FOUND_ADDITIONAL_INFO => 'Ошибка получения шаблона. Не заполнено обязательное поле additionalFields',
         };
-    }
-
-    public static function getMessageByCode(string $code): string
-    {
-        foreach (self::cases() as $case) {
-            if ($case->value === $code) {
-                return $case->getMessage();
-            }
-        }
-
-        return 'Неизвестная ошибка';
     }
 }

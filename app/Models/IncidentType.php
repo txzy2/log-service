@@ -1,15 +1,15 @@
 <?php
+
 namespace App\Models;
 
-use App\Values\AddTypeData;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IncidentType extends BaseModel
 {
     use HasFactory;
 
+    public $timestamps = false;
     protected $table = 'incident_type';
-
     protected $fillable = [
         'type_name',
         'send_template_id',
@@ -17,8 +17,6 @@ class IncidentType extends BaseModel
         'lifecycle',
         'alias',
     ];
-
-    public $timestamps = false;
 
     public function sendTemplate()
     {
