@@ -25,7 +25,8 @@ class SendIncidentNotifications
     {
         Log::channel('debug')->info("Try to send incident}", [$event->incidentType->alias]);
         if (!empty($event->incidentType->alias)) {
-            SenderManager::preparePushOrMail($event->incident, $event->incidentType);
+            $senderManager = new SenderManager($event->incidentType, $event->incident);
+            $senderManager->processNotify();
         }
 
         if($event->incident->count > 1) {

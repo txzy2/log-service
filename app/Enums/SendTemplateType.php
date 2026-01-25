@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 enum SendTemplateType: string {
-    case PUSH_MAIL = 'email';
-    case PUSH_MOBILE = 'mobile';
-    case TELEGRAM_ONLY = 'tg';
+    case PUSH_MAIL = 'Email';
+    case PUSH_MOBILE = 'Mobile';
+    case TELEGRAM_ONLY = 'Tg';
 }
