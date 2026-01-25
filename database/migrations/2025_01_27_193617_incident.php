@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::create('incident_type', function (Blueprint $table) {
             $table->id();
             $table->string('type_name', 50);
-            $table->enum('alias', ['email', 'push'])->nullable();
+            $table->enum('alias', ['Email', 'Push'])->nullable();
             $table->unsignedBigInteger('send_template_id')->nullable();
             $table->string('code', 50);
 

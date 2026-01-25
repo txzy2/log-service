@@ -3,80 +3,22 @@
 namespace App\Helpers;
 
 use App\Enums\SendTemplateType;
-use App\Jobs\SendMail;
 use App\Models\Incident;
 use App\Models\IncidentType;
-use App\Services\TemplateServiceFactory;
+use App\Services\IncidentNotifications\SenderResolver;
 use App\Values\TelegramSendData;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use Throwable;
 
 class SenderManager extends Helpers
 {
-    /**
-     * preparePushOrMail - отправляет сообщение об инциденте на сервис рассылки
-     *
-     * @param Incident $data
-     * @param IncidentType $incidentType
-     * @return void
-     */
-    public static function preparePushOrMail(Incident $data, IncidentType $incidentType): void
-    {
-        $incidentType->load('sendTemplate'); // Подгружаем таблицу send_template, т.к она связана через send_template_id
+    public function __construct(
+        private readonly IncidentType $incidentType,
+        private readonly Incident $incident,
+    ){ }
 
-        match (SendTemplateType::tryFrom($incidentType->alias)) {
-            SendTemplateType::PUSH_MAIL => static::prepareAndSendEmail(
-                $incidentType->sendTemplate->to,
-                $incidentType->sendTemplate->template,
-                $data
-            ),
-            default => Log::channel("debug")
-                ->error(
-                    static::getClassName() . "::sendToSendService ERROR SEND TYPE",
-                    [
-                        'DATA' => $data,
-                        'TEMPLATE_ID' => $incidentType->send_template_id
-                    ]
-                ),
-        };
-    }
-
-    protected static function prepareAndSendEmail(string $to, string $template, Incident $data): void
-    {
-        Log::channel('debug')->info(static::getClassName() . "prepareAndSendEmail is WORK", [$data]);
-        try {
-            $preparer = TemplateServiceFactory::create($data->class);
-            $processedTemplate = $preparer->prepare($data, $template);
-
-            if ($processedTemplate['success']) {
-                SendMail::dispatch([
-                    "to" => json_decode($to, true),
-                    "template" => $processedTemplate['data']
-                ])->onQueue('sendMailJob');
-            }
-        } catch (InvalidArgumentException $e) {
-            $error = $e->getMessage();
-            Log::channel("debug")->error(static::getClassName() . '::prepareAndSendEmail EXCEPTION PREPARE EMAIL', [$error]);
-            static::telegramSendMessage(new TelegramSendData(
-                static::getClassName(),
-                "EXCEPTION PREPARE EMAIL",
-                $error,
-                [
-                    "data" => $data,
-                    "to" => $to
-                ]
-            ));
-        }
-    }
-
-    /*
-     * telegramSendMessage - отправляет сообщение в телеграм
-     *
-     * @param string $message
-     * @return void
-     */
     public static function telegramSendMessage(TelegramSendData $data): void
     {
         $lineBreak = "\n";
@@ -105,6 +47,31 @@ class SenderManager extends Helpers
             Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage SUCCESS SEND", [$preparedMessage]);
         } catch (Exception $e) {
             Log::channel('telegramLogging')->error(static::getClassName() . "::telegramSendMessage ERROR", [$e->getMessage()]);
+        }
+    }
+
+    /*
+     * telegramSendMessage - отправляет сообщение в телеграм
+     *
+     * @param string $message
+     * @return void
+     */
+
+    /**
+     * processNotify - отправляет сообщение об инциденте на сервис рассылки
+     *
+     * @return void
+     */
+    public function processNotify(): void
+    {
+        $this->incidentType->load('sendTemplate'); // Подгружаем таблицу send_template, т.к она связана через send_template_id
+
+        try {
+            $senderObj = SenderResolver::resolve(SendTemplateType::tryFrom($this->incidentType->alias));
+            Log::channel('debug')->info("Incident senderObj", [$senderObj]);
+            $senderObj->send($this->incident, $this->incidentType);
+        } catch (Throwable $e) {
+            Log::channel('debug')->warning("preparePushOrMail Exception {$e->getMessage()}");
         }
     }
 }
