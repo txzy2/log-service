@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use App\Models\Services;
@@ -18,7 +19,7 @@ class ServiceCheck
     public function handle(Request $request, Closure $next): Response
     {
         $service = $request->input("service");
-        if(empty($service) || !Services::findActiveServiceByName($service)) {
+        if (empty($service) || !Services::findActiveServiceByName($service)) {
             return $this->sendError(
                 "Ошибка проверки сервиса. Сервис не активен или не найден в реестре",
                 Response::HTTP_BAD_REQUEST

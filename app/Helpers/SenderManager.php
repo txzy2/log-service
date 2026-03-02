@@ -9,7 +9,6 @@ use Telegram\Bot\Laravel\Facades\Telegram;
 
 class SenderManager extends Helpers
 {
-
     /**
      * telegramSendMessage - отправляет сообщение в телеграм
      *
@@ -36,8 +35,8 @@ class SenderManager extends Helpers
 
         try {
             Telegram::sendMessage([
-                'chat_id' => config('app.chat_id'),
-                'text' => $preparedMessage,
+                'chat_id'    => config('app.chat_id'),
+                'text'       => $preparedMessage,
                 'parse_mode' => 'Markdown',
             ]);
 

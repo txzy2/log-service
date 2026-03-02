@@ -26,11 +26,11 @@ enum ErrorsEnum: string
     public function getMessage(): string
     {
         return match ($this) {
-            self::SUCCESS => 'OK',
-            self::ERROR_WRITE_INCIDENT => 'Ошибка записи',
-            self::VALIDATION_ERROR => 'Не заполнены обязательные поля',
-            self::BAD_REQUEST => 'Неверный запрос. Проверьте отправленные данные',
-            self::INTERNAL_ERROR => 'Ошибка сервера, попробуйте позже',
+            self::SUCCESS                   => 'OK',
+            self::ERROR_WRITE_INCIDENT      => 'Ошибка записи',
+            self::VALIDATION_ERROR          => 'Не заполнены обязательные поля',
+            self::BAD_REQUEST               => 'Неверный запрос. Проверьте отправленные данные',
+            self::INTERNAL_ERROR            => 'Ошибка сервера, попробуйте позже',
             self::NOT_FOUND_ADDITIONAL_INFO => 'Ошибка получения шаблона. Не заполнено обязательное поле additionalFields',
         };
     }

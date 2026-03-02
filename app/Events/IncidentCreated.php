@@ -10,7 +10,9 @@ use Illuminate\Queue\SerializesModels;
 
 class IncidentCreated
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     /**
      * Create a new event instance.
@@ -18,6 +20,7 @@ class IncidentCreated
     public function __construct(
         public Incident $incident,
         public IncidentType $incidentType
-    ) {}
+    ) {
+    }
 
 }

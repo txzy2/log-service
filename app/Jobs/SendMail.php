@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class SendMail implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     private const CLASS_NAME = __CLASS__;
     public int $tries = 3;
@@ -44,10 +47,10 @@ class SendMail implements ShouldQueue
         $cleanedMessage = [];
         foreach ($emails as $email) {
             $cleanedMessage[] = [
-                "to" => $email,
+                "to"      => $email,
                 "subject" => "Уведомление",
-                "body" => $this->data['template'],
-                "isHTML" => true
+                "body"    => $this->data['template'],
+                "isHTML"  => true,
             ];
         }
         SendStatusQueue::where("job_id", $jobId)->update(["status" => "process", "message" => json_encode($emails)]);
@@ -56,11 +59,11 @@ class SendMail implements ShouldQueue
             $client = new Client();
             $response = $client->post(config('app.ws_messages_url') . "/api/v1/send_mail", [
                 'headers' => ['Content-type' => 'application/json'],
-                'json' => [
-                    "token" => $this->generateMailToken($cleanedMessage),
+                'json'    => [
+                    "token"                        => $this->generateMailToken($cleanedMessage),
                     "another_registration_service" => "ws-pg",
-                    "messages" => $cleanedMessage
-                ]
+                    "messages"                     => $cleanedMessage,
+                ],
             ]);
             $responseBody = $response->getBody()->getContents();
             $result = json_decode($responseBody, true);

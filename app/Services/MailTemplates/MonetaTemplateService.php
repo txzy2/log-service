@@ -8,11 +8,13 @@ use App\Services\TemplateServiceInterface;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class MonetaTemplateService implements TemplateServiceInterface {
-    public function prepare(Incident $data, string $template): array {
+class MonetaTemplateService implements TemplateServiceInterface
+{
+    public function prepare(Incident $data, string $template): array
+    {
         $return = [
             "success" => false,
-            "data" => "",
+            "data"    => "",
         ];
 
         try {
@@ -27,10 +29,10 @@ class MonetaTemplateService implements TemplateServiceInterface {
 
             if (isset($fields['transit'])) {
                 $replacements = [
-                    '{{inn}}' => $fields['inn'] ?? '',
-                    '{{kpp}}' => $fields['kpp'] ?? '',
+                    '{{inn}}'      => $fields['inn'] ?? '',
+                    '{{kpp}}'      => $fields['kpp'] ?? '',
                     '{{bank_acc}}' => $fields['bank_acc'] ?? '',
-                    '{{transit}}' => $fields['transit'] ?? '',
+                    '{{transit}}'  => $fields['transit'] ?? '',
                 ];
 
                 $return['data'] = str_replace(array_keys($replacements), array_values($replacements), $template);

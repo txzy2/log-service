@@ -6,7 +6,6 @@ use App\Enums\LevelsEnum;
 use App\Events\IncidentCreated;
 use App\Events\IncidentUpdatedAfterLifecycle;
 use App\Helpers\Parsers\Parser;
-use App\Values\SendReportFilterData;
 use Exception;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -54,17 +53,17 @@ class Incident extends BaseModel
     {
         $incident = new self();
         $incident->fill([
-            'level' => $data['level'],
-            'service' => $data['service'],
-            'message' => $data['message'],
-            'domain' => $data['domain'],
-            'action' => $data['action'],
-            'function' => $data['function'],
-            'file' => $data['file'] ?? '',
-            'class' => $data['class'] ?? '',
-            'date' => $data['date'],
-            'hash_sum' => $data['hash_sum'],
-            'demo' => $data['demo'] ?? 'N',
+            'level'            => $data['level'],
+            'service'          => $data['service'],
+            'message'          => $data['message'],
+            'domain'           => $data['domain'],
+            'action'           => $data['action'],
+            'function'         => $data['function'],
+            'file'             => $data['file'] ?? '',
+            'class'            => $data['class'] ?? '',
+            'date'             => $data['date'],
+            'hash_sum'         => $data['hash_sum'],
+            'demo'             => $data['demo'] ?? 'N',
             'additionalFields' => $data['additionalFields'] ?? null,
         ]);
 
@@ -76,7 +75,7 @@ class Incident extends BaseModel
         $return = [
             'success' => false,
             'message' => 'Данные не найдены',
-            'data' => [],
+            'data'    => [],
         ];
 
         $query = static::query()
@@ -117,21 +116,21 @@ class Incident extends BaseModel
 
             $return['data'] = array_map(function ($item) {
                 return [
-                    'id' => $item['uuid'],
-                    'domain' => $item['domain'],
-                    'action' => $item['action'],
+                    'id'       => $item['uuid'],
+                    'domain'   => $item['domain'],
+                    'action'   => $item['action'],
                     'incident' => [
-                        'type' => $item['type_name'] ?? 'unknown',
-                        'code' => $item['code'] ?? null,
-                        'service' => $item['service'],
-                        'message' => $item['message'],
+                        'type'      => $item['type_name'] ?? 'unknown',
+                        'code'      => $item['code'] ?? null,
+                        'service'   => $item['service'],
+                        'message'   => $item['message'],
                         'lifecycle' => $item['lifecycle'] ?? null,
                     ],
                     'additional_data' => $item['additionalFields'],
-                    'count' => $item['count'],
-                    'date' => $item['date'],
-                    'has_type' => $item['incident_type_id'] !== null,
-                    'demo' => $item['demo']
+                    'count'           => $item['count'],
+                    'date'            => $item['date'],
+                    'has_type'        => $item['incident_type_id'] !== null,
+                    'demo'            => $item['demo'],
                 ];
             }, $returnData);
         }
@@ -153,8 +152,7 @@ class Incident extends BaseModel
         mixed  $query,
         string $paramKey,
         string $column
-    ): void
-    {
+    ): void {
         if (!empty($params[$paramKey])) {
             if (str_contains($column, '.date') || $column === 'date') {
                 $query->whereDate($column, $params[$paramKey]);
@@ -180,7 +178,7 @@ class Incident extends BaseModel
 
         return match (true) {
             $existType === null || $this->demo === 'Y' => $this->saveAsUnknown(),
-            default => $this->processWithType($existType),
+            default                                    => $this->processWithType($existType),
         };
     }
 
@@ -235,7 +233,7 @@ class Incident extends BaseModel
         if (!$this->isValidHash()) {
             Log::channel('debug')->error(static::getModelClass() . ' invalid hash', [
                 'service' => $this->service,
-                'hash' => $this->hash_sum
+                'hash'    => $this->hash_sum,
             ]);
             return [
                 'success' => false,

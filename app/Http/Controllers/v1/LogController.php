@@ -29,23 +29,23 @@ class LogController extends Controller
         $validate = Validator::make(
             $data,
             [
-                'level' => ['required', Rule::in(LevelsEnum::cases())],
-                'service' => 'required|string',
-                'message' => 'required|string',
-                'domain' => 'required|string',
-                'action' => 'required|string',
-                'function' => 'required|string',
+                'level'            => ['required', Rule::in(LevelsEnum::cases())],
+                'service'          => 'required|string',
+                'message'          => 'required|string',
+                'domain'           => 'required|string',
+                'action'           => 'required|string',
+                'function'         => 'required|string',
                 'additionalFields' => 'nullable|array',
-                'file' => 'required|string',
-                'class' => 'required|string',
-                'date' => 'required|date',
-                'hash_sum' => 'required|string',
-                'demo' => 'nullable|in:Y,N'
+                'file'             => 'required|string',
+                'class'            => 'required|string',
+                'date'             => 'required|date',
+                'hash_sum'         => 'required|string',
+                'demo'             => 'nullable|in:Y,N',
             ],
             [
-                'required' => 'Поле :attribute обязательно для заполнения',
+                'required'               => 'Поле :attribute обязательно для заполнения',
                 'additionalFields.array' => 'Неверный тип для additionalFields. ожидается массив',
-                'level.in' => 'Переданный статус не валиден',
+                'level.in'               => 'Переданный статус не валиден',
             ],
         );
 

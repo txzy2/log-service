@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class WriteIncident implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     private const CLASS_NAME = __CLASS__;
     public int $tries = 16;

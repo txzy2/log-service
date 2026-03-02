@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use App\Traits\RespondsWithMessages;
@@ -26,15 +27,15 @@ class TokenCheck
     public function handle(Request $request, Closure $next): mixed
     {
         $userData = [
-            'ip' => $request->ip(),
+            'ip'        => $request->ip(),
             'userAgent' => $request->header('user-agent'),
-            'auth' => $request->header('Authorization'),
+            'auth'      => $request->header('Authorization'),
         ];
 
-        Log::channel("debug")->info("user data", ["userData"=> $userData]);
+        Log::channel("debug")->info("user data", ["userData" => $userData]);
 
         try {
-            if(!empty($request->demo) && $request->demo === 'Y') {
+            if (!empty($request->demo) && $request->demo === 'Y') {
                 return $next($request);
             }
             $payload = SignaturePayload::fromRequest($request);

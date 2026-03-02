@@ -5,7 +5,8 @@ namespace App\Services;
 use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
 
-class TemplateServiceFactory {
+class TemplateServiceFactory
+{
     public function create(string $source): TemplateServiceInterface
     {
         $service = Config::get('mail_templates.sources');

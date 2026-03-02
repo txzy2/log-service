@@ -25,11 +25,11 @@ class ReportController extends Controller
             $data,
             [
                 'service' => 'nullable|string',
-                'code' => 'nullable|string',
-                'date' => 'nullable|string',
-                'demo' => 'nullable|string',
-                'offset' => 'nullable|integer|min:0',
-                'limit' => 'nullable|integer|min:1|max:100',
+                'code'    => 'nullable|string',
+                'date'    => 'nullable|string',
+                'demo'    => 'nullable|string',
+                'offset'  => 'nullable|integer|min:0',
+                'limit'   => 'nullable|integer|min:1|max:100',
             ],
             [
                 '*.required' => 'Поле :attribute обязательно для заполнения',
@@ -43,7 +43,7 @@ class ReportController extends Controller
 
         $return = Incident::getIncidentDataByParams($data);
         return match ($return['success']) {
-            true => $this->sendSuccess($return['message'], $return['data']),
+            true    => $this->sendSuccess($return['message'], $return['data']),
             default => $this->sendError($return['message'], 400),
         };
     }
